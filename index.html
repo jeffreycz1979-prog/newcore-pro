@@ -1,0 +1,2706 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+<title>NewCore 語音點名</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; font-size: 14px; }
+
+  .top { background: #274e13; color: white; padding: 12px 18px; display: flex; align-items: center; gap: 12px; }
+  .top h2 { font-size: 15px; font-weight: 700; flex: 1; }
+  .tab-bar { display: flex; }
+  .tab-btn { padding: 6px 14px; font-size: 13px; border: none; cursor: pointer;
+             background: rgba(255,255,255,0.15); color: white; border-radius: 6px; margin-left: 6px; }
+  .tab-btn.active { background: white; color: #274e13; font-weight: 700; }
+
+  /* ── 登入資訊列 ── */
+  .auth-bar { background: #1a3a0a; color: rgba(255,255,255,0.85); padding: 6px 18px;
+              display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .auth-bar .auth-name { font-weight: 700; color: white; }
+  .auth-bar .auth-role { background: rgba(255,255,255,0.2); border-radius: 10px;
+                         padding: 2px 8px; font-size: 11px; }
+  .auth-bar .auth-role.admin { background: #d4a017; color: #222; }
+  .auth-logout { margin-left: auto; padding: 4px 10px; font-size: 11px; border-radius: 6px;
+                 border: 1px solid rgba(255,255,255,0.4); background: none; color: white; cursor: pointer; }
+  .auth-logout:hover { background: rgba(255,255,255,0.15); }
+
+  .body { padding: 14px; max-width: 900px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .card { background: white; border-radius: 12px; padding: 14px 16px;
+          margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase;
+          letter-spacing: .04em; display: block; margin-bottom: 5px; }
+  select { width: 100%; padding: 9px 10px; font-size: 13px; border-radius: 8px;
+           border: 1px solid #ddd; background: #fafafa; color: #222; }
+  .lesson-info { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .info-box { background: #f8f9fa; border-radius: 8px; padding: 8px 10px; text-align: center; }
+  .info-box .val { font-size: 15px; font-weight: 700; color: #274e13; }
+  .info-box .lbl { font-size: 10px; color: #999; margin-top: 2px; }
+
+  /* ── 登入畫面 ── */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+                background: linear-gradient(135deg, #1a3a0a 0%, #274e13 60%, #3d6b1a 100%); }
+  .login-box { background: white; border-radius: 20px; padding: 36px 32px; width: 100%; max-width: 360px;
+               box-shadow: 0 8px 40px rgba(0,0,0,0.25); text-align: center; }
+  .login-logo { font-size: 40px; margin-bottom: 8px; }
+  .login-title { font-size: 22px; font-weight: 700; color: #274e13; margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: #999; margin-bottom: 28px; }
+  .login-field { text-align: left; margin-bottom: 14px; }
+  .login-field label { font-size: 11px; font-weight: 700; color: #666; margin-bottom: 5px; display: block; }
+  .login-field input { width: 100%; padding: 11px 14px; font-size: 14px; border-radius: 10px;
+                       border: 1.5px solid #ddd; outline: none; transition: border-color .2s; }
+  .login-field input:focus { border-color: #274e13; }
+  .login-btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 700; border-radius: 10px;
+               border: none; background: #274e13; color: white; cursor: pointer; margin-top: 8px;
+               transition: background .2s; }
+  .login-btn:hover { background: #1a3a0a; }
+  .login-btn:disabled { opacity: .55; cursor: not-allowed; }
+  .login-err { color: #c0392b; font-size: 12px; margin-top: 10px; min-height: 18px; }
+  .login-api { margin-top: 20px; padding-top: 16px; border-top: 1px solid #f0f0f0; text-align: left; }
+  .login-api label { font-size: 11px; color: #aaa; margin-bottom: 4px; display: block; }
+  .login-api input { width: 100%; padding: 8px 10px; font-size: 11px; border-radius: 8px;
+                     border: 1px solid #ddd; font-family: monospace; color: #666; }
+
+  /* ── 麥克風按鈕區 ── */
+  .mic-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .mic-btn { flex: 1; padding: 13px; font-size: 15px; font-weight: 700;
+             border-radius: 10px; border: none; background: #274e13; color: white; cursor: pointer; }
+  .mic-btn.recording  { background: #c0392b; animation: pulse 1.2s infinite; }
+  .mic-btn.processing { background: #1a5276; }
+  .mic-btn:disabled   { opacity: .55; cursor: not-allowed; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.65} }
+  .rec-timer { font-size: 12px; color: #c0392b; font-weight: 700; min-width: 36px;
+               display: flex; align-items: center; justify-content: center; }
+
+  .status-bar { text-align: center; padding: 9px 12px; border-radius: 8px; font-size: 12px;
+                background: #eee; color: #666; min-height: 36px;
+                display: flex; align-items: center; justify-content: center; line-height: 1.5; }
+  .status-bar.ok   { background: #e6f4ea; color: #1e7e34; }
+  .status-bar.err  { background: #fce8e6; color: #c0392b; }
+  .status-bar.info { background: #e8f0fe; color: #1a5276; }
+  .hint-box { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; margin-top: 10px;
+              font-size: 11px; color: #888; line-height: 1.9; }
+  .hint-box b { color: #274e13; }
+  .att-summary { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 4px; }
+  .tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+  /* Gemini 結果卡片 */
+  .gemini-result { background: #e8f0fe; border-radius: 10px; padding: 10px 14px;
+                   margin-top: 10px; font-size: 12px; display: none; }
+  .gemini-result .gr-title { font-weight: 700; color: #1a5276; margin-bottom: 6px; font-size: 13px; }
+  .gemini-item { display: flex; align-items: center; gap: 8px; padding: 4px 0;
+                 border-bottom: 1px solid rgba(0,0,0,.06); }
+  .gemini-item:last-child { border-bottom: none; }
+  .gemini-name    { font-weight: 700; min-width: 80px; }
+  .gemini-sym     { font-size: 16px; }
+  .gemini-score   { color: #185FA5; font-weight: 700; }
+  .gemini-comment { color: #666; font-size: 11px; font-style: italic; flex: 1; }
+
+  /* 點名表格 */
+  .att-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .att-table { width: 100%; border-collapse: collapse; }
+  .att-table th { background: #f1f3f4; font-size: 11px; font-weight: 700; padding: 8px 4px; text-align: center; color: #666;
+                  position: sticky; top: 0; z-index: 2; }
+  .att-table th:first-child { text-align: left; padding-left: 10px; min-width: 110px;
+                               position: sticky; left: 0; z-index: 3; background: #f1f3f4; }
+  .att-table td { padding: 7px 4px; font-size: 13px; text-align: center; border-bottom: 1px solid #f5f5f5; }
+  .att-table td:first-child { text-align: left; padding-left: 10px;
+                               position: sticky; left: 0; z-index: 1; background: white; }
+  .att-table tr:nth-child(even) td:first-child { background: #fafafa; }
+  .att-table tr:last-child td { border-bottom: none; }
+  .att-table tr.highlight td { background: #fffde7 !important; }
+  .att-table tr.highlight td:first-child { background: #fffde7 !important; }
+  .name-en { font-weight: 600; font-size: 13px; color: #222; }
+  .name-zh { font-size: 11px; color: #999; margin-top: 1px; }
+  .sym-btn { width: 28px; height: 26px; border-radius: 5px; border: 1px solid #e0e0e0;
+             background: white; font-size: 13px; cursor: pointer; }
+  .sym-btn.sel-V  { background: #e6f4ea; border-color: #1e7e34; font-weight: 700; }
+  .sym-btn.sel-x1 { background: #fce8e6; border-color: #c0392b; font-weight: 700; }
+  .sym-btn.sel-x2 { background: #f5cba7; border-color: #ca6f1e; font-weight: 700; }
+  .sym-btn.sel-x3 { background: #fef9e7; border-color: #d4ac0d; font-weight: 700; }
+  .sym-btn.sel-x4 { background: #fad7a0; border-color: #ca8a04; font-weight: 700; }
+  .sym-btn.sel-x5 { background: #e8f0fe; border-color: #1a5276; font-weight: 700; }
+  .score-btn { width: 46px; height: 26px; border-radius: 5px; border: 1px solid #ddd;
+               background: #fafafa; font-size: 12px; cursor: pointer; color: #444; font-weight: 500; }
+  .score-btn.has-score { background: #e8f0fe; border-color: #185FA5; color: #185FA5; font-weight: 700; }
+  .log-item { font-size: 11px; color: #888; padding: 3px 0; border-bottom: 1px solid #f5f5f5; }
+  .empty   { text-align: center; color: #bbb; padding: 24px 0; font-size: 13px; }
+  .loading { text-align: center; color: #aaa; padding: 20px; }
+
+  /* 轉盤 */
+  .wheel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+                   display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
+  .wheel-panel { background: white; width: 100%; max-width: 480px;
+                 border-radius: 20px 20px 0 0; padding: 0 0 24px; animation: slideUp .25s ease; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .wheel-header { display: flex; align-items: center; justify-content: space-between;
+                  padding: 16px 20px 12px; border-bottom: 1px solid #f0f0f0; }
+  .wheel-student { font-size: 15px; font-weight: 700; }
+  .wheel-close { font-size: 22px; color: #aaa; cursor: pointer; background: none; border: none; padding: 0 4px; }
+  .wheel-display { text-align: center; padding: 12px 0 4px; }
+  .wheel-display .score-big { font-size: 52px; font-weight: 700; color: #274e13; line-height: 1; }
+  .wheel-display .score-label { font-size: 13px; color: #aaa; margin-top: 4px; }
+  .wheel-scroll-wrap { position: relative; height: 180px; overflow: hidden;
+                       margin: 8px 20px; border-radius: 12px; background: #f8f9fa; }
+  .wheel-scroll-wrap::before,.wheel-scroll-wrap::after { content:''; position:absolute; left:0; right:0; height:60px; z-index:2; pointer-events:none; }
+  .wheel-scroll-wrap::before { top:0; background:linear-gradient(to bottom,#f8f9fa,transparent); }
+  .wheel-scroll-wrap::after  { bottom:0; background:linear-gradient(to top,#f8f9fa,transparent); }
+  .wheel-selector { position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:52px;
+                    border-top:2px solid #274e13; border-bottom:2px solid #274e13; z-index:3; pointer-events:none; }
+  .wheel-scroll { height:100%; overflow-y:scroll; scroll-snap-type:y mandatory;
+                  -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+  .wheel-scroll::-webkit-scrollbar { display:none; }
+  .wheel-item { height:52px; display:flex; align-items:center; justify-content:center;
+                font-size:22px; font-weight:600; color:#bbb; scroll-snap-align:center; cursor:pointer; }
+  .wheel-item.center { color:#274e13; }
+  .wheel-quick { display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px 0; }
+  .quick-btn { flex:1; min-width:48px; padding:8px 4px; border-radius:8px; border:1px solid #ddd;
+               background:#f8f9fa; font-size:13px; font-weight:600; cursor:pointer; text-align:center; color:#444; }
+  .quick-btn:hover { background:#274e13; color:white; border-color:#274e13; }
+  .wheel-actions { display:flex; gap:10px; padding:14px 20px 0; }
+  .wheel-clear   { flex:1; padding:12px; border-radius:10px; border:1px solid #ddd; background:white; font-size:14px; cursor:pointer; color:#c0392b; }
+  .wheel-confirm { flex:2; padding:12px; border-radius:10px; border:none; background:#274e13; color:white; font-size:14px; font-weight:700; cursor:pointer; }
+
+  /* 九宮格鍵盤 */
+  .numpad-wrap { padding: 8px 16px 0; }
+  .numpad-display { text-align:center; font-size:42px; font-weight:700; color:#274e13;
+                    padding:8px 0 4px; min-height:60px; letter-spacing:2px; }
+  .numpad-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0; }
+  .numpad-btn { padding:16px 8px; font-size:22px; font-weight:700; border-radius:12px;
+                border:1px solid #e0e0e0; background:#f8f9fa; cursor:pointer;
+                color:#222; transition:background .1s; -webkit-tap-highlight-color:transparent; }
+  .numpad-btn:active { background:#274e13; color:white; }
+  .numpad-btn.zero { grid-column:span 2; }
+  .numpad-btn.del  { background:#fce8e6; color:#c0392b; border-color:#f5c6cb; }
+  .numpad-btn.del:active { background:#c0392b; color:white; }
+  .wheel-mode-toggle { display:flex; gap:6px; padding:0 16px 8px; }
+  .mode-btn { flex:1; padding:7px; font-size:12px; border-radius:8px; border:1px solid #ddd;
+              background:#f8f9fa; cursor:pointer; color:#666; font-weight:600; }
+  .mode-btn.active { background:#274e13; color:white; border-color:#274e13; }
+
+  /* 出席符號選單 */
+  .att-popup { position: fixed; z-index: 2000; background: white; border-radius: 12px;
+               box-shadow: 0 4px 20px rgba(0,0,0,0.2); padding: 10px;
+               display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+  .att-popup-item { padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px;
+                    font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .att-popup-item:hover { background: #f0f2f5; }
+  .att-popup-item.selected { background: #e6f4ea; }
+  .att-popup-divider { height: 1px; background: #f0f0f0; margin: 2px 0; }
+
+  /* 總表 */
+  .summary-toolbar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px; }
+  .summary-toolbar select { width:auto; flex:1; min-width:150px; }
+  .filter-btn { padding:7px 14px; font-size:12px; border-radius:8px; border:1px solid #ddd;
+                background:white; cursor:pointer; color:#444; white-space:nowrap; }
+  .filter-btn.active { background:#274e13; color:white; border-color:#274e13; }
+  .alert-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+  .alert-card { border-radius:10px; padding:12px 14px; }
+  .alert-card.makeup { background:#fef3cd; border:1px solid #ffc107; }
+  .alert-card.hw     { background:#fce8e6; border:1px solid #f5c6cb; }
+  .alert-card .ac-title { font-size:11px; font-weight:700; color:#666; margin-bottom:6px; }
+  .alert-card .ac-num   { font-size:28px; font-weight:700; }
+  .alert-card.makeup .ac-num { color:#856404; }
+  .alert-card.hw     .ac-num { color:#c0392b; }
+  .alert-card .ac-sub { font-size:11px; color:#888; margin-top:2px; }
+
+  .summary-table-wrap { overflow-x: auto; }
+  .summary-table { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  .summary-table th { background: #274e13; color: white; padding: 6px 8px; text-align: center;
+                      font-size: 11px; font-weight: 600; position: sticky; top: 0; z-index: 2; }
+  .summary-table th.name-col { text-align: left; position: sticky; left: 0; z-index: 3;
+                                background: #274e13; min-width: 100px; }
+  .summary-table th.stats-col { background: #1a3a0a; }
+  .summary-table th.alert-col { background: #7b1c1c; }
+  .summary-table td { padding: 5px 6px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+  .summary-table td.name-col { text-align: left; position: sticky; left: 0; background: white;
+                                z-index: 1; font-weight: 600; padding-left: 10px; min-width: 100px; }
+  .summary-table tr:nth-child(even) td { background: #fafafa; }
+  .summary-table tr:nth-child(even) td.name-col { background: #fafafa; }
+  .summary-table tr:hover td { background: #fffde7 !important; }
+
+  .cell-att { cursor: pointer; border-radius: 4px; padding: 2px 4px; transition: background .15s; }
+  .cell-att:hover { background: #e8f0fe; outline: 2px solid #274e13; }
+  .cell-score { cursor: pointer; border-radius: 4px; padding: 2px 4px;
+                font-size: 11px; color: #444; transition: background .15s; }
+  .cell-score:hover { background: #e8f0fe; outline: 2px solid #274e13; }
+  .cell-score.has-score { color: #185FA5; font-weight: 700; }
+
+  .att-V  { color: #1e7e34; font-weight: 700; }
+  .att-o  { color: #c0392b; font-weight: 700; }
+  .att-ob { color: #ca6f1e; font-weight: 700; }
+  .att-d  { color: #d4ac0d; font-weight: 700; }
+  .att-db { color: #ca8a04; font-weight: 700; }
+  .att-l  { color: #1a5276; font-weight: 700; }
+  .missing-makeup { background: #fff3cd !important; }
+  .missing-hw     { background: #fce8e6 !important; }
+  .stats-val { font-weight: 600; color: #274e13; }
+  .alert-count { font-weight: 700; }
+  .alert-count.has-issue { color: #c0392b; }
+
+  .save-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+                background: #274e13; color: white; padding: 8px 20px; border-radius: 20px;
+                font-size: 13px; font-weight: 600; z-index: 3000;
+                animation: fadeInOut 1.8s ease forwards; pointer-events: none; }
+  @keyframes fadeInOut { 0%{opacity:0;transform:translateX(-50%) translateY(10px)}
+    15%{opacity:1;transform:translateX(-50%) translateY(0)}
+    75%{opacity:1} 100%{opacity:0} }
+
+  /* ══ 成績單 ══ */
+  .report-toolbar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px; }
+  .report-toolbar select { width:auto; flex:1; min-width:150px; }
+  .rpt-btn { padding:8px 16px; font-size:13px; border-radius:8px; border:none; cursor:pointer;
+             background:#274e13; color:white; font-weight:600; white-space:nowrap; }
+  .rpt-btn:disabled { opacity:.5; cursor:not-allowed; }
+  .rpt-btn.secondary { background:#1a5276; }
+  .rpt-btn.danger    { background:#c0392b; }
+
+  .report-preview { background:white; border-radius:12px; padding:0;
+                    box-shadow:0 2px 12px rgba(0,0,0,.12); overflow:hidden; margin-bottom:12px; }
+  .rpt-header { background:#274e13; color:white; padding:14px 20px; text-align:center; }
+  .rpt-header h3 { font-size:16px; font-weight:700; margin-bottom:2px; }
+  .rpt-header p  { font-size:11px; opacity:.8; }
+  .rpt-meta { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #f0f0f0; }
+  .rpt-meta-cell { padding:10px 14px; border-right:1px solid #f0f0f0; }
+  .rpt-meta-cell:last-child { border-right:none; }
+  .rpt-meta-cell .mc-label { font-size:10px; color:#999; font-weight:700; text-transform:uppercase; margin-bottom:3px; }
+  .rpt-meta-cell .mc-val   { font-size:14px; font-weight:700; color:#222; }
+  .rpt-meta-cell .mc-val.green { color:#274e13; }
+  .rpt-meta-cell .mc-val.red   { color:#c0392b; }
+  .rpt-body { padding:16px 20px; }
+
+  .rpt-chart-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .rpt-radar-wrap { position:relative; }
+  .rpt-radar-wrap canvas { width:100% !important; height:auto !important; }
+  .rpt-stats-list { display:flex; flex-direction:column; gap:8px; justify-content:center; }
+  .stat-row { display:flex; align-items:center; gap:8px; }
+  .stat-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .stat-name { font-size:12px; color:#666; flex:1; }
+  .stat-bar-wrap { width:80px; height:7px; background:#eee; border-radius:4px; overflow:hidden; }
+  .stat-bar  { height:100%; border-radius:4px; transition:width .6s ease; }
+  .stat-val  { font-size:13px; font-weight:700; min-width:36px; text-align:right; }
+
+  .rpt-scores-title { font-size:12px; font-weight:700; color:white; background:#444;
+                      padding:6px 12px; border-radius:6px; margin-bottom:8px; }
+  .rpt-scores-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:16px; }
+  .score-chip { background:#f8f9fa; border-radius:8px; padding:6px 10px;
+                display:flex; justify-content:space-between; align-items:center; }
+  .score-chip .sc-label { font-size:11px; color:#666; }
+  .score-chip .sc-val   { font-size:13px; font-weight:700; color:#c0392b; }
+  .score-chip .sc-val.perfect { color:#274e13; }
+
+  .perf-row { display:flex; align-items:center; gap:10px; margin-bottom:16px;
+              background:#f8f9fa; border-radius:10px; padding:10px 14px; }
+  .perf-row label { margin:0; font-size:12px; white-space:nowrap; color:#555; }
+  .perf-row input[type=range] { flex:1; accent-color:#274e13; }
+  .perf-val { font-size:18px; font-weight:700; color:#274e13; min-width:36px; text-align:center; }
+
+  .rpt-comment-title { font-size:12px; font-weight:700; color:#856404;
+                       background:#fff2cc; padding:6px 12px; border-radius:6px; margin-bottom:8px; }
+  .rpt-comment-area  { width:100%; padding:10px 12px; font-size:13px; border-radius:8px;
+                       border:2px solid #ffd666; font-family:inherit; line-height:1.7;
+                       resize:vertical; min-height:80px; }
+  .rpt-comment-area:focus { outline:none; border-color:#274e13; }
+
+  .email-row { display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .email-row input { flex:1; padding:8px 12px; border-radius:8px; border:1px solid #ddd; font-size:13px; }
+  .rpt-actions { display:flex; gap:8px; flex-wrap:wrap; padding:14px 20px;
+                 border-top:1px solid #f0f0f0; background:#fafafa; }
+
+  .perf-input { width:60px; padding:6px 8px; border:1px solid #ddd; border-radius:8px;
+                font-size:15px; font-weight:700; text-align:center; color:#274e13; }
+
+  /* ══ 考試成績 ══ */
+  .exam-toolbar { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px; }
+  .exam-toolbar select { width:auto; flex:1; min-width:150px; }
+  .exam-tab-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .exam-tab { padding:6px 14px; font-size:12px; border-radius:20px; border:1px solid #ddd;
+              background:white; cursor:pointer; color:#666; font-weight:600; }
+  .exam-tab.quiz   { border-color:#1a5276; color:#1a5276; }
+  .exam-tab.test   { border-color:#7d3c98; color:#7d3c98; }
+  .exam-tab.active.quiz { background:#1a5276; color:white; }
+  .exam-tab.active.test { background:#7d3c98; color:white; }
+
+  .exam-table { width:100%; border-collapse:collapse; }
+  .exam-table th { background:#f1f3f4; font-size:11px; font-weight:700; padding:8px 12px;
+                   text-align:left; color:#666; border-bottom:2px solid #e0e0e0; }
+  .exam-table th.score-th { text-align:center; width:120px; }
+  .exam-table td { padding:8px 12px; border-bottom:1px solid #f5f5f5; vertical-align:middle; }
+  .exam-table tr:last-child td { border-bottom:none; }
+  .exam-table tr:hover td { background:#fffde7; }
+  .score-input { width:80px; padding:6px 8px; border:1px solid #ddd; border-radius:8px;
+                 font-size:15px; font-weight:700; text-align:center; color:#222; transition:border-color .2s; }
+  .score-input:focus { outline:none; border-color:#274e13; background:#f0fff4; }
+  .score-input.has-score { border-color:#274e13; color:#274e13; background:#f0fff4; }
+  .score-input.over-100  { border-color:#ca6f1e; color:#ca6f1e; background:#fef9e7; }
+  .score-input.low-score { border-color:#c0392b; color:#c0392b; background:#fce8e6; }
+  .exam-stats { display:flex; gap:16px; font-size:12px; color:#888; padding:8px 0; }
+  .exam-stats span { font-weight:700; }
+  .exam-save-bar { display:flex; gap:8px; align-items:center; padding-top:10px;
+                   border-top:1px solid #f0f0f0; margin-top:8px; }
+  .exam-save-info { font-size:12px; color:#888; flex:1; }
+
+  /* ══ 總覽頁 ══ */
+  .overview-toolbar { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; margin-bottom:14px; }
+  .overview-toolbar select { width:auto; flex:1; min-width:150px; }
+  .threshold-box { display:flex; align-items:center; gap:6px; }
+  .threshold-box label { font-size:11px; color:#888; white-space:nowrap; margin:0; }
+  .threshold-input { width:64px; padding:8px 8px; border:1px solid #ddd; border-radius:8px;
+                     font-size:14px; font-weight:700; text-align:center; color:#274e13; }
+  .class-card { background:white; border-radius:12px; margin-bottom:14px;
+                box-shadow:0 1px 4px rgba(0,0,0,.08); overflow:hidden; }
+  .class-card-header { background:#274e13; color:white; padding:10px 16px;
+                       display:flex; align-items:center; gap:10px; }
+  .class-card-header h4 { font-size:14px; font-weight:700; flex:1; margin:0; }
+  .class-card-badge { background:rgba(255,255,255,0.2); border-radius:10px;
+                      padding:2px 10px; font-size:11px; }
+  .class-card-badge.warn { background:#f39c12; }
+  .class-card-badge.ok   { background:rgba(255,255,255,0.15); }
+  .class-card-body { padding:12px 16px; }
+  .alert-section-title { font-size:11px; font-weight:700; color:#666; text-transform:uppercase;
+                         letter-spacing:.04em; margin:10px 0 6px; }
+  .alert-section-title:first-child { margin-top:0; }
+  .alert-row { display:flex; align-items:flex-start; gap:10px; padding:5px 0;
+               border-bottom:1px solid #f5f5f5; font-size:12px; }
+  .alert-row:last-child { border-bottom:none; }
+  .alert-name { font-weight:700; min-width:80px; color:#222; }
+  .alert-detail { color:#666; flex:1; line-height:1.6; }
+  .alert-score { font-weight:700; color:#c0392b; min-width:36px; text-align:right; }
+  .no-alert { color:#bbb; font-size:12px; padding:6px 0; }
+  .overview-loading { text-align:center; color:#aaa; padding:30px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     登入畫面
+══════════════════════════════════════════════ -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">🎤</div>
+    <div class="login-title">NewCore</div>
+    <div class="login-sub">補習班管理系統</div>
+
+    <div class="login-field">
+      <label>補習班 Sheet ID</label>
+      <input type="text" id="login-sheet-id" placeholder="貼上您的 Google Sheet ID"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>授權碼</label>
+      <input type="password" id="login-code" placeholder="請輸入授權碼"
+             onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">登入</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     主畫面（登入後顯示）
+══════════════════════════════════════════════ -->
+<div id="main-screen" style="display:none;">
+
+<div class="top">
+  <h2>🎤 NewCore</h2>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('attend',this)">點名</button>
+    <button class="tab-btn"        onclick="switchTab('summary',this)">總表</button>
+    <button class="tab-btn"        onclick="switchTab('report',this)">成績單</button>
+    <button class="tab-btn"        onclick="switchTab('exam',this)">考試成績</button>
+    <button class="tab-btn" id="tab-overview" style="display:none;" onclick="switchTab('overview',this)">📊 總覽</button>
+  </div>
+</div>
+
+<!-- 登入資訊列 -->
+<div class="auth-bar">
+  <span>👤</span>
+  <span class="auth-name" id="auth-name-display">--</span>
+  <span class="auth-role" id="auth-role-display">--</span>
+  <button class="auth-logout" onclick="doLogout()">登出</button>
+</div>
+
+<div class="body">
+
+  <!-- ══ 點名頁 ══ -->
+  <div class="page active" id="page-attend">
+  <div class="card">
+    <div class="row2">
+      <div>
+        <label>班級</label>
+        <select id="class-sel" onchange="onClassChange()">
+          <option value="">請先選班級...</option>
+        </select>
+      </div>
+      <div>
+        <label>堂次 / 日期</label>
+        <select id="date-sel" onchange="onDateChange()" disabled>
+          <option value="">請先選班級</option>
+        </select>
+      </div>
+    </div>
+    
+    <div id="lesson-info" style="display:none;">
+      <div class="lesson-info">
+        <div class="info-box"><div class="val" id="info-unit">--</div><div class="lbl">單元</div></div>
+        <div class="info-box"><div class="val" id="info-lesson">--</div><div class="lbl">堂數</div></div>
+        <div class="info-box"><div class="val" id="info-teacher">--</div><div class="lbl">授課老師</div></div>
+      </div>
+    </div>
+    <div id="attend-main" style="display:none;">
+      <div class="card">
+        <div class="mic-row">
+          <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤 開始錄音點名</button>
+          <div class="rec-timer" id="rec-timer" style="display:none;">0s</div>
+        </div>
+        <div class="status-bar" id="status-bar">選擇堂次後可開始點名</div>
+        <div class="att-summary" id="attend-summary"></div>
+        <div class="gemini-result" id="gemini-result">
+          <div class="gr-title">🤖 Gemini 辨識結果</div>
+          <div id="gemini-items"></div>
+        </div>
+        <div class="hint-box">
+          🎙 <b>按下按鈕開始錄音</b>，說完再按一次停止，Gemini 自動辨識並寫入<br>
+          🌐 <b>全班：</b>全班到 / 全班缺席 / 全班請假<br>
+          🔀 <b>例外：</b>全班到，只有 Amy 缺席<br>
+          👤 <b>單人：</b>Amy 到了 / Brian 請假 / 缺席 / 遲到<br>
+          🔢 <b>分數：</b>Amy 90分 ── 或點分數欄用<b>轉盤</b>輸入
+        </div>
+      </div>
+      <div class="card" style="padding:10px 0;overflow-x:auto;">
+        <div id="student-table-wrap"><div class="loading">載入中...</div></div>
+      </div>
+      <div class="card"><label>辨識紀錄</label><div id="log"></div></div>
+    </div>
+  </div>
+  </div><!-- /.page#page-attend  ← 修正：補上正確的關閉標籤 -->
+
+  <!-- ══ 總表頁 ══ -->
+  <div class="page" id="page-summary">
+    <div class="card">
+      <div class="summary-toolbar">
+        <div style="flex:1;min-width:150px;">
+          <label>選擇班級</label>
+          <!-- ✅ 修正：移除重複的 sum-class-sel，只保留有 onchange 的這個 -->
+          <select id="sum-class-sel" onchange="onSumClassChange()">
+            <option value="">請先選班級...</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;padding-bottom:1px;">
+          <button class="filter-btn active" id="filter-all"    onclick="setFilter('all')">全部</button>
+          <button class="filter-btn"        id="filter-makeup" onclick="setFilter('makeup')">⚠️ 未補課</button>
+          <button class="filter-btn"        id="filter-hw"     onclick="setFilter('hw')">📝 缺作業</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#aaa;margin-top:8px;">💡 點出席格子可改符號，點分數可調整數值</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:150px;">
+          <label style="font-size:10px;color:#aaa;margin-bottom:3px;">語音輸入目標堂次</label>
+          <select id="sum-lesson-sel" style="width:100%;padding:7px 10px;font-size:12px;border-radius:8px;border:1px solid #ddd;background:#fafafa;">
+            <option value="">請先選班級</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button class="mic-btn" id="sum-mic-btn" onclick="toggleSumMic()" style="padding:8px 14px;font-size:13px;border-radius:8px;">🎤 語音輸入</button>
+          <div class="rec-timer" id="sum-rec-timer" style="display:none;color:#c0392b;font-weight:700;font-size:12px;">0s</div>
+        </div>
+      </div>
+      <div class="status-bar" id="sum-status-bar" style="margin-top:8px;display:none;"></div>
+    </div>
+    <div class="alert-cards" id="alert-cards" style="display:none;">
+      <div class="alert-card makeup">
+        <div class="ac-title">⚠️ 尚未補課人次</div>
+        <div class="ac-num" id="alert-makeup-num">0</div>
+        <div class="ac-sub">缺席(○) 或 請假(△) 未補</div>
+      </div>
+      <div class="alert-card hw">
+        <div class="ac-title">📝 缺作業/分數人次</div>
+        <div class="ac-num" id="alert-hw-num">0</div>
+        <div class="ac-sub">出席但分數空白</div>
+      </div>
+    </div>
+    <div class="card" style="padding:10px 0;">
+      <div id="summary-wrap"><div class="empty">請選擇班級</div></div>
+    </div>
+  </div>
+
+  <!-- ══ 考試成績頁 ══ -->
+  <div class="page" id="page-exam">
+    <div class="card">
+      <div class="exam-toolbar">
+        <div style="flex:1;min-width:150px;">
+          <label>選擇班級</label>
+          <select id="exam-class-sel" onchange="onExamClassChange()">
+            <option value="">請先選班級...</option>
+          </select>
+        </div>
+        <button class="rpt-btn" id="exam-refresh-btn" onclick="onExamClassChange()" style="display:none;">🔄 重新載入</button>
+      </div>
+      <div id="exam-loading" style="display:none;" class="loading">讀取考試資料中...</div>
+    </div>
+    <div id="exam-main" style="display:none;">
+      <div class="card" style="padding:12px 16px;">
+        <label>選擇考試</label>
+        <div class="exam-tab-row" id="exam-tab-row"></div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:12px; border-top:1px solid #f0f0f0; padding-top:12px;">
+          <button class="mic-btn" id="exam-mic-btn" onclick="toggleExamMic()" style="flex:1; padding:10px; font-size:14px;">🎤 語音輸入成績</button>
+          <div class="rec-timer" id="exam-rec-timer" style="display:none;">0s</div>
+        </div>
+        <div id="exam-status-bar" class="status-bar" style="display:none; margin-top:8px; font-size:11px;"></div>
+      </div>
+      <div class="card" style="padding:10px 0;" id="exam-score-card">
+        <div style="padding:0 16px 8px;">
+          <div class="exam-stats" id="exam-stats"></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="exam-table">
+            <thead>
+              <tr>
+                <th>學生</th>
+                <th class="score-th">分數（滿分100，可超過）</th>
+                <th style="width:60px;text-align:center;">清除</th>
+              </tr>
+            </thead>
+            <tbody id="exam-tbody"></tbody>
+          </table>
+        </div>
+        <div class="exam-save-bar" style="padding:10px 16px 4px;">
+          <div class="exam-save-info" id="exam-save-info">Tab 鍵切換下一位學生</div>
+          <button class="rpt-btn" onclick="saveExamScores()">💾 儲存全部分數</button>
+        </div>
+      </div>
+    </div>
+    <div id="exam-empty" class="card"><div class="empty">請選擇班級</div></div>
+  </div>
+
+  <!-- ══ 成績單頁 ══ -->
+  <div class="page" id="page-report">
+    <div class="card">
+      <div class="report-toolbar">
+        <div style="flex:1;min-width:150px;">
+          <label>選擇班級</label>
+          <select id="rpt-class-sel" onchange="onRptClassChange()"><option value="">請先選班級...</option></select>
+        </div>
+        <div style="flex:1;min-width:150px;">
+          <label>選擇學生</label>
+          <select id="rpt-student-sel" disabled onchange="onRptStudentChange()"><option value="">請先選班級</option></select>
+        </div>
+        <button class="rpt-btn" id="rpt-load-btn" onclick="loadStudentReport()" disabled>載入成績單</button>
+      </div>
+    </div>
+    <div id="report-main" style="display:none;">
+      <div class="card">
+        <div class="perf-row">
+          <label>🎭 口語 / 課堂表現</label>
+          <input type="range" id="perf-slider" min="0" max="100" value="80" oninput="onPerfChange(this.value)">
+          <input type="number" class="perf-input" id="perf-input" min="0" max="100" value="80" oninput="onPerfChange(this.value)">
+          <span style="font-size:11px;color:#999;">分</span>
+        </div>
+      </div>
+      <div class="report-preview" id="report-preview"></div>
+      <div class="card">
+        <div style="margin-bottom:10px;">
+          <label>📧 家長 Email</label>
+          <div class="email-row">
+            <input type="email" id="parent-email" placeholder="輸入家長 Email">
+            <button class="rpt-btn secondary" onclick="saveParentEmail()">儲存</button>
+            <button class="rpt-btn danger" onclick="sendReportEmail()">📨 寄送成績單</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <button class="rpt-btn" onclick="downloadPDF()">⬇️ 下載 PDF</button>
+          <button class="rpt-btn secondary" onclick="genComment()">🤖 Gemini 生成評語</button>
+        </div>
+      </div>
+    </div>
+    <div id="report-empty" class="card"><div class="empty">請選擇班級與學生</div></div>
+  </div>
+
+  <!-- ══ 總覽頁 ══ -->
+  <div class="page" id="page-overview">
+    <div class="card">
+      <div class="overview-toolbar">
+        <div style="flex:1;min-width:150px;">
+          <label>選擇老師</label>
+          <select id="overview-teacher-sel" onchange="onOverviewTeacherChange()">
+            <option value="">請選擇老師...</option>
+          </select>
+        </div>
+        <div class="threshold-box">
+          <label>成績警示門檻</label>
+          <input type="number" class="threshold-input" id="overview-threshold"
+                 value="80" min="0" max="100" step="5">
+          <span style="font-size:11px;color:#888;">分</span>
+        </div>
+        <button class="rpt-btn" onclick="loadOverview()">🔍 查詢</button>
+        <button class="rpt-btn secondary" onclick="clearServerCache()" title="授權紀錄或班級有變動時使用">🗑 清除快取</button>
+      </div>
+    </div>
+    <div id="overview-result"><div class="empty">請選擇老師後按查詢</div></div>
+  </div>
+
+</div><!-- /.body -->
+</div><!-- /#main-screen -->
+
+<!-- 轉盤 Modal -->
+<div class="wheel-overlay" id="wheel-overlay" style="display:none;" onclick="wheelOverlayClick(event)">
+  <div class="wheel-panel">
+    <div class="wheel-header">
+      <div class="wheel-student" id="wheel-student-name"></div>
+      <button class="wheel-close" onclick="closeWheel()">×</button>
+    </div>
+    <!-- 模式切換 -->
+    <div class="wheel-mode-toggle">
+      <button class="mode-btn active" id="mode-numpad" onclick="switchScoreMode('numpad')">⌨️ 鍵盤</button>
+      <button class="mode-btn"        id="mode-wheel"  onclick="switchScoreMode('wheel')">🎡 滑輪</button>
+    </div>
+    <!-- 九宮格鍵盤 -->
+    <div class="numpad-wrap" id="numpad-section">
+      <div class="numpad-display" id="numpad-display">--</div>
+      <div class="numpad-grid">
+        <button class="numpad-btn" onclick="numpadPress('1')">1</button>
+        <button class="numpad-btn" onclick="numpadPress('2')">2</button>
+        <button class="numpad-btn" onclick="numpadPress('3')">3</button>
+        <button class="numpad-btn" onclick="numpadPress('4')">4</button>
+        <button class="numpad-btn" onclick="numpadPress('5')">5</button>
+        <button class="numpad-btn" onclick="numpadPress('6')">6</button>
+        <button class="numpad-btn" onclick="numpadPress('7')">7</button>
+        <button class="numpad-btn" onclick="numpadPress('8')">8</button>
+        <button class="numpad-btn" onclick="numpadPress('9')">9</button>
+        <button class="numpad-btn zero" onclick="numpadPress('0')">0</button>
+        <button class="numpad-btn del"  onclick="numpadDel()">⌫</button>
+      </div>
+    </div>
+    <!-- 滑輪（隱藏） -->
+    <div id="wheel-section" style="display:none;">
+      <div class="wheel-display">
+        <div class="score-big" id="wheel-score-display">--</div>
+        <div class="score-label">分數</div>
+      </div>
+      <div class="wheel-scroll-wrap">
+        <div class="wheel-selector"></div>
+        <div class="wheel-scroll" id="wheel-scroll"></div>
+      </div>
+      <div class="wheel-quick" id="wheel-quick"></div>
+    </div>
+    <div class="wheel-actions">
+      <button class="wheel-clear"   onclick="clearScore()">清除分數</button>
+      <button class="wheel-confirm" onclick="confirmScore()">確認 ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- 出席符號彈窗 -->
+<div id="att-popup" class="att-popup" style="display:none;"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// 全域變數
+// ══════════════════════════════════════════════
+// ── 固定網址（寫死在前端，老師不需填寫）──
+var API_URL   = localStorage.getItem('nc_api_url') || '';   // 各補習班自己的 GAS（由 sheetId 決定）
+var BRAIN_URL = 'https://script.google.com/macros/s/BRAIN_GAS_URL_HERE/exec'; // ← 授權中心 GAS，部署後填入
+
+var AUTH_CODE   = localStorage.getItem('nc_auth_code') || '';
+var SHEET_ID    = localStorage.getItem('nc_sheet_id')  || '';
+var currentUser = null;
+
+var classData     = null;
+var summaryData   = null;
+var summaryStructure = null;
+var availDates    = [];
+var lastMatchIdx  = -1;
+var cbCounter     = 0;
+var currentFilter = 'all';
+
+var GEMINI_API_KEY = '';
+var GEMINI_URL     = '';
+
+// ══════════════════════════════════════════════
+// Gemini 模型設定（主力 + 備援）
+// ══════════════════════════════════════════════
+// 主力：gemini-2.5-flash（穩定版，平衡效能與速度）
+// 備援：gemini-2.5-flash-lite（穩定版，高流量低延遲，2026/02 GA）
+var GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+
+function updateGeminiUrl() {
+  GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODELS[0] + ':generateContent?key=' + GEMINI_API_KEY;
+  console.log('Gemini ready. 主力：' + GEMINI_MODELS[0] + '，備援：' + GEMINI_MODELS[1]);
+}
+
+/**
+ * 統一 Gemini 呼叫介面，含自動備援與指數退避重試
+ * parts: Gemini contents parts 陣列（含 text + inline_data）
+ * callback: function(err, parsedJson)
+ */
+function callGeminiWithFallback(parts, callback, retryCount) {
+  retryCount = retryCount || 0;
+  var model = GEMINI_MODELS[retryCount % GEMINI_MODELS.length];
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_API_KEY;
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: parts }],
+      generationConfig: {
+        response_mime_type: 'application/json',
+        temperature: 0.1
+      }
+    })
+  })
+  .then(function(r) {
+    if (r.status === 503 && retryCount < 3) {
+      var delay = Math.pow(2, retryCount) * 800;
+      console.warn('⚠️ ' + model + ' 忙碌（503），' + delay + 'ms 後切換備援...');
+      setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, delay);
+      return null;
+    }
+    return r.json();
+  })
+  .then(function(data) {
+    if (!data) return;
+    if (data.error) {
+      if (retryCount < 3) {
+        console.warn('⚠️ ' + model + ' 錯誤，切換備援...');
+        setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, 800);
+        return;
+      }
+      throw new Error(data.error.message);
+    }
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      var reason = (data.promptFeedback && data.promptFeedback.blockReason) || '無回應';
+      throw new Error('Gemini ' + model + ' 無回應：' + reason);
+    }
+    var text = data.candidates[0].content.parts[0].text;
+    var cleaned = text.trim().replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
+    callback(null, JSON.parse(cleaned));
+  })
+  .catch(function(err) {
+    if (retryCount < 3) {
+      setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, 800);
+    } else {
+      callback(new Error('Gemini 服務暫時無法使用：' + err.message));
+    }
+  });
+}
+
+// 錄音相關
+var mediaRecorder    = null;
+var audioChunks      = [];
+var isRecording      = false;
+var recTimerInterval = null;
+var recSeconds       = 0;
+
+// 總表語音錄音相關
+var sumRecorder = null, sumAudioChunks = [], sumIsRecording = false;
+var sumRecTimer = null, sumRecSeconds = 0;
+
+// 轉盤
+var wheelStudentIdx = -1;
+var wheelValue      = null;
+var wheelContext    = null;
+var ITEM_HEIGHT     = 52;
+var QUICK_SCORES    = [60,70,75,80,85,90,95,100];
+
+// 出席彈窗
+var attPopupContext = null;
+
+var SYMS      = ['V','\u25cb','\u25cf','\u25b3','\u25b2','\u229d'];
+var SYMCLASS  = {'V':'sel-V','\u25cb':'sel-x1','\u25cf':'sel-x2','\u25b3':'sel-x3','\u25b2':'sel-x4','\u229d':'sel-x5'};
+var SYM_SHORT = {'V':'到','\u25cb':'缺席','\u25cf':'補缺','\u25b3':'請假','\u25b2':'補假','\u229d':'遲到'};
+var SYM_BG    = {'V':'#e6f4ea','\u25cb':'#fce8e6','\u25cf':'#f5cba7','\u25b3':'#fef9e7','\u25b2':'#fad7a0','\u229d':'#e8f0fe'};
+var SYM_COLOR = {'V':'#1e7e34','\u25cb':'#c0392b','\u25cf':'#ca6f1e','\u25b3':'#d4ac0d','\u25b2':'#ca8a04','\u229d':'#1a5276'};
+var ATT_CLASS = {'V':'att-V','\u25cb':'att-o','\u25cf':'att-ob','\u25b3':'att-d','\u25b2':'att-db','\u229d':'att-l'};
+
+// ══════════════════════════════════════════════
+// JSONP
+// ══════════════════════════════════════════════
+function jsonpCall(params, callback) {
+  var cbName = '__ncCb' + (cbCounter++);
+  // 自動帶入 sheetId（所有 API 呼叫都需要）
+  var fullParams = Object.assign({ sheetId: SHEET_ID }, params);
+  var url = API_URL + '?callback=' + cbName;
+  Object.keys(fullParams).forEach(function(k) {
+    url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(fullParams[k] === null ? '' : fullParams[k]);
+  });
+  window[cbName] = function(data) {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(null, data);
+  };
+  var script = document.createElement('script');
+  script.src = url;
+  script.onerror = function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(new Error('網路錯誤'));
+  };
+  document.body.appendChild(script);
+}
+
+// ══════════════════════════════════════════════
+// 登入 / 登出
+// ══════════════════════════════════════════════
+window.addEventListener('load', function() {
+  // 填入已儲存的 Sheet ID
+  if (SHEET_ID) {
+    var sidEl = document.getElementById('login-sheet-id');
+    if (sidEl) sidEl.value = SHEET_ID;
+  }
+  // 嘗試自動登入
+  if (SHEET_ID && AUTH_CODE && API_URL) autoLogin();
+
+  document.addEventListener('click', function(e) {
+    if (!document.getElementById('att-popup').contains(e.target) &&
+        !e.target.classList.contains('cell-att')) closeAttPopup();
+  });
+  buildWheel();
+});
+
+function autoLogin() {
+  document.getElementById('login-btn').disabled = true;
+  document.getElementById('login-err').textContent = '自動登入中...';
+  jsonpCall({ action: 'verifyAuth', authCode: AUTH_CODE }, function(err, data) {
+    document.getElementById('login-btn').disabled = false;
+    if (err || !data || !data.ok) {
+      localStorage.removeItem('nc_auth_code');
+      AUTH_CODE = '';
+      document.getElementById('login-err').textContent = '';
+      return;
+    }
+    onLoginSuccess(data);
+  });
+}
+
+function doLogin() {
+  var sheetId = document.getElementById('login-sheet-id').value.trim();
+  var code    = document.getElementById('login-code').value.trim();
+  if (!sheetId) { document.getElementById('login-err').textContent = '請填入補習班 Sheet ID'; return; }
+  if (!code)    { document.getElementById('login-err').textContent = '請輸入授權碼'; return; }
+
+  var btn = document.getElementById('login-btn');
+  btn.textContent = '驗證中...'; btn.disabled = true;
+  document.getElementById('login-err').textContent = '';
+
+  // 第一步：打授權中心驗證 Sheet ID → 取得 API_URL
+  checkLicense(sheetId, function(licErr, licData) {
+    if (licErr) {
+      btn.textContent = '登入'; btn.disabled = false;
+      document.getElementById('login-err').textContent = '❌ 授權中心連線失敗';
+      return;
+    }
+    if (!licData || !licData.valid) {
+      btn.textContent = '登入'; btn.disabled = false;
+      document.getElementById('login-err').textContent = '❌ ' + (licData && licData.message || '授權無效，請聯繫管理員');
+      return;
+    }
+
+    // 從授權中心取得該補習班的 GAS 網址
+    SHEET_ID = sheetId;
+    API_URL  = licData.gasUrl || API_URL;
+    localStorage.setItem('nc_sheet_id', sheetId);
+    localStorage.setItem('nc_api_url',  API_URL);
+
+    // 第二步：用該補習班的 GAS 驗證授權碼
+    jsonpCall({ action: 'verifyAuth', authCode: code }, function(err, data) {
+      btn.textContent = '登入'; btn.disabled = false;
+      if (err) { document.getElementById('login-err').textContent = '❌ 連線失敗，請稍後再試'; return; }
+      if (!data || !data.ok) { document.getElementById('login-err').textContent = '❌ ' + (data && data.msg || '授權碼無效'); return; }
+      AUTH_CODE = code;
+      localStorage.setItem('nc_auth_code', code);
+      onLoginSuccess(data, licData);
+    });
+  });
+}
+
+/** 打授權中心驗證 Sheet ID，取得 GAS 網址 **/
+function checkLicense(sheetId, callback) {
+  fetch(BRAIN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'checkLicense', sheetId: sheetId })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){ callback(null, data); })
+  .catch(function(err){ callback(err); });
+}
+
+function onLoginSuccess(data, licData) {
+  currentUser = data;
+  // 寬限期警告
+  if (licData && licData.isGrace) showToast('⚠️ ' + licData.message);
+  document.getElementById('auth-name-display').textContent = data.name;
+  var roleEl = document.getElementById('auth-role-display');
+  roleEl.textContent = data.role === 'admin' ? '管理員' : '老師';
+  roleEl.className = 'auth-role' + (data.role === 'admin' ? ' admin' : '');
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-screen').style.display  = 'block';
+  var overviewTab = document.getElementById('tab-overview');
+  if (overviewTab) {
+    overviewTab.style.display = data.role === 'admin' ? 'inline-block' : 'none';
+    if (data.role === 'admin') initOverviewTab();
+  }
+  jsonpCall({ action: 'getMyClasses', authCode: AUTH_CODE }, function(err, data) {
+    if (err || !data || !data.ok) { populateAllClassSelects([]); return; }
+    if (data.role === 'admin' || !data.myClasses) {
+      jsonpCall({ action: 'getClassList' }, function(err2, list) {
+        populateAllClassSelects((!err2 && list && !list.error) ? list : []);
+      });
+    } else {
+      populateAllClassSelects(data.myClasses);
+    }
+  });
+  loadGeminiKey();
+}
+
+function doLogout() {
+  currentUser = null; AUTH_CODE = ''; SHEET_ID = '';
+  localStorage.removeItem('nc_auth_code');
+  localStorage.removeItem('nc_sheet_id');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('main-screen').style.display  = 'none';
+  document.getElementById('login-code').value = '';
+  var sidEl = document.getElementById('login-sheet-id');
+  if (sidEl) sidEl.value = '';
+  document.getElementById('login-err').textContent = '';
+  classData = summaryData = null;
+}
+
+// ══════════════════════════════════════════════
+// 班級清單
+// ══════════════════════════════════════════════
+function populateAllClassSelects(classList) {
+  var opts = '<option value="">請選擇班級...</option>';
+  classList.forEach(function(c){ opts += '<option value="'+c+'">'+c+'</option>'; });
+  document.getElementById('class-sel').innerHTML      = opts;
+  document.getElementById('sum-class-sel').innerHTML  = opts;
+  document.getElementById('rpt-class-sel').innerHTML  = opts;
+  document.getElementById('exam-class-sel').innerHTML = opts;
+}
+
+function loadGeminiKey() {
+  if (!API_URL) return;
+  jsonpCall({ action: 'getGeminiKey' }, function(err, data) {
+    if (err || !data || !data.key) { console.warn('Gemini Key 載入失敗'); return; }
+    GEMINI_API_KEY = data.key;
+    updateGeminiUrl();
+  });
+}
+
+// ══════════════════════════════════════════════
+// Gemini 語音辨識
+// ══════════════════════════════════════════════
+function callGemini(base64, mimeType, studentList, callback) {
+  var prompt = '你是點名助手。學生名單：[ ' + studentList + ' ]。\n' +
+    '請聽錄音，辨識老師說了哪些學生的出席狀況或分數。\n' +
+    '輸出格式（JSON 陣列）：[{"name":"學生名","status":"符號","score":"分數或空字串","comment":"一句幽默評論"}]\n' +
+    '出席符號規則：到=V, 缺席=○, 請假=△, 補課缺席=●, 補課請假=▲, 遲到=⊝\n' +
+    '沒提到分數就填空字串。';
+  var parts = [
+    { text: prompt },
+    { inline_data: { mime_type: mimeType, data: base64 } }
+  ];
+  callGeminiWithFallback(parts, callback);
+}
+
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.className = 'save-toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2000);
+}
+
+// ══════════════════════════════════════════════
+// 頁籤切換
+// ══════════════════════════════════════════════
+function switchTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('page-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+// 點名頁
+// ══════════════════════════════════════════════
+function onClassChange() {
+  var className = document.getElementById('class-sel').value;
+  var dateSel   = document.getElementById('date-sel');
+  classData = null; availDates = [];
+  dateSel.innerHTML = '<option value="">載入中...</option>';
+  dateSel.disabled = true;
+  document.getElementById('attend-main').style.display = 'none';
+  document.getElementById('lesson-info').style.display = 'none';
+  if (!className) { dateSel.innerHTML = '<option value="">請先選班級</option>'; return; }
+  jsonpCall({ action:'getAvailableDates', className:className }, function(err, dates) {
+    if (err || !dates) { dateSel.innerHTML = '<option value="">❌ 讀取失敗</option>'; return; }
+    availDates = dates;
+    if (!dates.length) { dateSel.innerHTML = '<option value="">（無可用堂次）</option>'; return; }
+    var todayMMDD = getTodayMMDD();
+    var defaultIdx = 0;
+    for (var i = 0; i < dates.length; i++) {
+      if (dates[i].dateText.indexOf(todayMMDD) !== -1) { defaultIdx = i; break; }
+      if (dates[i].dateText < todayMMDD) defaultIdx = i;
+    }
+    dateSel.innerHTML = '<option value="">請選擇堂次...</option>';
+    for (var i = 0; i < dates.length; i++) {
+      var d = dates[i];
+      dateSel.innerHTML += '<option value="'+d.colIdx+'">'+d.dateText+'　'+d.unit+' '+d.lesson.replace(' 點名','')+'　'+(d.teacher||'')+'</option>';
+    }
+    dateSel.disabled = false;
+    dateSel.selectedIndex = defaultIdx + 1;
+    onDateChange();
+  });
+}
+
+// ✅ 修正 3：onDateChange 立即清空狀態，防止舊資料殘留
+function onDateChange() {
+  var className = document.getElementById('class-sel').value;
+  var colIdx    = parseInt(document.getElementById('date-sel').value);
+  if (!className || isNaN(colIdx)) return;
+
+  // 立即清空舊狀態
+  classData    = null;
+  lastMatchIdx = -1;
+
+  // 隱藏 Gemini 上次結果
+  var geminiRes = document.getElementById('gemini-result');
+  if (geminiRes) geminiRes.style.display = 'none';
+
+  // 顯示載入中（防止舊按鈕被點擊）
+  document.getElementById('student-table-wrap').innerHTML = '<div class="loading">讀取中...</div>';
+  document.getElementById('attend-main').style.display = 'block';
+  document.getElementById('lesson-info').style.display = 'none';
+  setStatus('載入中...', 'info');
+
+  jsonpCall({ action:'getClassDataByCol', className:className, attCol:colIdx }, function(err, data) {
+    if (err || !data || data.error) {
+      setStatus((data && data.error) || '讀取失敗', 'err');
+      document.getElementById('student-table-wrap').innerHTML = '<div class="empty">❌ 讀取失敗</div>';
+      return;
+    }
+    classData = data;
+    document.getElementById('info-unit').textContent    = data.unitText    || '--';
+    document.getElementById('info-lesson').textContent  = (data.lessonText || '').replace(' 點名','') || '--';
+    document.getElementById('info-teacher').textContent = data.teacherText || '--';
+    document.getElementById('lesson-info').style.display = 'block';
+    setStatus('已載入 ' + data.dateText + ' · 共 ' + data.students.length + ' 位學生', 'ok');
+    renderAttTable();
+    renderAttSummaryBar();
+  });
+}
+
+function writeOne(idx, status, score) {
+  if (!classData) return;
+  var st = classData.students[idx];
+  if (status !== null && status !== undefined) st.status = status;
+  if (score  !== null && score  !== undefined) st.score  = score;
+  renderAttRow(idx); renderAttSummaryBar();
+  jsonpCall({
+    action:'writeAttendance', authCode: AUTH_CODE,
+    className:classData.className,
+    studentRow:st.row, attCol:classData.attCol, scoreCol:classData.scoreCol,
+    status:(status!==null&&status!==undefined)?status:'',
+    score: (score!==null&&score!==undefined)?score:''
+  }, function(err,r){
+    if(r && !r.ok) showToast('⚠️ ' + (r.msg || '寫入失敗'));
+  });
+}
+
+function clickStatus(idx, sym) {
+  if (!classData) return;
+  var st=classData.students[idx];
+  var newSym=st.status===sym?'':sym;
+  writeOne(idx,newSym,null);
+  addLog(getDisplayName(st)+' → '+(newSym||'清除'),true);
+}
+
+function getDisplayName(st){ return st.eName||st.cName||''; }
+
+function renderAttTable() {
+  if(!classData) return;
+  var wrap=document.getElementById('student-table-wrap');
+  if(!classData.students.length){wrap.innerHTML='<div class="empty">無學生資料</div>';return;}
+  var html='<table class="att-table"><thead><tr><th>學生</th>';
+  for(var s=0;s<SYMS.length;s++) html+='<th>'+SYMS[s]+'</th>';
+  html+='<th>分數</th></tr></thead><tbody>';
+  for(var i=0;i<classData.students.length;i++){
+    var st=classData.students[i];
+    var nameHtml=st.eName&&st.cName
+      ?'<div class="name-en">'+st.eName+'</div><div class="name-zh">'+st.cName+'</div>'
+      :'<div class="name-en">'+(st.eName||st.cName)+'</div>';
+    var hasScore=st.score!==''&&st.score!==null&&st.score!==undefined;
+    html+='<tr id="arow-'+i+'"'+(i===lastMatchIdx?' class="highlight"':'')+'>';
+    html+='<td>'+nameHtml+'</td>';
+    for(var j=0;j<SYMS.length;j++){
+      var sym=SYMS[j];
+      html+='<td><button class="sym-btn'+(st.status===sym?' '+SYMCLASS[sym]:'')+'" onclick="clickStatus('+i+',\''+sym+'\')">'+sym+'</button></td>';
+    }
+    html+='<td><button class="score-btn'+(hasScore?' has-score':'')+'" onclick="openWheel('+i+',\'attend\')">'+(hasScore?st.score:'--')+'</button></td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  wrap.innerHTML='<div class="att-table-wrap">'+html+'</div>';
+}
+
+function renderAttSummaryBar() {
+  if(!classData) return;
+  var counts={}; SYMS.forEach(function(s){counts[s]=0;}); var none=0;
+  classData.students.forEach(function(st){if(st.status)counts[st.status]++;else none++;});
+  var html='';
+  SYMS.forEach(function(sym){if(counts[sym])html+='<span class="tag" style="background:'+SYM_BG[sym]+';color:'+SYM_COLOR[sym]+'">'+SYM_SHORT[sym]+' '+counts[sym]+'</span>';});
+  if(none) html+='<span class="tag" style="background:#eee;color:#999">未點 '+none+'</span>';
+  document.getElementById('attend-summary').innerHTML=html;
+}
+
+function renderAttRow(idx) {
+  if(!classData) return;
+  var st=classData.students[idx];
+  var row=document.getElementById('arow-'+idx);
+  if(!row) return;
+  row.className=(idx===lastMatchIdx)?'highlight':'';
+  var btns=row.querySelectorAll('.sym-btn');
+  for(var j=0;j<SYMS.length;j++)
+    btns[j].className='sym-btn'+(st.status===SYMS[j]?' '+SYMCLASS[SYMS[j]]:'');
+  var sb=row.querySelector('.score-btn');
+  if(sb){var has=st.score!==''&&st.score!==null&&st.score!==undefined;sb.textContent=has?st.score:'--';sb.className='score-btn'+(has?' has-score':'');}
+}
+
+// ══════════════════════════════════════════════
+// 語音錄音 → Gemini
+// ══════════════════════════════════════════════
+function toggleMic() {
+  if (isRecording) { stopRecording(); } else { startRecording(); }
+}
+
+function startRecording() {
+  if (!classData) { setStatus('❌ 請先選班級與堂次','err'); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    setStatus('❌ 瀏覽器不支援錄音，請使用 Chrome','err'); return;
+  }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    var mimeType = 'audio/webm';
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+    else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) mimeType = 'audio/ogg;codecs=opus';
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: mimeType });
+    mediaRecorder.addEventListener('dataavailable', function(e) {
+      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+    });
+    mediaRecorder.addEventListener('stop', function() {
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      processAudio(mimeType);
+    });
+    mediaRecorder.start();
+    isRecording = true;
+    var btn = document.getElementById('mic-btn');
+    btn.textContent = '⏹ 停止錄音';
+    btn.className   = 'mic-btn recording';
+    setStatus('🔴 錄音中... 說完再按一次停止','info');
+    recSeconds = 0;
+    var timer = document.getElementById('rec-timer');
+    timer.style.display = 'flex';
+    timer.textContent = '0s';
+    recTimerInterval = setInterval(function(){
+      recSeconds++;
+      timer.textContent = recSeconds + 's';
+      if (recSeconds >= 30) stopRecording();
+    }, 1000);
+  }).catch(function(err) {
+    setStatus('❌ 無法取得麥克風：' + err.message, 'err');
+  });
+}
+
+function stopRecording() {
+  if (!mediaRecorder || !isRecording) return;
+  isRecording = false;
+  clearInterval(recTimerInterval);
+  document.getElementById('rec-timer').style.display = 'none';
+  mediaRecorder.stop();
+  var btn = document.getElementById('mic-btn');
+  btn.textContent = '⏳ Gemini 辨識中...';
+  btn.className   = 'mic-btn processing';
+  btn.disabled    = true;
+  setStatus('⏳ 送出音訊，等待 Gemini 辨識...','info');
+}
+
+function processAudio(mimeType) {
+  var blob = new Blob(audioChunks, { type: mimeType });
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    var base64 = reader.result.split(',')[1];
+    sendToGemini(base64, mimeType);
+  };
+  reader.readAsDataURL(blob);
+}
+
+function sendToGemini(base64, mimeType) {
+  if (!GEMINI_API_KEY) {
+    var btn = document.getElementById('mic-btn');
+    btn.textContent = '🎤 開始錄音點名'; btn.className = 'mic-btn'; btn.disabled = false;
+    setStatus('❌ Gemini Key 尚未載入，請重新連線', 'err'); return;
+  }
+  var studentList = classData.students.map(function(s){ return s.eName || s.cName; }).join(', ');
+  callGemini(base64, mimeType, studentList, function(err, updates) {
+    var btn = document.getElementById('mic-btn');
+    btn.textContent = '🎤 開始錄音點名';
+    btn.className   = 'mic-btn';
+    btn.disabled    = false;
+    if (err) { setStatus('❌ Gemini 辨識失敗：' + err.message, 'err'); addLog('❌ Gemini 失敗：' + err.message, false); return; }
+    if (!updates || !updates.length) { setStatus('⚠️ Gemini 未辨識到任何學生','err'); return; }
+    applyGeminiResults(updates);
+  });
+}
+
+function applyGeminiResults(updates) {
+  if (!classData) return;
+  var matched = 0, skipped = 0, resultHtml = '';
+  updates.forEach(function(up) {
+    var idx = -1;
+    var upName = (up.name || '').toLowerCase().replace(/\s/g,'');
+    for (var i = 0; i < classData.students.length; i++) {
+      var st = classData.students[i];
+      var eName = (st.eName || '').toLowerCase().replace(/\s/g,'');
+      var cName = (st.cName || '').toLowerCase().replace(/\s/g,'');
+      var firstName = eName.split(' ')[0];
+      if (upName && (eName === upName || cName === upName ||
+          (firstName.length >= 2 && upName.indexOf(firstName) !== -1))) {
+        idx = i; break;
+      }
+    }
+    if (idx !== -1) {
+      var sym   = SYMS.indexOf(up.status) !== -1 ? up.status : null;
+      var score = up.score ? String(up.score) : null;
+      writeOne(idx, sym, score);
+      lastMatchIdx = idx;
+      matched++;
+      setTimeout(function(){
+        var row = document.getElementById('arow-' + idx);
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      var st = classData.students[idx];
+      resultHtml += '<div class="gemini-item">';
+      resultHtml += '<span class="gemini-name">' + getDisplayName(st) + '</span>';
+      if (sym) resultHtml += '<span class="gemini-sym" style="color:'+SYM_COLOR[sym]+'">' + sym + '</span>';
+      if (score) resultHtml += '<span class="gemini-score">' + score + '分</span>';
+      if (up.comment) resultHtml += '<span class="gemini-comment">' + up.comment + '</span>';
+      resultHtml += '</div>';
+    } else {
+      skipped++;
+    }
+  });
+  if (resultHtml) {
+    document.getElementById('gemini-items').innerHTML = resultHtml;
+    document.getElementById('gemini-result').style.display = 'block';
+  }
+  var msg = '✅ Gemini 完成：更新 ' + matched + ' 人';
+  if (skipped) msg += '，' + skipped + ' 人未比對到';
+  setStatus(msg, 'ok');
+  addLog(msg, true);
+  renderAttTable();
+  renderAttSummaryBar();
+}
+
+// ══════════════════════════════════════════════
+// 總表頁
+// ══════════════════════════════════════════════
+function onSumClassChange() {
+  var className = document.getElementById('sum-class-sel').value;
+  summaryData = null;
+  summaryStructure = null;
+  document.getElementById('alert-cards').style.display = 'none';
+  document.getElementById('summary-wrap').innerHTML = '<div class="loading">讀取中...</div>';
+  document.getElementById('sum-lesson-sel').innerHTML = '<option value="">請先選班級</option>';
+
+  if (!className) {
+    document.getElementById('summary-wrap').innerHTML = '<div class="empty">請選擇班級</div>';
+    return;
+  }
+
+  jsonpCall({action:'getSummaryStructure', className:className}, function(err, struct) {
+    if (!err && struct) {
+      summaryStructure = struct;
+      // 填入堂次下拉選單，預設選最後一堂
+      var opts = '';
+      struct.lessons.forEach(function(l, i) {
+        opts += '<option value="' + i + '">' + l.unit + ' ' + l.lesson + '　' + l.date + '</option>';
+      });
+      var sel = document.getElementById('sum-lesson-sel');
+      sel.innerHTML = opts;
+      sel.selectedIndex = struct.lessons.length - 1; // 預設最後一堂
+    }
+  });
+
+  jsonpCall({action:'getClassSummary', className:className}, function(err, data) {
+    if (err || !data || data.error) {
+      document.getElementById('summary-wrap').innerHTML = '<div class="empty">讀取失敗</div>';
+      return;
+    }
+    summaryData = data;
+    renderSummaryTable();
+  });
+}
+
+function setFilter(f) {
+  currentFilter=f;
+  ['all','makeup','hw'].forEach(function(id){
+    document.getElementById('filter-'+id).classList.toggle('active',id===f);
+  });
+  if(summaryData) renderSummaryTable();
+}
+
+function updateSummaryCell(studentIdx, lessonIdx) {
+  if (!summaryData) return;
+  var st  = summaryData.students[studentIdx];
+  var rec = st.lessonRecords[lessonIdx];
+  var cellId = 'scell-' + studentIdx + '-' + lessonIdx;
+  var td = document.getElementById(cellId);
+  if (!td) { renderSummaryTable(); return; }
+
+  var attCls     = ATT_CLASS[rec.att] || '';
+  var needMakeup = (rec.att === '○' || rec.att === '△');
+  var needHw     = (rec.att !== '' && rec.att !== '●' && rec.att !== '▲' && rec.score === '');
+  td.className   = needMakeup ? 'missing-makeup' : (needHw ? 'missing-hw' : '');
+
+  var attDisplay = rec.att
+    ? '<span class="' + attCls + '">' + rec.att + '</span>'
+    : '<span style="color:#ddd">·</span>';
+  var hasScore     = (rec.score !== '');
+  var scoreDisplay = hasScore ? rec.score : '<span style="color:#ccc">-</span>';
+
+  var attEl = document.createElement('span');
+  attEl.className = 'cell-att';
+  attEl.title = '點擊修改出席';
+  attEl.innerHTML = attDisplay;
+  attEl.onclick = (function(si, li){ return function(e){ openAttPopup(e, si, li); }; })(studentIdx, lessonIdx);
+
+  var scoreEl = document.createElement('span');
+  scoreEl.className = 'cell-score' + (hasScore ? ' has-score' : '');
+  scoreEl.title = '點擊修改分數';
+  scoreEl.innerHTML = scoreDisplay;
+  scoreEl.onclick = (function(si, li){ return function(){ openWheel(si, 'summary', li); }; })(studentIdx, lessonIdx);
+
+  var br = document.createElement('br');
+  td.innerHTML = '';
+  td.appendChild(attEl);
+  td.appendChild(br);
+  td.appendChild(scoreEl);
+}
+
+function renderSummaryTable() {
+  if(!summaryData) return;
+  var lessons=summaryData.lessons, students=summaryData.students, statsH=summaryData.statsHeaders;
+  var totalMakeup=0, totalHw=0;
+  students.forEach(function(st){ if(st.missingMakeup.length) totalMakeup++; if(st.missingHw.length) totalHw++; });
+  document.getElementById('alert-makeup-num').textContent=totalMakeup;
+  document.getElementById('alert-hw-num').textContent=totalHw;
+  document.getElementById('alert-cards').style.display='grid';
+
+  var filtered=students.filter(function(st){
+    if(currentFilter==='makeup') return st.missingMakeup.length>0;
+    if(currentFilter==='hw')     return st.missingHw.length>0;
+    return true;
+  });
+
+  if(!filtered.length){
+    document.getElementById('summary-wrap').innerHTML='<div class="empty">✅ 沒有符合條件的學生</div>'; return;
+  }
+
+  var html='<div class="summary-table-wrap"><table class="summary-table"><thead><tr>';
+  html+='<th class="name-col">學生</th>';
+  for(var l=0;l<lessons.length;l++){
+    var dateShort = lessons[l].date ? '<br><span style="font-weight:400;opacity:.65;font-size:10px;">'+lessons[l].date+'</span>' : '';
+    html+='<th title="'+lessons[l].date+' '+lessons[l].teacher+'">'+lessons[l].unit+' '+lessons[l].lesson+dateShort+'</th>';
+  }
+  for(var s=0;s<statsH.length;s++) html+='<th class="stats-col">'+statsH[s].name+'</th>';
+  html+='<th class="alert-col">⚠️ 未補課</th><th class="alert-col">📝 缺作業</th>';
+  html+='</tr></thead><tbody>';
+
+  for(var i=0;i<filtered.length;i++){
+    var st=filtered[i];
+    var origIdx=-1;
+    for(var oi=0;oi<students.length;oi++){if(students[oi]===st){origIdx=oi;break;}}
+    var nameCell=st.eName&&st.cName
+      ?'<div class="name-en" style="font-size:12px">'+st.eName+'</div><div class="name-zh">'+st.cName+'</div>'
+      :'<div class="name-en" style="font-size:12px">'+(st.eName||st.cName)+'</div>';
+    html+='<tr>';
+    html+='<td class="name-col">'+nameCell+'</td>';
+
+    for(var l=0;l<lessons.length;l++){
+      var rec=st.lessonRecords[l]||{att:'',score:'',attRow:0,attCol:0,scoreRow:0,scoreCol:0};
+      var attCls=ATT_CLASS[rec.att]||'';
+      var needMakeup=rec.att==='\u25cb'||rec.att==='\u25b3';
+      var needHw=rec.att!==''&&rec.att!=='\u25cf'&&rec.att!=='\u25b2'&&rec.score===''&&(rec.att==='V'||rec.att==='\u229d');
+      var cellBg=needMakeup?'missing-makeup':(needHw?'missing-hw':'');
+      var attDisplay=rec.att?'<span class="'+attCls+'">'+rec.att+'</span>':'<span style="color:#ddd">·</span>';
+      var hasScore=rec.score!=='';
+      var scoreDisplay=hasScore?rec.score:'<span style="color:#ccc">-</span>';
+      html+='<td id="scell-'+origIdx+'-'+l+'" class="'+cellBg+'">';
+      html+='<span class="cell-att" onclick="openAttPopup(event,'+origIdx+','+l+')" title="點擊修改出席">'+attDisplay+'</span>';
+      html+='<br><span class="cell-score'+(hasScore?' has-score':'')+'" onclick="openWheel('+origIdx+',\'summary\','+l+')" title="點擊修改分數">'+scoreDisplay+'</span>';
+      html+='</td>';
+    }
+
+    for(var s=0;s<statsH.length;s++) html+='<td class="stats-val">'+(st.statsValues[s]||'')+'</td>';
+    var mkCls=st.missingMakeup.length?'alert-count has-issue':'alert-count';
+    var hwCls=st.missingHw.length?'alert-count has-issue':'alert-count';
+    html+='<td class="'+mkCls+'">'+(st.missingMakeup.length?st.missingMakeup.length+' 堂<br><span style="font-size:10px;color:#856404">'+st.missingMakeup.slice(0,3).join(' ')+(st.missingMakeup.length>3?'...':'')+'</span>':'<span style="color:#ddd">✓</span>')+'</td>';
+    html+='<td class="'+hwCls+'">'+(st.missingHw.length?st.missingHw.length+' 堂<br><span style="font-size:10px;color:#c0392b">'+st.missingHw.slice(0,3).join(' ')+(st.missingHw.length>3?'...':'')+'</span>':'<span style="color:#ddd">✓</span>')+'</td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table></div>';
+  document.getElementById('summary-wrap').innerHTML=html;
+}
+
+// ══════════════════════════════════════════════
+// 出席符號彈窗（總表用）
+// ══════════════════════════════════════════════
+function openAttPopup(event, studentIdx, lessonIdx) {
+  event.stopPropagation();
+  var st  = summaryData.students[studentIdx];
+  var rec = st.lessonRecords[lessonIdx];
+  var cellEl = event.currentTarget;
+  attPopupContext = { studentIdx:studentIdx, lessonIdx:lessonIdx, cellEl:cellEl };
+  var popup = document.getElementById('att-popup');
+  var html = '';
+  SYMS.forEach(function(sym) {
+    var isSel = rec.att === sym;
+    html += '<div class="att-popup-item'+(isSel?' selected':'')+'" onclick="selectAttSym(\''+sym+'\')" style="color:'+SYM_COLOR[sym]+'">';
+    html += sym + ' ' + SYM_SHORT[sym];
+    if (isSel) html += ' ✓';
+    html += '</div>';
+  });
+  html += '<div class="att-popup-divider"></div>';
+  html += '<div class="att-popup-item" onclick="selectAttSym(\'\')" style="color:#999">✕ 清除</div>';
+  popup.innerHTML = html;
+  var rect = cellEl.getBoundingClientRect();
+  popup.style.display = 'flex';
+  var top  = rect.bottom + window.scrollY + 4;
+  var left = rect.left   + window.scrollX;
+  if (left + 140 > window.innerWidth) left = window.innerWidth - 148;
+  popup.style.top  = top  + 'px';
+  popup.style.left = left + 'px';
+}
+
+function selectAttSym(sym) {
+  if (!attPopupContext) return;
+  var ctx = attPopupContext;
+  var st  = summaryData.students[ctx.studentIdx];
+  var rec = st.lessonRecords[ctx.lessonIdx];
+  var oldAtt = rec.att;
+  rec.att = sym;
+  updateSummaryCell(ctx.studentIdx, ctx.lessonIdx);
+  closeAttPopup();
+  jsonpCall({
+    action:'writeCell', authCode: AUTH_CODE,
+    className:summaryData.className,
+    row:rec.attRow, col:rec.attCol, value:sym
+  }, function(err,r){
+    if(r&&r.ok) showToast('✅ 已更新');
+    else {
+      rec.att = oldAtt;
+      updateSummaryCell(ctx.studentIdx, ctx.lessonIdx);
+      showToast('❌ 寫入失敗：' + (r&&r.msg||''));
+    }
+  });
+}
+
+function closeAttPopup() {
+  document.getElementById('att-popup').style.display='none';
+  attPopupContext=null;
+}
+
+// ══════════════════════════════════════════════
+// 轉盤
+// ══════════════════════════════════════════════
+function buildWheel() {
+  var scroll=document.getElementById('wheel-scroll');
+  var html='<div class="wheel-item" style="height:64px;"></div><div class="wheel-item" style="height:64px;"></div>';
+  for(var i=0;i<=100;i++) html+='<div class="wheel-item" data-val="'+i+'" onclick="wheelTap('+i+')">'+i+'</div>';
+  html+='<div class="wheel-item" style="height:64px;"></div><div class="wheel-item" style="height:64px;"></div>';
+  scroll.innerHTML=html;
+  var quick=document.getElementById('wheel-quick');
+  var qHtml='';
+  for(var q=0;q<QUICK_SCORES.length;q++) qHtml+='<button class="quick-btn" onclick="wheelTap('+QUICK_SCORES[q]+')">'+QUICK_SCORES[q]+'</button>';
+  quick.innerHTML=qHtml;
+  scroll.addEventListener('scroll',function(){
+    var idx=Math.round(scroll.scrollTop/ITEM_HEIGHT);
+    idx=Math.max(0,Math.min(100,idx));
+    wheelValue=idx;
+    document.getElementById('wheel-score-display').textContent=idx;
+    highlightCenter(idx);
+  });
+}
+// ══════════════════════════════════════════════
+// 九宮格鍵盤邏輯
+// ══════════════════════════════════════════════
+var currentScoreMode = 'numpad'; // 'numpad' or 'wheel'
+var numpadBuffer = '';
+
+function switchScoreMode(mode) {
+  currentScoreMode = mode;
+  document.getElementById('numpad-section').style.display = mode === 'numpad' ? 'block' : 'none';
+  document.getElementById('wheel-section').style.display  = mode === 'wheel'  ? 'block' : 'none';
+  document.getElementById('mode-numpad').className = 'mode-btn' + (mode === 'numpad' ? ' active' : '');
+  document.getElementById('mode-wheel').className  = 'mode-btn' + (mode === 'wheel'  ? ' active' : '');
+  if (mode === 'wheel' && wheelValue !== null) {
+    setTimeout(function(){ document.getElementById('wheel-scroll').scrollTop = wheelValue * ITEM_HEIGHT; }, 50);
+  }
+}
+
+function numpadPress(digit) {
+  if (numpadBuffer.length >= 3) return; // 最多3位數（0-200）
+  numpadBuffer += digit;
+  document.getElementById('numpad-display').textContent = numpadBuffer || '--';
+  // 同步更新 wheelValue
+  var num = parseInt(numpadBuffer);
+  if (!isNaN(num)) {
+    wheelValue = num;
+    document.getElementById('wheel-score-display').textContent = num;
+  }
+}
+
+function numpadDel() {
+  numpadBuffer = numpadBuffer.slice(0, -1);
+  document.getElementById('numpad-display').textContent = numpadBuffer || '--';
+  if (numpadBuffer) {
+    wheelValue = parseInt(numpadBuffer);
+  } else {
+    wheelValue = null;
+  }
+}
+
+function numpadReset(initVal) {
+  numpadBuffer = initVal !== null && initVal !== undefined && initVal !== '' ? String(initVal) : '';
+  document.getElementById('numpad-display').textContent = numpadBuffer || '--';
+}
+
+function highlightCenter(val){
+  document.querySelectorAll('.wheel-item[data-val]').forEach(function(el){
+    el.className='wheel-item'+(parseInt(el.dataset.val)===val?' center':'');
+  });
+}
+function wheelTap(val){
+  wheelValue=val;
+  document.getElementById('wheel-score-display').textContent=val;
+  highlightCenter(val);
+  document.getElementById('wheel-scroll').scrollTo({top:val*ITEM_HEIGHT,behavior:'smooth'});
+}
+function openWheel(studentIdx, mode, lessonIdx) {
+  wheelContext = { mode:mode, studentIdx:studentIdx, lessonIdx:lessonIdx };
+  var initVal = 80, name = '';
+  if (mode === 'attend') {
+    var st = classData.students[studentIdx];
+    name = (st.eName||'')+(st.eName&&st.cName?'　':'')+(st.cName||'');
+    initVal = st.score!==''?parseInt(st.score):80;
+    wheelStudentIdx = studentIdx;
+  } else {
+    var st = summaryData.students[studentIdx];
+    var rec = st.lessonRecords[lessonIdx];
+    name = (st.eName||st.cName||'') + '　' + summaryData.lessons[lessonIdx].unit + ' ' + summaryData.lessons[lessonIdx].lesson;
+    initVal = rec.score!==''?parseInt(rec.score):80;
+  }
+  if(isNaN(initVal)) initVal=80;
+  wheelValue=initVal;
+  document.getElementById('wheel-student-name').textContent=name;
+  document.getElementById('wheel-score-display').textContent=initVal;
+  document.getElementById('wheel-overlay').style.display='flex';
+  // 初始化九宮格
+  numpadReset(initVal);
+  // 預設顯示鍵盤模式
+  switchScoreMode(currentScoreMode);
+  highlightCenter(initVal);
+  setTimeout(function(){document.getElementById('wheel-scroll').scrollTop=initVal*ITEM_HEIGHT;},50);
+}
+function closeWheel(){
+  document.getElementById('wheel-overlay').style.display='none';
+  if (wheelContext && wheelContext.mode === 'exam') buildWheel();
+  wheelContext=null; wheelStudentIdx=-1;
+}
+function wheelOverlayClick(e){ if(e.target===document.getElementById('wheel-overlay')) closeWheel(); }
+
+function confirmScore() {
+  if(!wheelContext) return;
+  // 讀取分數：九宮格模式從 buffer 讀，滑輪模式從 wheelValue 讀
+  var finalScore;
+  if (currentScoreMode === 'numpad') {
+    if (!numpadBuffer) return; // 沒輸入不確認
+    finalScore = parseInt(numpadBuffer);
+    if (isNaN(finalScore)) return;
+    wheelValue = finalScore;
+  } else {
+    if (wheelValue === null) return;
+    finalScore = wheelValue;
+  }
+  var ctx=wheelContext;
+  if(ctx.mode==='exam'){
+    var input = ctx.input;
+    input.value = finalScore;
+    onScoreInput(input);
+    closeWheel();
+    buildWheel();
+    return;
+  }
+  if(ctx.mode==='attend'){
+    var st=classData.students[ctx.studentIdx];
+    writeOne(ctx.studentIdx,null,String(wheelValue));
+    addLog(getDisplayName(st)+' 分數 → '+wheelValue,true);
+    setStatus('✅ '+getDisplayName(st)+' 分數 → '+wheelValue+' 分','ok');
+  } else {
+    var st=summaryData.students[ctx.studentIdx];
+    var rec=st.lessonRecords[ctx.lessonIdx];
+    var oldScore = rec.score;
+    var sIdx = ctx.studentIdx, lIdx = ctx.lessonIdx;
+    rec.score = String(wheelValue);
+    closeWheel();
+    updateSummaryCell(sIdx, lIdx);
+    jsonpCall({
+      action:'writeCell', authCode: AUTH_CODE,
+      className:summaryData.className,
+      row:rec.scoreRow, col:rec.scoreCol, value:wheelValue
+    }, function(err,r){
+      if(r&&r.ok) showToast('✅ 已更新');
+      else {
+        rec.score = oldScore;
+        updateSummaryCell(sIdx, lIdx);
+        showToast('❌ 寫入失敗：' + (r&&r.msg||''));
+      }
+    });
+    return;
+  }
+  closeWheel();
+}
+
+function clearScore() {
+  if(!wheelContext) return;
+  var ctx=wheelContext;
+  if(ctx.mode==='attend'){
+    var st=classData.students[ctx.studentIdx];
+    writeOne(ctx.studentIdx,null,'');
+    addLog(getDisplayName(st)+' 分數清除',true);
+    setStatus('✅ '+getDisplayName(st)+' 分數已清除','ok');
+  } else {
+    var st=summaryData.students[ctx.studentIdx];
+    var rec=st.lessonRecords[ctx.lessonIdx];
+    var oldScore = rec.score;
+    var sIdx = ctx.studentIdx, lIdx = ctx.lessonIdx;
+    rec.score = '';
+    closeWheel();
+    updateSummaryCell(sIdx, lIdx);
+    jsonpCall({
+      action:'writeCell', authCode: AUTH_CODE,
+      className:summaryData.className,
+      row:rec.scoreRow, col:rec.scoreCol, value:''
+    }, function(err,r){
+      if(r&&r.ok) showToast('✅ 已清除');
+      else {
+        rec.score = oldScore;
+        updateSummaryCell(sIdx, lIdx);
+        showToast('❌ 清除失敗');
+      }
+    });
+    return;
+  }
+  closeWheel();
+}
+
+// ══════════════════════════════════════════════
+// 工具函數
+// ══════════════════════════════════════════════
+function getTodayMMDD(){var now=new Date();return('0'+(now.getMonth()+1)).slice(-2)+'/'+('0'+now.getDate()).slice(-2);}
+function setStatus(msg,type){var el=document.getElementById('status-bar');el.textContent=msg;el.className='status-bar'+(type?' '+type:'');}
+function addLog(msg,ok){var log=document.getElementById('log');var t=new Date().toLocaleTimeString('zh-TW');log.innerHTML='<div class="log-item">['+t+'] '+(ok!==false?'✅':'❌')+' '+msg+'</div>'+log.innerHTML;}
+
+// ══════════════════════════════════════════════
+// 成績單頁
+// ══════════════════════════════════════════════
+var reportData          = null;
+var reportClassStudents = [];
+var perfScore           = 80;
+
+var RADAR_COLORS = ['#274e13','#1a5276','#7d3c98','#ca6f1e','#c0392b'];
+var RADAR_LABELS = ['出席表現','作業均分','小考成績','大考成績','口語表現'];
+
+function onRptClassChange() {
+  var className = document.getElementById('rpt-class-sel').value;
+  var stuSel    = document.getElementById('rpt-student-sel');
+  var loadBtn   = document.getElementById('rpt-load-btn');
+  reportData = null; reportClassStudents = [];
+  stuSel.innerHTML = '<option value="">載入中...</option>';
+  stuSel.disabled  = true;
+  loadBtn.disabled = true;
+  document.getElementById('report-main').style.display  = 'none';
+  document.getElementById('report-empty').style.display = 'block';
+  if (!className) { stuSel.innerHTML = '<option value="">請先選班級</option>'; return; }
+  jsonpCall({ action:'getClassSummary', className:className }, function(err, data) {
+    if (err || !data || data.error) { stuSel.innerHTML = '<option value="">讀取失敗</option>'; return; }
+    reportClassStudents = data.students;
+    var opts = '<option value="">請選擇學生...</option>';
+    data.students.forEach(function(st) {
+      opts += '<option value="'+st.sheetRow+'">'+(st.eName||st.cName)+(st.cName&&st.eName?' ('+st.cName+')':'')+'</option>';
+    });
+    stuSel.innerHTML = opts;
+    stuSel.disabled  = false;
+  });
+}
+
+function onRptStudentChange() {
+  var row = document.getElementById('rpt-student-sel').value;
+  document.getElementById('rpt-load-btn').disabled = !row;
+}
+
+function loadStudentReport() {
+  var className = document.getElementById('rpt-class-sel').value;
+  var row       = parseInt(document.getElementById('rpt-student-sel').value);
+  if (!className || !row) return;
+  document.getElementById('rpt-load-btn').disabled = true;
+  document.getElementById('rpt-load-btn').textContent = '載入中...';
+  jsonpCall({ action:'getStudentReport', className:className, studentRow:row }, function(err, data) {
+    document.getElementById('rpt-load-btn').disabled = false;
+    document.getElementById('rpt-load-btn').textContent = '載入成績單';
+    if (err || !data || data.error) { showToast('❌ 載入失敗：'+(data&&data.error||'')); return; }
+    reportData = data;
+    document.getElementById('parent-email').value = data.parentEmail || '';
+    document.getElementById('report-main').style.display  = 'block';
+    document.getElementById('report-empty').style.display = 'none';
+    renderReport();
+  });
+}
+
+function onPerfChange(val) {
+  val = Math.min(100, Math.max(0, parseInt(val) || 0));
+  perfScore = val;
+  document.getElementById('perf-slider').value = val;
+  document.getElementById('perf-input').value  = val;
+  renderReport();
+}
+
+function renderReport() {
+  if (!reportData) return;
+  var d = reportData;
+  var attDesc = (d.leaveCount === 0 && d.absenceCount === 0)
+    ? '🌟 全勤 (Perfect Attendance)'
+    : '請假 ' + d.leaveCount + ' / 缺席 ' + d.absenceCount;
+  var totalCls = d.totalScore >= 90 ? 'green' : d.totalScore < 60 ? 'red' : '';
+  var html = '';
+  html += '<div class="rpt-header">';
+  html += '<h3>🎓 ' + d.className + ' 學習成果報告單</h3>';
+  html += '<p>' + d.today + ' &nbsp;|&nbsp; ' + d.teacher + ' 老師</p>';
+  html += '</div>';
+  html += '<div class="rpt-meta">';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">學生姓名</div><div class="mc-val">'+(d.eName||d.cName)+(d.cName&&d.eName?' ('+d.cName+')':'')+'</div></div>';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">學期總分</div><div class="mc-val '+totalCls+'">'+d.totalScore.toFixed(1)+'</div></div>';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">班級名次</div><div class="mc-val">'+d.rankDisplay+'</div></div>';
+  html += '</div>';
+  html += '<div class="rpt-meta" style="border-bottom:1px solid #f0f0f0;">';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">出勤狀態</div><div class="mc-val" style="font-size:12px;">'+attDesc+'</div></div>';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">報告日期</div><div class="mc-val" style="font-size:12px;">'+d.today+'</div></div>';
+  html += '<div class="rpt-meta-cell"><div class="mc-label">授課教師</div><div class="mc-val" style="font-size:12px;">'+d.teacher+'</div></div>';
+  html += '</div>';
+  html += '<div class="rpt-body">';
+  var attScore   = d.attendanceScore;
+  var radarVals  = [attScore, d.homeworkAvg, d.quizAvg, d.testAvg, perfScore];
+  html += '<div class="rpt-chart-row">';
+  html += '<div class="rpt-radar-wrap"><canvas id="radar-canvas" width="260" height="220"></canvas></div>';
+  html += '<div class="rpt-stats-list">';
+  RADAR_LABELS.forEach(function(lbl, i) {
+    var val = radarVals[i];
+    html += '<div class="stat-row">';
+    html += '<div class="stat-dot" style="background:'+RADAR_COLORS[i]+'"></div>';
+    html += '<div class="stat-name">'+lbl+'</div>';
+    html += '<div class="stat-bar-wrap"><div class="stat-bar" style="width:'+Math.min(val,100)+'%;background:'+RADAR_COLORS[i]+'"></div></div>';
+    html += '<div class="stat-val" style="color:'+RADAR_COLORS[i]+'">'+val+'</div>';
+    html += '</div>';
+  });
+  html += '</div></div>';
+  if (d.scoreDetails && d.scoreDetails.length > 0) {
+    html += '<div class="rpt-scores-title">📝 本學期大小考成績</div>';
+    html += '<div class="rpt-scores-grid">';
+    d.scoreDetails.forEach(function(s) {
+      var isPerfect = s.score === '100';
+      html += '<div class="score-chip">';
+      html += '<span class="sc-label">'+s.label+'</span>';
+      html += '<span class="sc-val'+(isPerfect?' perfect':'')+'">'+s.score+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="rpt-comment-title">💬 老師綜合評語 (Comments)</div>';
+  html += '<textarea class="rpt-comment-area" id="rpt-comment" placeholder="點「Gemini 生成評語」或直接輸入..."></textarea>';
+  html += '<div style="font-size:11px;color:#999;text-align:right;margin-top:4px;">'+d.teacher+' 老師 簽章</div>';
+  html += '</div>';
+  document.getElementById('report-preview').innerHTML = html;
+  setTimeout(function(){ drawRadar(radarVals); }, 50);
+}
+
+function drawRadar(vals) {
+  var canvas = document.getElementById('radar-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W / 2, cy = H / 2;
+  var R  = Math.min(W, H) * 0.36;
+  var N  = 5;
+  ctx.clearRect(0, 0, W, H);
+  for (var ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    for (var i = 0; i < N; i++) {
+      var angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+      var r = R * ring / 4;
+      var x = cx + r * Math.cos(angle);
+      var y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  for (var i = 0; i < N; i++) {
+    var angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(angle), cy + R * Math.sin(angle));
+    ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  ctx.beginPath();
+  for (var i = 0; i < N; i++) {
+    var angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    var r = R * Math.min(vals[i], 100) / 100;
+    var x = cx + r * Math.cos(angle);
+    var y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(39,78,19,0.18)';
+  ctx.strokeStyle = '#274e13'; ctx.lineWidth = 2;
+  ctx.fill(); ctx.stroke();
+  for (var i = 0; i < N; i++) {
+    var angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    var r = R * Math.min(vals[i], 100) / 100;
+    ctx.beginPath();
+    ctx.arc(cx + r * Math.cos(angle), cy + r * Math.sin(angle), 4, 0, Math.PI * 2);
+    ctx.fillStyle = RADAR_COLORS[i]; ctx.fill();
+  }
+  ctx.font = 'bold 11px Segoe UI';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (var i = 0; i < N; i++) {
+    var angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    var lx = cx + (R + 22) * Math.cos(angle);
+    var ly = cy + (R + 22) * Math.sin(angle);
+    ctx.fillStyle = RADAR_COLORS[i];
+    ctx.fillText(RADAR_LABELS[i], lx, ly);
+  }
+}
+
+function genComment() {
+  if (!reportData || !GEMINI_API_KEY) { showToast('❌ 請先載入成績單並連線'); return; }
+  var d = reportData;
+  var btn = document.querySelector('.rpt-btn.secondary');
+  btn.textContent = '⏳ 生成中...'; btn.disabled = true;
+  var prompt = [
+    '你是一位英語補習班老師，請用中文寫一段30-50字的學生學期評語。',
+    '學生：' + (d.eName||d.cName),
+    '班級：' + d.className,
+    '學期總分：' + d.totalScore.toFixed(1),
+    '出勤：請假 ' + d.leaveCount + ' 次，缺席 ' + d.absenceCount + ' 次',
+    '作業均分：' + d.homeworkAvg + '，小考：' + d.quizAvg + '，大考：' + d.testAvg + '，口語表現：' + perfScore,
+    '請根據數據給出溫暖、具體、正向的評語，並提出一個改進建議。以 JSON 格式回傳：{"comment":"評語文字"}'
+  ].join('\n');
+  callGeminiWithFallback([{ text: prompt }], function(err, result) {
+    btn.textContent = '🤖 Gemini 生成評語'; btn.disabled = false;
+    if (err) { showToast('❌ 生成失敗：' + err.message); return; }
+    // 評語是純文字，result 可能是字串或物件
+    var comment = (typeof result === 'string') ? result : (result.comment || result.text || JSON.stringify(result));
+    document.getElementById('rpt-comment').value = comment.trim();
+  });
+}
+
+function saveParentEmail() {
+  if (!reportData) return;
+  var email = document.getElementById('parent-email').value.trim();
+  if (!email) { showToast('❌ 請輸入 Email'); return; }
+  jsonpCall({
+    action: 'saveParentEmail', authCode: AUTH_CODE,
+    className:  reportData.className,
+    studentRow: reportData.studentRow,
+    email:      email
+  }, function(err, r) {
+    if (r && r.ok) showToast('✅ Email 已儲存');
+    else showToast('❌ 儲存失敗：' + (r && r.msg || ''));
+  });
+}
+
+function sendReportEmail() {
+  if (!reportData) return;
+  var email = document.getElementById('parent-email').value.trim();
+  if (!email) { showToast('❌ 請先填入家長 Email'); return; }
+  var comment  = document.getElementById('rpt-comment').value.trim();
+  var d        = reportData;
+  var attDesc  = (d.leaveCount === 0 && d.absenceCount === 0)
+    ? '🌟 全勤' : '請假 ' + d.leaveCount + ' / 缺席 ' + d.absenceCount;
+  var attScore = d.attendanceScore;
+  var htmlBody = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;">';
+  htmlBody += '<div style="background:#274e13;color:white;padding:16px 20px;border-radius:8px 8px 0 0;text-align:center;">';
+  htmlBody += '<h2 style="margin:0;font-size:17px;">🎓 ' + d.className + ' 學習成果報告單</h2></div>';
+  htmlBody += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+  htmlBody += '<tr><td style="padding:8px 14px;background:#f8f8f8;font-weight:bold;">學生姓名</td><td style="padding:8px 14px;">'+(d.eName||d.cName)+(d.cName&&d.eName?' ('+d.cName+')':'')+'</td>';
+  htmlBody += '<td style="padding:8px 14px;background:#f8f8f8;font-weight:bold;">學期總分</td><td style="padding:8px 14px;font-weight:bold;color:#274e13;">'+d.totalScore.toFixed(1)+'</td></tr>';
+  htmlBody += '<tr><td style="padding:8px 14px;background:#f8f8f8;font-weight:bold;">出勤狀態</td><td style="padding:8px 14px;">'+attDesc+'</td>';
+  htmlBody += '<td style="padding:8px 14px;background:#f8f8f8;font-weight:bold;">班級名次</td><td style="padding:8px 14px;">'+d.rankDisplay+'</td></tr>';
+  htmlBody += '</table>';
+  htmlBody += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;">';
+  htmlBody += '<tr style="background:#eee;"><th style="padding:6px 10px;">指標</th><th style="padding:6px 10px;">得分</th></tr>';
+  var labels2 = ['出席表現','作業均分','小考成績','大考成績','口語表現'];
+  var vals2   = [attScore, d.homeworkAvg, d.quizAvg, d.testAvg, perfScore];
+  labels2.forEach(function(l,i){
+    htmlBody += '<tr><td style="padding:6px 10px;text-align:center;">'+l+'</td><td style="padding:6px 10px;text-align:center;font-weight:bold;">'+vals2[i]+'</td></tr>';
+  });
+  htmlBody += '</table>';
+  if (comment) {
+    htmlBody += '<div style="margin-top:12px;padding:12px 14px;background:#fff8e1;border-radius:6px;">';
+    htmlBody += '<b>💬 老師評語</b><br><br>' + comment.replace(/\n/g,'<br>') + '</div>';
+  }
+  htmlBody += '<p style="font-size:11px;color:#999;text-align:right;margin-top:12px;">'+d.teacher+' 老師　'+d.today+'</p>';
+  htmlBody += '</div>';
+  fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action:      'sendReportEmail',
+      authCode:    AUTH_CODE,
+      sheetId:     SHEET_ID,
+      toEmail:     email,
+      studentName: d.eName || d.cName,
+      className:   d.className,
+      htmlBody:    htmlBody,
+      teacher:     d.teacher
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(result){
+    if (result && result.ok) showToast('✅ 已寄出至 ' + email);
+    else showToast('❌ 寄送失敗：' + (result && result.msg || ''));
+  })
+  .catch(function(err){ showToast('❌ 寄送失敗：' + err.message); });
+}
+
+function downloadPDF() {
+  if (!reportData) return;
+  var d = reportData;
+  var attScore = d.attendanceScore;
+  var radarVals = [attScore, d.homeworkAvg, d.quizAvg, d.testAvg, perfScore];
+  var comment = document.getElementById('rpt-comment') ? document.getElementById('rpt-comment').value : '';
+  var win = window.open('', '_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">');
+  win.document.write('<title>' + (d.eName||d.cName) + ' 成績單</title>');
+  win.document.write('<style>');
+  win.document.write('body{font-family:"Microsoft JhengHei",Arial,sans-serif;margin:0;padding:20px;max-width:700px;}');
+  win.document.write('.rpt-header{background:#274e13;color:white;padding:14px 20px;text-align:center;border-radius:8px 8px 0 0;}');
+  win.document.write('.rpt-header h3{margin:0;font-size:16px;}.rpt-header p{font-size:11px;opacity:.8;margin:4px 0 0;}');
+  win.document.write('.rpt-meta{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid #eee;}');
+  win.document.write('.rpt-meta-cell{padding:10px 14px;border-right:1px solid #eee;}');
+  win.document.write('.mc-label{font-size:10px;color:#999;font-weight:bold;text-transform:uppercase;margin-bottom:3px;}');
+  win.document.write('.mc-val{font-size:14px;font-weight:bold;}.green{color:#274e13;}.red{color:#c0392b;}');
+  win.document.write('.rpt-body{padding:16px 20px;}');
+  win.document.write('.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}');
+  win.document.write('.stat-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}');
+  win.document.write('.stat-dot{width:10px;height:10px;border-radius:50%;}');
+  win.document.write('.stat-name{font-size:12px;color:#666;flex:1;}');
+  win.document.write('.stat-val{font-size:13px;font-weight:bold;min-width:36px;text-align:right;}');
+  win.document.write('.scores-title{background:#444;color:white;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:bold;margin-bottom:8px;}');
+  win.document.write('.scores-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px;}');
+  win.document.write('.score-chip{background:#f8f9fa;border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;}');
+  win.document.write('.sc-label{font-size:11px;color:#666;}.sc-val{font-size:13px;font-weight:bold;color:#c0392b;}');
+  win.document.write('.sc-val.perfect{color:#274e13;}');
+  win.document.write('.comment-title{background:#fff2cc;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:bold;color:#856404;margin-bottom:8px;}');
+  win.document.write('.comment-box{border:2px solid #ffd666;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7;min-height:60px;}');
+  win.document.write('@media print{body{padding:0;}}');
+  win.document.write('</style></head><body>');
+  var attDesc = (d.leaveCount===0&&d.absenceCount===0)?'🌟 全勤':'請假 '+d.leaveCount+' / 缺席 '+d.absenceCount;
+  var totalCls = d.totalScore>=90?'green':d.totalScore<60?'red':'';
+  win.document.write('<div class="rpt-header"><h3>🎓 '+d.className+' 學習成果報告單</h3><p>'+d.today+' | '+d.teacher+' 老師</p></div>');
+  win.document.write('<div class="rpt-meta">');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">學生姓名</div><div class="mc-val">'+(d.eName||d.cName)+(d.cName&&d.eName?' ('+d.cName+')':'')+'</div></div>');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">學期總分</div><div class="mc-val '+totalCls+'">'+d.totalScore.toFixed(1)+'</div></div>');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">班級名次</div><div class="mc-val">'+d.rankDisplay+'</div></div>');
+  win.document.write('</div>');
+  win.document.write('<div class="rpt-meta" style="border-bottom:1px solid #eee;">');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">出勤狀態</div><div class="mc-val" style="font-size:12px;">'+attDesc+'</div></div>');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">報告日期</div><div class="mc-val" style="font-size:12px;">'+d.today+'</div></div>');
+  win.document.write('<div class="rpt-meta-cell"><div class="mc-label">授課教師</div><div class="mc-val" style="font-size:12px;">'+d.teacher+'</div></div>');
+  win.document.write('</div>');
+  win.document.write('<div class="rpt-body">');
+  win.document.write('<div class="chart-row">');
+  win.document.write('<canvas id="pdf-radar" width="260" height="220"></canvas>');
+  win.document.write('<div>');
+  RADAR_LABELS.forEach(function(lbl,i){
+    win.document.write('<div class="stat-row">');
+    win.document.write('<div class="stat-dot" style="background:'+RADAR_COLORS[i]+'"></div>');
+    win.document.write('<div class="stat-name">'+lbl+'</div>');
+    win.document.write('<div class="stat-val" style="color:'+RADAR_COLORS[i]+'">'+radarVals[i]+'</div>');
+    win.document.write('</div>');
+  });
+  win.document.write('</div></div>');
+  if (d.scoreDetails && d.scoreDetails.length > 0) {
+    win.document.write('<div class="scores-title">📝 本學期大小考成績</div>');
+    win.document.write('<div class="scores-grid">');
+    d.scoreDetails.forEach(function(s){
+      win.document.write('<div class="score-chip"><span class="sc-label">'+s.label+'</span><span class="sc-val'+(s.score==='100'?' perfect':'')+'">'+s.score+'</span></div>');
+    });
+    win.document.write('</div>');
+  }
+  win.document.write('<div class="comment-title">💬 老師綜合評語 (Comments)</div>');
+  win.document.write('<div class="comment-box">'+(comment||'').replace(/\n/g,'<br>')+'</div>');
+  win.document.write('<p style="font-size:11px;color:#999;text-align:right;margin-top:8px;">'+d.teacher+' 老師 簽章</p>');
+  win.document.write('</div>');
+  win.document.write('<'+'script>');
+  win.document.write('window.onload=function(){');
+  win.document.write('var canvas=document.getElementById("pdf-radar");');
+  win.document.write('var ctx=canvas.getContext("2d");');
+  win.document.write('var W=canvas.width,H=canvas.height,cx=W/2,cy=H/2,R=Math.min(W,H)*0.36,N=5;');
+  win.document.write('ctx.clearRect(0,0,W,H);');
+  win.document.write('for(var ring=1;ring<=4;ring++){ctx.beginPath();for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2,r=R*ring/4;if(i===0)ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a));else ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();ctx.strokeStyle="#e0e0e0";ctx.lineWidth=1;ctx.stroke();}');
+  win.document.write('for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));ctx.strokeStyle="#ddd";ctx.lineWidth=1;ctx.stroke();}');
+  win.document.write('var vals='+JSON.stringify(radarVals)+';');
+  win.document.write('var colors='+JSON.stringify(RADAR_COLORS)+';');
+  win.document.write('var labels='+JSON.stringify(RADAR_LABELS)+';');
+  win.document.write('ctx.beginPath();for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2,r=R*Math.min(vals[i],100)/100;if(i===0)ctx.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a));else ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();ctx.fillStyle="rgba(39,78,19,0.18)";ctx.strokeStyle="#274e13";ctx.lineWidth=2;ctx.fill();ctx.stroke();');
+  win.document.write('for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2,r=R*Math.min(vals[i],100)/100;ctx.beginPath();ctx.arc(cx+r*Math.cos(a),cy+r*Math.sin(a),4,0,Math.PI*2);ctx.fillStyle=colors[i];ctx.fill();}');
+  win.document.write('ctx.font="bold 11px Arial";ctx.textAlign="center";ctx.textBaseline="middle";');
+  win.document.write('for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2;ctx.fillStyle=colors[i];ctx.fillText(labels[i],cx+(R+22)*Math.cos(a),cy+(R+22)*Math.sin(a));}');
+  win.document.write('setTimeout(function(){window.print();},300);');
+  win.document.write('};');
+  win.document.write('<'+'/script>');
+  win.document.write('</body></html>');
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════
+// 總表語音輸入
+// ══════════════════════════════════════════════
+function toggleSumMic() {
+  if (sumIsRecording) { stopSumRecording(); } else { startSumRecording(); }
+}
+
+function startSumRecording() {
+  var className = document.getElementById('sum-class-sel').value;
+  if (!className) { showSumStatus('❌ 請先選擇班級', 'err'); return; }
+  var lessonIdx = document.getElementById('sum-lesson-sel').value;
+  if (lessonIdx === '' || lessonIdx === '請先選班級') { showSumStatus('❌ 請先選擇堂次', 'err'); return; }
+  if (!navigator.mediaDevices) { showSumStatus('❌ 不支援錄音', 'err'); return; }
+  var doRecord = function() {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+      sumAudioChunks = [];
+      sumRecorder = new MediaRecorder(stream);
+      sumRecorder.ondataavailable = function(e) { if (e.data.size > 0) sumAudioChunks.push(e.data); };
+      sumRecorder.onstop = function() {
+        stream.getTracks().forEach(function(t){ t.stop(); });
+        processSumAudio('audio/webm', className);
+      };
+      sumRecorder.start();
+      sumIsRecording = true;
+      document.getElementById('sum-mic-btn').textContent = '⏹ 停止錄音';
+      document.getElementById('sum-mic-btn').className = 'mic-btn recording';
+      showSumStatus('🔴 錄音中...', 'info');
+      sumRecSeconds = 0;
+      document.getElementById('sum-rec-timer').style.display = 'flex';
+      sumRecTimer = setInterval(function(){
+        sumRecSeconds++;
+        document.getElementById('sum-rec-timer').textContent = sumRecSeconds + 's';
+        if (sumRecSeconds >= 60) stopSumRecording();
+      }, 1000);
+    }).catch(function(err) { showSumStatus('❌ 麥克風錯誤', 'err'); });
+  };
+  if (summaryStructure && summaryStructure.className === className) {
+    doRecord();
+  } else {
+    showSumStatus('⏳ 載入結構...', 'info');
+    jsonpCall({ action: 'getSummaryStructure', className: className }, function(err, data) {
+      if (err || !data || data.error) { showSumStatus('❌ 載入失敗', 'err'); return; }
+      summaryStructure = data;
+      doRecord();
+    });
+  }
+}
+
+function stopSumRecording() {
+  if (!sumRecorder || !sumIsRecording) return;
+  sumIsRecording = false;
+  clearInterval(sumRecTimer);
+  document.getElementById('sum-rec-timer').style.display = 'none';
+  sumRecorder.stop();
+  document.getElementById('sum-mic-btn').textContent = '⏳ 辨識中...';
+  document.getElementById('sum-mic-btn').className = 'mic-btn processing';
+}
+
+function processSumAudio(mimeType, className) {
+  var blob = new Blob(sumAudioChunks, { type: mimeType });
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    callGeminiSummary(reader.result.split(',')[1], mimeType, className);
+  };
+  reader.readAsDataURL(blob);
+}
+
+function callGeminiSummary(base64, mimeType, className) {
+  var struct = summaryStructure;
+  var studentRef = struct.students.map(function(s){ return s.eName || s.cName; }).join(',');
+
+  // 取得使用者選定的堂次
+  var selectedLessonIdx = parseInt(document.getElementById('sum-lesson-sel').value);
+  if (isNaN(selectedLessonIdx)) { showSumStatus('❌ 請先選擇堂次', 'err'); return; }
+  var selectedLesson = struct.lessons[selectedLessonIdx];
+
+  // Gemini 只需辨識學生和數值，堂次由系統決定
+  var prompt =
+    '你是補習班助手，請聆聽錄音，辨識老師說的學生出席狀況或分數。\n' +
+    '學生名單：[' + studentRef + ']\n' +
+    '本次堂次固定為索引 ' + selectedLessonIdx + '（' + selectedLesson.unit + ' ' + selectedLesson.lesson + ' ' + selectedLesson.date + '），不需要判斷堂次。\n' +
+    '輸出格式（JSON 陣列）：[{"student":"學生名或all","lessonIdx":' + selectedLessonIdx + ',"field":"att或score","value":"值"}]\n' +
+    '出席符號：到=V, 缺席=○, 請假=△, 補課缺席=●, 補課請假=▲, 遲到=⊝\n' +
+    '只輸出 JSON，不要其他文字。';
+
+  var parts = [{ text: prompt }, { inline_data: { mime_type: mimeType, data: base64 } }];
+  callGeminiWithFallback(parts, function(err, commands) {
+    document.getElementById('sum-mic-btn').textContent = '🎤 語音輸入';
+    document.getElementById('sum-mic-btn').className = 'mic-btn';
+    if (err) { showSumStatus('❌ Gemini 錯誤：' + err.message, 'err'); return; }
+
+    // ✅ 修正 B：cells 同時記錄 studentIdx + lessonIdx，供畫面更新用
+    var cells = [];       // 傳給 GAS 寫入的格子
+    var uiUpdates = [];   // 畫面更新用的 {studentIdx, lessonIdx, field, value}
+
+    commands.forEach(function(cmd) {
+      var upName = (cmd.student || '').toLowerCase().replace(/\s/g,'');
+      var isScore = ['score','points','grade','分數'].includes((cmd.field||'').toLowerCase().trim());
+      var vals = (cmd.value || '').toString().split(',').map(function(v){ return v.trim(); });
+      var indices = Array.isArray(cmd.lessonIdx) ? cmd.lessonIdx : [parseInt(cmd.lessonIdx)];
+
+      // 找匹配的 summaryStructure 學生（有 row）
+      var matchedStructStudents = [];
+      if (upName === 'all') {
+        matchedStructStudents = struct.students.map(function(s, si){ return { s: s, si: si }; });
+      } else {
+        struct.students.forEach(function(s, si) {
+          if ((s.eName||'').toLowerCase().includes(upName) || (s.cName||'').includes(upName)) {
+            matchedStructStudents.push({ s: s, si: si });
+          }
+        });
+      }
+
+      matchedStructStudents.forEach(function(item) {
+        var structSt = item.s;
+        var structRow = structSt.sheetRow || structSt.row;
+        indices.forEach(function(lIdx, vIdx) {
+          var lesson = struct.lessons[lIdx];
+          if (!lesson) return;
+          var col = isScore ? lesson.scoreCol : lesson.attCol;
+          var value = vals[vIdx] || vals[0];
+          if (col) {
+            cells.push({ row: structRow, col: col, value: value });
+          }
+
+          // 找對應的 summaryData 學生 index
+          if (summaryData) {
+            var sumIdx = -1;
+            summaryData.students.forEach(function(sumSt, i) {
+              if ((sumSt.sheetRow || sumSt.row) === structRow) sumIdx = i;
+            });
+            if (sumIdx >= 0) {
+              uiUpdates.push({ studentIdx: sumIdx, lessonIdx: lIdx, field: isScore ? 'score' : 'att', value: value });
+            }
+          }
+        });
+      });
+    });
+
+    if (!cells.length) {
+      showSumStatus('⚠️ 未匹配任何學生或堂次，請重試', 'err');
+      return;
+    }
+
+    showSumStatus('⏳ 寫入中（' + cells.length + ' 格）...', 'info');
+
+    // 改用 JSONP，避免 GAS doPost 的 CORS preflight 問題
+    jsonpCall({
+      action: 'writeSummaryCells',
+      authCode: AUTH_CODE,
+      className: className,
+      cells: JSON.stringify(cells)
+      // sheetId 已由 jsonpCall 自動帶入
+    }, function(err, res) {
+      if (err) { showSumStatus('❌ 寫入請求失敗：' + err.message, 'err'); return; }
+      if (res && res.ok) {
+        if (summaryData) {
+          uiUpdates.forEach(function(u) {
+            var st = summaryData.students[u.studentIdx];
+            if (!st || !st.lessonRecords[u.lessonIdx]) return;
+            if (u.field === 'att') st.lessonRecords[u.lessonIdx].att = u.value;
+            else                   st.lessonRecords[u.lessonIdx].score = u.value;
+          });
+        }
+        showSumStatus('✅ 寫入 ' + cells.length + ' 格，畫面已更新', 'ok');
+        renderSummaryTable();
+      } else {
+        showSumStatus('❌ 寫入失敗：' + (res && res.msg || ''), 'err');
+      }
+    });
+  });
+}
+
+function showSumStatus(msg, type) {
+  var el = document.getElementById('sum-status-bar');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'status-bar ' + (type || '');
+  el.style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════
+// 考試成績頁
+// ══════════════════════════════════════════════
+var examData        = null;
+var currentExamIdx  = -1;
+var pendingChanges  = {};
+var examRecorder = null, examAudioChunks = [], examIsRecording = false;
+var examRecTimer = null, examRecSeconds = 0;
+
+function toggleExamMic() {
+  if (examIsRecording) { stopExamRecording(); } else { startExamRecording(); }
+}
+
+function startExamRecording() {
+  if (!examData || currentExamIdx < 0) { showExamStatus('❌ 請先選班級與考試', 'err'); return; }
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+    var mimeType = 'audio/webm';
+    examAudioChunks = [];
+    examRecorder = new MediaRecorder(stream);
+    examRecorder.addEventListener('dataavailable', function(e) { if (e.data.size > 0) examAudioChunks.push(e.data); });
+    examRecorder.addEventListener('stop', function() {
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      processExamAudio(mimeType);
+    });
+    examRecorder.start();
+    examIsRecording = true;
+    document.getElementById('exam-mic-btn').textContent = '⏹ 停止並辨識';
+    document.getElementById('exam-mic-btn').className = 'mic-btn recording';
+    document.getElementById('exam-rec-timer').style.display = 'flex';
+    examRecSeconds = 0;
+    examRecTimer = setInterval(function(){
+      examRecSeconds++;
+      document.getElementById('exam-rec-timer').textContent = examRecSeconds + 's';
+      if (examRecSeconds >= 45) stopExamRecording();
+    }, 1000);
+    showExamStatus('🔴 錄音中... 例如唸：Amy 90分、Brian 80分', 'info');
+  });
+}
+
+function stopExamRecording() {
+  if (!examRecorder || !examIsRecording) return;
+  examIsRecording = false;
+  clearInterval(examRecTimer);
+  document.getElementById('exam-rec-timer').style.display = 'none';
+  examRecorder.stop();
+  document.getElementById('exam-mic-btn').textContent = '⏳ 辨識中...';
+  document.getElementById('exam-mic-btn').className = 'mic-btn processing';
+}
+
+function processExamAudio(mimeType) {
+  var blob = new Blob(examAudioChunks, { type: mimeType });
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    var base64 = reader.result.split(',')[1];
+    var studentList = examData.students.map(function(s){ return s.eName || s.cName; }).join(', ');
+    var prompt = "你是成績輸入助手。名單：[" + studentList + "]。請聽錄音並辨識學生的分數。" +
+                 "格式（JSON 陣列）：[{\"name\":\"學生名\",\"score\":數字}]";
+    var parts = [
+      { text: prompt },
+      { inline_data: { mime_type: mimeType, data: base64 } }
+    ];
+    callGeminiWithFallback(parts, function(err, results) {
+      var btn = document.getElementById('exam-mic-btn');
+      btn.textContent = '🎤 語音輸入成績';
+      btn.className = 'mic-btn';
+      if (err) { showExamStatus('❌ 辨識失敗：' + err.message, 'err'); return; }
+      applyExamVoiceResults(results);
+    });
+  };
+  reader.readAsDataURL(blob);
+}
+
+function applyExamVoiceResults(results) {
+  var matched = 0;
+  var inputs = document.querySelectorAll('.score-input');
+  results.forEach(function(res) {
+    var upName = res.name.toLowerCase().replace(/\s/g,'');
+    for (var i = 0; i < examData.students.length; i++) {
+      var st = examData.students[i];
+      if ((st.eName||'').toLowerCase() === upName || (st.cName||'') === upName) {
+        if (inputs[i]) {
+          inputs[i].value = res.score;
+          onScoreInput(inputs[i]);
+          matched++;
+        }
+      }
+    }
+  });
+  showExamStatus('✅ 語音已填入 ' + matched + ' 筆，請檢查後儲存', 'ok');
+}
+
+function showExamStatus(msg, type) {
+  var el = document.getElementById('exam-status-bar');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.className = 'status-bar ' + type;
+}
+
+function onExamClassChange() {
+  var className = document.getElementById('exam-class-sel').value;
+  examData = null; currentExamIdx = -1; pendingChanges = {};
+  document.getElementById('exam-main').style.display  = 'none';
+  document.getElementById('exam-empty').style.display = 'block';
+  document.getElementById('exam-loading').style.display = 'none';
+  document.getElementById('exam-refresh-btn').style.display = 'none';
+  if (!className) return;
+  document.getElementById('exam-loading').style.display = 'block';
+  document.getElementById('exam-empty').style.display  = 'none';
+  jsonpCall({ action:'getExamData', className:className }, function(err, data) {
+    document.getElementById('exam-loading').style.display = 'none';
+    if (err || !data || data.error) {
+      document.getElementById('exam-empty').style.display = 'block';
+      document.getElementById('exam-empty').innerHTML = '<div class="empty">❌ '+(data&&data.error||'載入失敗')+'</div>';
+      return;
+    }
+    examData = data;
+    document.getElementById('exam-refresh-btn').style.display = 'block';
+    renderExamTabs();
+    document.getElementById('exam-main').style.display = 'block';
+    if (data.exams.length > 0) selectExam(0);
+  });
+}
+
+function renderExamTabs() {
+  if (!examData) return;
+  var html = '';
+  examData.exams.forEach(function(exam, i) {
+    var cls = exam.type + (i === currentExamIdx ? ' active' : '');
+    html += '<button class="exam-tab '+cls+'" onclick="selectExam('+i+')">';
+    html += exam.label + '</button>';
+  });
+  document.getElementById('exam-tab-row').innerHTML = html;
+}
+
+function selectExam(idx) {
+  if (Object.keys(pendingChanges).length > 0) {
+    if (!confirm('有未儲存的分數，切換考試後將遺失，確定要繼續嗎？')) return;
+  }
+  currentExamIdx = idx;
+  pendingChanges = {};
+  renderExamTabs();
+  renderExamTable();
+}
+
+function renderExamTable() {
+  if (!examData || currentExamIdx < 0) return;
+  var exam     = examData.exams[currentExamIdx];
+  var students = examData.students;
+  var scores   = exam.scores || [];
+  var filled = 0, total = students.length, sum = 0, count = 0;
+  scores.forEach(function(s) { if (s !== '') { filled++; sum += parseFloat(s)||0; count++; } });
+  var avg = count > 0 ? (sum / count).toFixed(1) : '--';
+  document.getElementById('exam-stats').innerHTML =
+    '已填 <span style="color:#274e13">' + filled + '</span> / ' + total + ' 人　' +
+    '平均 <span style="color:#1a5276">' + avg + '</span> 分　' +
+    '<span style="color:#999">（Tab 鍵跳下一格）</span>';
+  var html = '';
+  students.forEach(function(st, i) {
+    var score   = scores[i] !== undefined ? scores[i] : '';
+    var hasScore = score !== '';
+    var numScore = hasScore ? parseFloat(score) : null;
+    var inputCls = 'score-input';
+    if (hasScore) {
+      if (numScore > 100) inputCls += ' over-100';
+      else if (numScore < 60) inputCls += ' low-score';
+      else inputCls += ' has-score';
+    }
+    var nameHtml = st.eName && st.cName
+      ? '<div class="name-en">'+st.eName+'</div><div class="name-zh">'+st.cName+'</div>'
+      : '<div class="name-en">'+(st.eName||st.cName)+'</div>';
+    html += '<tr>';
+    html += '<td>'+nameHtml+'</td>';
+    html += '<td style="text-align:center;">';
+    html += '<input type="number" class="'+inputCls+'" ';
+    html += 'data-row="'+st.row+'" data-idx="'+i+'" ';
+    html += 'value="'+(hasScore?score:'')+'" ';
+    html += 'placeholder="--" min="0" max="200" step="1" ';
+    html += 'oninput="onScoreInput(this)" ';
+    html += 'onkeydown="onScoreKeydown(event,'+i+')">';
+    html += '</td>';
+    html += '<td style="text-align:center;display:flex;gap:4px;align-items:center;justify-content:center;">';
+    html += '<button onclick="openExamWheel('+i+')" style="background:#274e13;border:none;cursor:pointer;font-size:13px;color:white;border-radius:6px;padding:4px 8px;" title="轉盤輸入">⚙</button>';
+    html += '<button onclick="clearExamScore('+i+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:#ccc;" title="清除">✕</button>';
+    html += '</td>';
+    html += '</tr>';
+  });
+  document.getElementById('exam-tbody').innerHTML = html;
+  updateSaveInfo();
+}
+
+function onScoreInput(input) {
+  var row = input.dataset.row;
+  var val = input.value.trim();
+  pendingChanges[row] = val;
+  input.className = 'score-input';
+  if (val !== '') {
+    var n = parseFloat(val);
+    if (n > 100) input.className += ' over-100';
+    else if (n < 60) input.className += ' low-score';
+    else input.className += ' has-score';
+  }
+  updateSaveInfo();
+  updateExamStats();
+}
+
+function onScoreKeydown(event, idx) {
+  if (event.key === 'Tab' || event.key === 'Enter') {
+    event.preventDefault();
+    var inputs = document.querySelectorAll('.score-input');
+    var next   = inputs[idx + 1];
+    if (next) { next.focus(); next.select(); }
+  }
+}
+
+function clearExamScore(idx) {
+  var inputs = document.querySelectorAll('.score-input');
+  var input  = inputs[idx];
+  if (!input) return;
+  input.value = '';
+  input.className = 'score-input';
+  pendingChanges[input.dataset.row] = '';
+  updateSaveInfo();
+  updateExamStats();
+}
+
+function updateSaveInfo() {
+  var changed = Object.keys(pendingChanges).length;
+  var info = document.getElementById('exam-save-info');
+  if (changed > 0) {
+    info.innerHTML = '<span style="color:#c0392b;font-weight:700;">⚠️ 有 ' + changed + ' 筆未儲存</span>';
+  } else {
+    info.textContent = 'Tab 鍵切換下一位學生';
+  }
+}
+
+function updateExamStats() {
+  if (!examData || currentExamIdx < 0) return;
+  var inputs  = document.querySelectorAll('.score-input');
+  var total   = examData.students.length;
+  var filled  = 0, sum = 0, count = 0;
+  inputs.forEach(function(inp) {
+    if (inp.value !== '') { filled++; sum += parseFloat(inp.value)||0; count++; }
+  });
+  var avg = count > 0 ? (sum / count).toFixed(1) : '--';
+  document.getElementById('exam-stats').innerHTML =
+    '已填 <span style="color:#274e13">' + filled + '</span> / ' + total + ' 人　' +
+    '平均 <span style="color:#1a5276">' + avg + '</span> 分　' +
+    '<span style="color:#999">（Tab 鍵跳下一格）</span>';
+}
+
+function openExamWheel(idx) {
+  var inputs = document.querySelectorAll('.score-input');
+  var input  = inputs[idx];
+  if (!input) return;
+  var st = examData.students[idx];
+  var name = st.eName && st.cName ? st.eName + '　' + st.cName : (st.eName || st.cName);
+  var exam = examData.exams[currentExamIdx];
+  var initVal = input.value !== '' ? parseInt(input.value) : 80;
+  if (isNaN(initVal) || initVal < 0) initVal = 80;
+  if (initVal > 110) initVal = 110;
+  wheelContext = { mode: 'exam', examIdx: idx, input: input };
+  document.getElementById('wheel-student-name').textContent = name + '　' + exam.label;
+  document.getElementById('wheel-score-display').textContent = initVal;
+  document.getElementById('wheel-overlay').style.display = 'flex';
+  numpadReset(initVal);
+  switchScoreMode(currentScoreMode);
+  buildExamWheel();
+  wheelValue = initVal;
+  highlightCenter(initVal);
+  setTimeout(function(){ document.getElementById('wheel-scroll').scrollTop = initVal * ITEM_HEIGHT; }, 50);
+}
+
+function buildExamWheel() {
+  var scroll = document.getElementById('wheel-scroll');
+  var html = '<div class="wheel-item" style="height:64px;"></div><div class="wheel-item" style="height:64px;"></div>';
+  for (var i = 0; i <= 110; i++) html += '<div class="wheel-item" data-val="' + i + '" onclick="wheelTap(' + i + ')">' + i + '</div>';
+  html += '<div class="wheel-item" style="height:64px;"></div><div class="wheel-item" style="height:64px;"></div>';
+  scroll.innerHTML = html;
+  var quick = document.getElementById('wheel-quick');
+  var qHtml = '';
+  QUICK_SCORES.forEach(function(q){ qHtml += '<button class="quick-btn" onclick="wheelTap(' + q + ')">' + q + '</button>'; });
+  quick.innerHTML = qHtml;
+  scroll.onscroll = function() {
+    var idx = Math.round(scroll.scrollTop / ITEM_HEIGHT);
+    idx = Math.max(0, Math.min(110, idx));
+    wheelValue = idx;
+    document.getElementById('wheel-score-display').textContent = idx;
+    highlightCenter(idx);
+  };
+}
+
+function saveExamScores() {
+  if (!examData || currentExamIdx < 0) return;
+  var exam    = examData.exams[currentExamIdx];
+  var inputs  = document.querySelectorAll('.score-input');
+  var scores  = [];
+  inputs.forEach(function(inp) {
+    scores.push({ row: inp.dataset.row, score: inp.value.trim() });
+  });
+  var btn = document.querySelector('#exam-score-card .rpt-btn');
+  btn.textContent = '⏳ 儲存中...';
+  btn.disabled = true;
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({
+      action:    'saveExamScores',
+      authCode:  AUTH_CODE,
+      sheetId:   SHEET_ID,
+      className: examData.className,
+      colIdx:    exam.colIdx,
+      scores:    JSON.stringify(scores)
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(result) {
+    btn.textContent = '💾 儲存全部分數';
+    btn.disabled = false;
+    if (result && result.ok) {
+      examData.exams[currentExamIdx].scores = scores.map(function(s){ return s.score; });
+      pendingChanges = {};
+      updateSaveInfo();
+      showToast('✅ ' + result.msg);
+    } else {
+      showToast('❌ 儲存失敗：' + (result && result.msg || ''));
+    }
+  })
+  .catch(function(err) {
+    btn.textContent = '💾 儲存全部分數';
+    btn.disabled = false;
+    showToast('❌ 連線失敗：' + err.message);
+  });
+}
+
+// ══════════════════════════════════════════════
+// 總覽頁（管理員專用）
+// ══════════════════════════════════════════════
+function initOverviewTab() {
+  jsonpCall({ action: 'getTeacherList' }, function(err, data) {
+    if (err || !data || data.error) return;
+    var sel = document.getElementById('overview-teacher-sel');
+    var opts = '<option value="">請選擇老師...</option>';
+    data.forEach(function(t) {
+      opts += '<option value="' + t.name + '">' + t.name + (t.role === 'admin' ? ' ★' : '') + '</option>';
+    });
+    sel.innerHTML = opts;
+  });
+}
+
+function onOverviewTeacherChange() {
+  document.getElementById('overview-result').innerHTML = '<div class="empty">請按查詢載入資料</div>';
+}
+
+function loadOverview() {
+  var teacherName = document.getElementById('overview-teacher-sel').value;
+  var threshold   = parseFloat(document.getElementById('overview-threshold').value) || 80;
+  if (!teacherName) { showToast('❌ 請先選擇老師'); return; }
+  document.getElementById('overview-result').innerHTML = '<div class="overview-loading">⏳ 載入中，請稍候...</div>';
+  jsonpCall({ action: 'getTeacherOverview', teacherName: teacherName, threshold: threshold }, function(err, data) {
+    if (err || !data || data.error) {
+      document.getElementById('overview-result').innerHTML = '<div class="empty">❌ 載入失敗</div>';
+      return;
+    }
+    renderOverview(data, threshold);
+  });
+}
+
+function clearServerCache() {
+  if (!confirm('確定要清除伺服器快取嗎？\n（授權紀錄或班級名單有變動時使用）')) return;
+  jsonpCall({ action: 'clearCache', authCode: AUTH_CODE }, function(err, r) {
+    if (r && r.ok) showToast('✅ ' + r.msg);
+    else showToast('❌ 清除失敗：' + (r && r.msg || ''));
+  });
+}
+
+function renderOverview(data, threshold) {
+  if (!data.classes || !data.classes.length) {
+    document.getElementById('overview-result').innerHTML =
+      '<div class="card"><div class="empty">找不到 ' + data.teacherName + ' 的班級</div></div>';
+    return;
+  }
+  var totalAttAlerts = 0, totalScoreAlerts = 0;
+  data.classes.forEach(function(c) {
+    totalAttAlerts   += c.attendanceAlerts.length;
+    totalScoreAlerts += c.scoreAlerts.length;
+  });
+  var html = '';
+  html += '<div class="card" style="background:#f8f9fa;margin-bottom:14px;">';
+  html += '<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;">';
+  html += '<div style="flex:1;font-size:13px;font-weight:700;color:#274e13;">' + data.teacherName + ' 老師　共 ' + data.classes.length + ' 個班級</div>';
+  html += '<div style="font-size:12px;color:#856404;">⚠️ 出勤警示 ' + totalAttAlerts + ' 人次</div>';
+  html += '<div style="font-size:12px;color:#c0392b;">📊 成績警示 ' + totalScoreAlerts + ' 筆（低於 ' + threshold + ' 分 / 缺考）</div>';
+  html += '</div></div>';
+  data.classes.forEach(function(cls) {
+    var hasAtt   = cls.attendanceAlerts.length > 0;
+    var hasScore = cls.scoreAlerts.length > 0;
+    var badgeClass = (hasAtt || hasScore) ? 'warn' : 'ok';
+    var badgeText  = (hasAtt || hasScore) ? '⚠️ 需注意' : '✅ 正常';
+    html += '<div class="class-card">';
+    html += '<div class="class-card-header"><h4>' + cls.className + '</h4>';
+    html += '<span class="class-card-badge ' + badgeClass + '">' + badgeText + '</span></div>';
+    html += '<div class="class-card-body">';
+    html += '<div class="alert-section-title">⚠️ 未補課 / 缺作業</div>';
+    if (!hasAtt) {
+      html += '<div class="no-alert">✓ 無警示</div>';
+    } else {
+      cls.attendanceAlerts.forEach(function(a) {
+        html += '<div class="alert-row"><div class="alert-name">' + a.name + '</div><div class="alert-detail">';
+        if (a.missingMakeup.length) html += '<span style="color:#856404;">未補課：' + a.missingMakeup.join(', ') + '</span>';
+        if (a.missingMakeup.length && a.missingHw.length) html += '　';
+        if (a.missingHw.length) html += '<span style="color:#c0392b;">缺作業：' + a.missingHw.join(', ') + '</span>';
+        html += '</div></div>';
+      });
+    }
+    html += '<div class="alert-section-title">📊 成績低於 ' + threshold + ' 分 / 缺考</div>';
+    if (!hasScore) {
+      html += '<div class="no-alert">✓ 無警示</div>';
+    } else {
+      var byStudent = {};
+      cls.scoreAlerts.forEach(function(a) {
+        if (!byStudent[a.name]) byStudent[a.name] = [];
+        byStudent[a.name].push(a);
+      });
+      Object.keys(byStudent).forEach(function(name) {
+        html += '<div class="alert-row"><div class="alert-name">' + name + '</div><div class="alert-detail">';
+        byStudent[name].forEach(function(a, i) {
+          if (i > 0) html += '　';
+          if (a.missing) {
+            html += a.exam + '：<span style="font-weight:700;color:#7d3c98;">缺考</span>';
+          } else {
+            var scoreColor = a.score < 60 ? '#c0392b' : '#ca6f1e';
+            html += a.exam + '：<span style="font-weight:700;color:' + scoreColor + ';">' + a.score + '</span>';
+          }
+        });
+        html += '</div></div>';
+      });
+    }
+    html += '</div></div>';
+  });
+  document.getElementById('overview-result').innerHTML = html;
+}
+</script>
+</body>
+</html>
