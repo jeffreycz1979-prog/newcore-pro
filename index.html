@@ -704,7 +704,7 @@
 // ══════════════════════════════════════════════
 // ── 固定網址（寫死在前端，老師不需填寫）──
 var API_URL   = localStorage.getItem('nc_api_url') || '';   // 各補習班自己的 GAS（由 sheetId 決定）
-var BRAIN_URL = 'https://script.google.com/macros/s/BRAIN_GAS_URL_HERE/exec'; // ← 授權中心 GAS，部署後填入
+var BRAIN_URL = 'https://script.google.com/macros/s/AKfycbwMfZQGDq1dk0Ok0KlbnO5F3Df7SFNXA4M8lB8-sspkVNcx5rBusIlynWCvO15wtdiPew/exec';
 
 var AUTH_CODE   = localStorage.getItem('nc_auth_code') || '';
 var SHEET_ID    = localStorage.getItem('nc_sheet_id')  || '';
@@ -919,16 +919,25 @@ function doLogin() {
   });
 }
 
-/** 打授權中心驗證 Sheet ID，取得 GAS 網址 **/
+/** 打授權中心驗證 Sheet ID（JSONP，避免 CORS）**/
 function checkLicense(sheetId, callback) {
-  fetch(BRAIN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'checkLicense', sheetId: sheetId })
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(data){ callback(null, data); })
-  .catch(function(err){ callback(err); });
+  var cbName = '__brainCb' + (cbCounter++);
+  var url = BRAIN_URL + '?callback=' + cbName
+    + '&action=checkLicense'
+    + '&sheetId=' + encodeURIComponent(sheetId);
+  window[cbName] = function(data) {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(null, data);
+  };
+  var script = document.createElement('script');
+  script.src = url;
+  script.onerror = function() {
+    delete window[cbName];
+    if (script.parentNode) script.parentNode.removeChild(script);
+    callback(new Error('授權中心連線失敗'));
+  };
+  document.body.appendChild(script);
 }
 
 function onLoginSuccess(data, licData) {
