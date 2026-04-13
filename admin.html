@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NewCore Admin — 班級生成</title>
+<title>NewCore Admin — 管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -13,6 +13,7 @@
     --accent:   #e8ff47;
     --accent2:  #47c8ff;
     --danger:   #ff4757;
+    --success:  #2ed573;
     --muted:    #555566;
     --text:     #e8e8f0;
     --text-dim: #888899;
@@ -42,13 +43,21 @@
   .client-badge.visible { display: flex; }
   .client-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
 
+  /* Tabs */
+  .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 32px; }
+  .tab-btn { font-family: var(--mono); font-size: 0.78rem; padding: 12px 20px; color: var(--text-dim); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; letter-spacing: .04em; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; flex: 1; }
+  .tab-content.active { display: flex; }
+
   /* Modal */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
   .overlay.visible { display: flex; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 480px; max-width: 90vw; display: flex; flex-direction: column; gap: 20px; animation: modalIn .25s cubic-bezier(.34,1.56,.64,1); }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 480px; max-width: 90vw; display: flex; flex-direction: column; gap: 20px; animation: modalIn .25s cubic-bezier(.34,1.56,.64,1); max-height: 80vh; overflow-y: auto; }
   @keyframes modalIn { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   .modal-title { font-family: var(--display); font-size: 1.1rem; font-weight: 800; color: var(--text); }
-  .client-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .client-list { display: flex; flex-direction: column; gap: 8px; }
   .client-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: all .15s; gap: 12px; }
   .client-item:hover { border-color: var(--accent); }
   .client-item.selected { border-color: var(--accent); background: rgba(232,255,71,.05); }
@@ -62,10 +71,9 @@
   .btn-confirm:hover { opacity: .85; }
   .btn-confirm:disabled { opacity: .35; cursor: not-allowed; }
 
-  /* Layout */
-  main { display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 61px); }
-  .panel-left { background: var(--surface); border-right: 1px solid var(--border); padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; }
-  .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+  /* Layout - Class Builder */
+  .panel-left { background: var(--surface); border-right: 1px solid var(--border); padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; width: 380px; flex-shrink: 0; }
+  .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; }
 
   .section-title { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
   .field-group { display: flex; flex-direction: column; gap: 14px; }
@@ -74,20 +82,17 @@
   .field input:focus, .field select:focus { border-color: var(--accent); }
   .field select option { background: var(--surface); }
 
-  /* Days */
   .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
   .day-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-family: var(--mono); font-size: 0.75rem; padding: 8px 0; text-align: center; cursor: pointer; transition: all .15s; user-select: none; }
   .day-btn:hover { border-color: var(--accent); color: var(--accent); }
   .day-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
 
-  /* Teacher rows */
   .teacher-rows { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
   .teacher-row { display: flex; align-items: center; gap: 8px; }
   .day-label { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 6px 10px; min-width: 38px; text-align: center; flex-shrink: 0; }
   .teacher-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--sans); font-size: 0.82rem; padding: 8px 12px; outline: none; transition: border-color .2s; }
   .teacher-row input:focus { border-color: var(--accent); }
 
-  /* Spec summary */
   .spec-summary { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); line-height: 1.8; }
   .spec-summary strong { color: var(--accent); font-weight: 500; }
   .unit-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
@@ -96,7 +101,6 @@
 
   .divider { height: 1px; background: var(--border); }
 
-  /* Buttons */
   .btn-preview { width: 100%; background: transparent; border: 1px solid var(--accent); border-radius: var(--radius); color: var(--accent); font-family: var(--display); font-size: 0.95rem; font-weight: 700; padding: 12px; cursor: pointer; transition: all .15s; }
   .btn-preview:hover { background: var(--accent); color: #000; }
   .btn-preview:disabled { opacity: .35; cursor: not-allowed; }
@@ -113,7 +117,7 @@
   .stat-card.holiday .val { color: var(--danger); }
   .stat-card.end .val { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
 
-  /* Table */
+  /* Schedule Table */
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .table-header { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
   .schedule-body { max-height: calc(100vh - 340px); overflow-y: auto; }
@@ -130,6 +134,41 @@
   .teacher-cell { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
   .holiday-tag { font-family: var(--mono); font-size: 0.72rem; color: var(--danger); display: flex; align-items: center; gap: 5px; }
   .holiday-tag::before { content: '✕'; font-size: 0.65rem; }
+
+  /* Teacher Management Tab */
+  .teacher-mgmt { padding: 28px 32px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
+  .teacher-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .teacher-toolbar h2 { font-family: var(--display); font-size: 1rem; font-weight: 800; }
+
+  /* Teacher table */
+  .teacher-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .teacher-table-header { display: grid; grid-template-columns: 140px 120px 90px 1fr 120px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
+  .teacher-row-item { display: grid; grid-template-columns: 140px 120px 90px 1fr 120px; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; transition: background .1s; }
+  .teacher-row-item:last-child { border-bottom: none; }
+  .teacher-row-item:hover { background: rgba(255,255,255,.03); }
+  .role-badge { font-family: var(--mono); font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+  .role-badge.admin { background: rgba(232,255,71,.1); border: 1px solid rgba(232,255,71,.3); color: var(--accent); }
+  .role-badge.teacher { background: rgba(71,200,255,.1); border: 1px solid rgba(71,200,255,.3); color: var(--accent2); }
+  .role-badge.superadmin { background: rgba(255,71,87,.1); border: 1px solid rgba(255,71,87,.3); color: var(--danger); }
+  .auth-code-cell { font-family: var(--mono); font-size: 0.8rem; color: var(--text); }
+  .temp-class-cell { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
+  .action-btns { display: flex; gap: 6px; }
+  .btn-edit { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.7rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
+  .btn-edit:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-del { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.7rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
+  .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Add Teacher Form */
+  .add-teacher-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .form-title { font-family: var(--mono); font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .form-field label { display: block; font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); margin-bottom: 5px; }
+  .form-field input, .form-field select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--sans); font-size: 0.85rem; padding: 9px 12px; outline: none; transition: border-color .2s; appearance: none; }
+  .form-field input:focus, .form-field select:focus { border-color: var(--accent); }
+  .form-field select option { background: var(--surface); }
+  .btn-add-teacher { background: var(--accent); border: none; border-radius: var(--radius); color: #000; font-family: var(--display); font-size: 0.88rem; font-weight: 800; padding: 11px 24px; cursor: pointer; transition: opacity .15s; align-self: flex-end; }
+  .btn-add-teacher:hover { opacity: .85; }
+  .btn-add-teacher:disabled { opacity: .35; cursor: not-allowed; }
 
   /* Empty / Loading */
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; color: var(--muted); font-family: var(--mono); font-size: 0.85rem; text-align: center; padding: 60px; }
@@ -162,6 +201,12 @@
   </div>
 </header>
 
+<!-- Tabs -->
+<div class="tab-bar" id="tabBar" style="display:none">
+  <button class="tab-btn active" onclick="switchTab('build')">📅 建班 Class Builder</button>
+  <button class="tab-btn" onclick="switchTab('teachers')">👥 老師管理 Teachers</button>
+</div>
+
 <!-- Client Modal -->
 <div class="overlay" id="clientOverlay">
   <div class="modal">
@@ -174,84 +219,134 @@
   </div>
 </div>
 
-<main>
-  <!-- Left -->
-  <div class="panel-left">
-    <div>
-      <div class="section-title">班級資訊 Class Info</div>
-      <div class="field-group">
-        <div class="field">
-          <label>班級名稱 Class Name</label>
-          <input type="text" id="className" placeholder="e.g. G1/THC5, 114-2 ESL04" />
+<!-- Tab: Class Builder -->
+<div class="tab-content active" id="tab-build" style="height:calc(100vh - 110px)">
+  <div style="display:flex;flex:1;height:100%;overflow:hidden">
+    <div class="panel-left">
+      <div>
+        <div class="section-title">班級資訊 Class Info</div>
+        <div class="field-group">
+          <div class="field">
+            <label>班級名稱 Class Name</label>
+            <input type="text" id="className" placeholder="e.g. G1/THC5, 114-2 ESL04" />
+          </div>
+          <div class="field">
+            <label>課程規格 Curriculum Spec</label>
+            <select id="specSelect" onchange="onSpecChange()">
+              <option value="">— 請先登入並選擇補習班 —</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label>課程規格 Curriculum Spec</label>
-          <select id="specSelect" onchange="onSpecChange()">
-            <option value="">— 請先登入並選擇補習班 —</option>
+      </div>
+      <div id="specSummaryWrap" style="display:none">
+        <div class="spec-summary" id="specSummaryContent"></div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="section-title">排課設定 Schedule Config</div>
+        <div class="field-group">
+          <div class="field">
+            <label>開始日期 Start Date</label>
+            <input type="date" id="startDate" />
+          </div>
+          <div class="field">
+            <label>上課星期 Days of Week</label>
+            <div class="days-grid" id="daysGrid">
+              <div class="day-btn" data-day="1" onclick="toggleDay(this)">一</div>
+              <div class="day-btn" data-day="2" onclick="toggleDay(this)">二</div>
+              <div class="day-btn" data-day="3" onclick="toggleDay(this)">三</div>
+              <div class="day-btn" data-day="4" onclick="toggleDay(this)">四</div>
+              <div class="day-btn" data-day="5" onclick="toggleDay(this)">五</div>
+              <div class="day-btn" data-day="6" onclick="toggleDay(this)">六</div>
+              <div class="day-btn" data-day="7" onclick="toggleDay(this)">日</div>
+            </div>
+          </div>
+          <div class="field">
+            <label>授課老師 Teacher（每個上課日）</label>
+            <div class="teacher-rows" id="teacherRows">
+              <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">請先選擇上課星期 ↑</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <button class="btn-preview" id="btnPreview" onclick="doPreview()">▶ 預覽課表 Preview Schedule</button>
+      <button class="btn-create" id="btnCreate" onclick="doCreate()">✦ 正式建立班級 Create Class</button>
+    </div>
+    <div class="panel-right" id="panelRight">
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div>登入後選擇補習班<br>再設定排課參數</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:6px">Login → Select Client → Configure → Preview</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab: Teacher Management -->
+<div class="tab-content" id="tab-teachers" style="height:calc(100vh - 110px)">
+  <div class="teacher-mgmt">
+
+    <!-- Add Teacher Form -->
+    <div class="add-teacher-form">
+      <div class="form-title">新增老師 Add Teacher</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>姓名 Name</label>
+          <input type="text" id="newTeacherName" placeholder="e.g. Sandy" />
+        </div>
+        <div class="form-field">
+          <label>授權碼 Auth Code</label>
+          <input type="text" id="newTeacherCode" placeholder="e.g. Sandy2026" />
+        </div>
+        <div class="form-field">
+          <label>角色 Role</label>
+          <select id="newTeacherRole">
+            <option value="teacher">Teacher 老師</option>
+            <option value="admin">Admin 管理員</option>
           </select>
         </div>
       </div>
+      <div class="form-field" style="width:100%">
+        <label>臨時班級 Temp Classes（逗號分隔，可留空）</label>
+        <input type="text" id="newTeacherTemp" placeholder="e.g. THC低A, THC低B" />
+      </div>
+      <button class="btn-add-teacher" id="btnAddTeacher" onclick="addTeacher()">+ 新增 Add</button>
     </div>
 
-    <div id="specSummaryWrap" style="display:none">
-      <div class="spec-summary" id="specSummaryContent"></div>
-    </div>
-
-    <div class="divider"></div>
-
+    <!-- Teacher List -->
     <div>
-      <div class="section-title">排課設定 Schedule Config</div>
-      <div class="field-group">
-        <div class="field">
-          <label>開始日期 Start Date</label>
-          <input type="date" id="startDate" />
-        </div>
-        <div class="field">
-          <label>上課星期 Days of Week</label>
-          <div class="days-grid" id="daysGrid">
-            <div class="day-btn" data-day="1" onclick="toggleDay(this)">一</div>
-            <div class="day-btn" data-day="2" onclick="toggleDay(this)">二</div>
-            <div class="day-btn" data-day="3" onclick="toggleDay(this)">三</div>
-            <div class="day-btn" data-day="4" onclick="toggleDay(this)">四</div>
-            <div class="day-btn" data-day="5" onclick="toggleDay(this)">五</div>
-            <div class="day-btn" data-day="6" onclick="toggleDay(this)">六</div>
-            <div class="day-btn" data-day="7" onclick="toggleDay(this)">日</div>
+      <div class="teacher-toolbar">
+        <h2>老師清單 Teacher List</h2>
+        <button class="btn-sm outline" onclick="loadTeachers()">↻ 重新載入</button>
+      </div>
+      <div style="margin-top:14px">
+        <div class="teacher-table">
+          <div class="teacher-table-header">
+            <div>授權碼 Code</div>
+            <div>姓名 Name</div>
+            <div>角色 Role</div>
+            <div>臨時班級</div>
+            <div>操作</div>
           </div>
-        </div>
-        <div class="field">
-          <label>授課老師 Teacher（每個上課日）</label>
-          <div class="teacher-rows" id="teacherRows">
-            <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">請先選擇上課星期 ↑</div>
+          <div id="teacherListBody">
+            <div class="loading"><div class="spinner"></div>請先選擇補習班</div>
           </div>
         </div>
       </div>
     </div>
-
-    <div class="divider"></div>
-
-    <button class="btn-preview" id="btnPreview" onclick="doPreview()">▶ 預覽課表 Preview Schedule</button>
-    <button class="btn-create" id="btnCreate" onclick="doCreate()">✦ 正式建立班級 Create Class</button>
   </div>
-
-  <!-- Right -->
-  <div class="panel-right" id="panelRight">
-    <div class="empty-state">
-      <div class="empty-icon">📅</div>
-      <div>登入後選擇補習班<br>再設定排課參數</div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:6px">Login → Select Client → Configure → Preview</div>
-    </div>
-  </div>
-</main>
+</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxE7aSryLEDxBqi-28EpdjvK9lhQwvGMKnWJlCbcHIG9Rc6FEPN3UrZwSIqMNVJ1GPs/exec';
-
 const DAY_NAMES      = {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'日'};
 const WEEKDAY_TO_NUM = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','日':'7'};
 
 let authCode        = '';
+let userRole        = '';
 let specsData       = [];
 let selectedDays    = '';
 let currentSchedule = null;
@@ -274,12 +369,8 @@ function callGAS(params) {
   });
 }
 
-// POST（建班用，資料較大）
 async function postGAS(payload) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
+  const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
   return await res.json();
 }
 
@@ -291,7 +382,17 @@ function toast(msg, type='ok', dur=3000) {
   setTimeout(() => el.className = 'toast', dur);
 }
 
-// ── Login ──
+// ── Tabs ──
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['build','teachers'][i] === tab);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'teachers' && selectedClient) loadTeachers();
+}
+
+// ── Login（走授權中心）──
 async function doLogin() {
   const code = document.getElementById('authInput').value.trim();
   if (!code) return toast('請輸入授權碼', 'err');
@@ -299,12 +400,13 @@ async function doLogin() {
   statusEl.textContent = '驗證中…';
   statusEl.className = 'auth-status';
   try {
-    const res = await callGAS({ action: 'verifyAuth', authCode: code });
+    const res = await callGAS({ action: 'verifyMasterAuth', authCode: code });
     if (res.ok) {
       authCode = code;
+      userRole = res.role;
       statusEl.textContent = `✓ ${res.name} (${res.role})`;
       statusEl.className = 'auth-status ok';
-      if (res.role !== 'admin') { toast('⚠ 僅 Admin 可使用建班功能', 'err', 4000); return; }
+      document.getElementById('tabBar').style.display = 'flex';
       await loadAndShowClientModal();
     } else {
       statusEl.textContent = '✕ ' + (res.msg || '驗證失敗');
@@ -325,7 +427,7 @@ async function loadAndShowClientModal() {
   pendingClient = null;
   try {
     const res = await callGAS({ action: 'getMasterClients' });
-    if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);font-family:var(--mono);font-size:.8rem;padding:12px">載入失敗</div>`; return; }
+    if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">載入失敗</div>`; return; }
     clientsData = res.clients;
     listEl.innerHTML = '';
     clientsData.forEach(c => {
@@ -348,7 +450,7 @@ async function loadAndShowClientModal() {
       listEl.appendChild(div);
     });
   } catch(e) {
-    listEl.innerHTML = `<div style="color:var(--danger);font-family:var(--mono);font-size:.8rem;padding:12px">連線失敗</div>`;
+    listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">連線失敗</div>`;
   }
 }
 
@@ -367,7 +469,7 @@ async function confirmClient() {
 async function loadSpecs() {
   const sel = document.getElementById('specSelect');
   sel.innerHTML = '<option value="">載入規格中…</option>';
-  specsData = [];
+  specsData = []; currentSpec = null;
   try {
     const res = await callGAS({ action: 'getAvailableSpecs', sheetId: selectedClient.sheetId });
     if (!res.ok) return toast('無法載入規格', 'err');
@@ -386,7 +488,6 @@ async function loadSpecs() {
   }
 }
 
-// ── Spec Change ──
 function onSpecChange() {
   const idx = document.getElementById('specSelect').value;
   const wrapEl = document.getElementById('specSummaryWrap');
@@ -403,7 +504,6 @@ function onSpecChange() {
   `;
 }
 
-// ── Day Toggle ──
 function toggleDay(el) {
   el.classList.toggle('active');
   selectedDays = [...document.querySelectorAll('.day-btn.active')].map(e=>e.dataset.day).sort().join('');
@@ -443,26 +543,18 @@ function buildDayTeacherMap() {
   return map;
 }
 
-// ── Preview ──
 async function doPreview() {
   if (!selectedClient) return toast('請先選擇補習班', 'err');
   const startDate = document.getElementById('startDate').value;
-  if (!startDate)     return toast('請選擇開始日期', 'err');
-  if (!selectedDays)  return toast('請選擇上課星期', 'err');
-  if (!currentSpec)   return toast('請選擇課程規格', 'err');
+  if (!startDate)    return toast('請選擇開始日期', 'err');
+  if (!selectedDays) return toast('請選擇上課星期', 'err');
+  if (!currentSpec)  return toast('請選擇課程規格', 'err');
 
   const pr = document.getElementById('panelRight');
   pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中…</div>`;
   document.getElementById('btnPreview').disabled = true;
-
   try {
-    const res = await callGAS({
-      action: 'getPreviewSchedule',
-      startDate, days: selectedDays,
-      lessons: currentSpec.totalLessons,
-      sheetId: selectedClient.sheetId,
-      teacher: ''
-    });
+    const res = await callGAS({ action: 'getPreviewSchedule', startDate, days: selectedDays, lessons: currentSpec.totalLessons, sheetId: selectedClient.sheetId, teacher: '' });
     document.getElementById('btnPreview').disabled = false;
     if (!res.ok) return showError(res.error || '預覽失敗');
     currentSchedule = res;
@@ -474,18 +566,14 @@ async function doPreview() {
   }
 }
 
-// ── Render Preview ──
 function renderPreview(data) {
   const unitMap = {};
   let cursor = 1;
-  currentSpec.units.forEach(u => {
-    for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; }
-  });
+  currentSpec.units.forEach(u => { for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; } });
   const dayTeacherMap = buildDayTeacherMap();
   const lastReal = [...data.schedule].filter(r => !r.isHoliday).pop();
   const pr = document.getElementById('panelRight');
   pr.innerHTML = '';
-
   const teacherSummary = Object.entries(dayTeacherMap).map(([d,v])=>`週${DAY_NAMES[d]}&nbsp;${v}`).join('&emsp;');
   const stats = document.createElement('div');
   stats.className = 'stats-bar';
@@ -497,25 +585,20 @@ function renderPreview(data) {
     ${teacherSummary?`<div class="stat-card" style="flex-basis:100%"><div class="lbl">授課老師 Teachers</div><div style="font-family:var(--mono);font-size:0.82rem;color:var(--text-dim);margin-top:6px">${teacherSummary}</div></div>`:''}
   `;
   pr.appendChild(stats);
-
   const tableWrap = document.createElement('div');
   tableWrap.className = 'table-wrap';
-  tableWrap.innerHTML = `
-    <div class="table-header"><div>Lesson</div><div>Date</div><div>Day</div><div>Unit</div><div>Teacher</div><div>Note</div></div>
-    <div class="schedule-body" id="scheduleBody"></div>
-  `;
+  tableWrap.innerHTML = `<div class="table-header"><div>Lesson</div><div>Date</div><div>Day</div><div>Unit</div><div>Teacher</div><div>Note</div></div><div class="schedule-body" id="scheduleBody"></div>`;
   pr.appendChild(tableWrap);
-
   const body = tableWrap.querySelector('#scheduleBody');
   data.schedule.forEach(row => {
     const div = document.createElement('div');
-    div.className = 'schedule-row' + (row.isHoliday ? ' holiday' : '');
-    const unitName   = row.lesson ? (unitMap[row.lesson]||'') : '';
+    div.className = 'schedule-row' + (row.isHoliday?' holiday':'');
+    const unitName = row.lesson?(unitMap[row.lesson]||''):'';
     const isExamUnit = unitName && /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(unitName);
-    const dayNum     = WEEKDAY_TO_NUM[row.weekday]||'';
+    const dayNum = WEEKDAY_TO_NUM[row.weekday]||'';
     const rowTeacher = dayTeacherMap[dayNum]||'';
     div.innerHTML = `
-      ${row.isHoliday ? `<span class="lesson-num" style="color:var(--muted)">—</span>` : `<span class="lesson-num active">${row.lesson}</span>`}
+      ${row.isHoliday?`<span class="lesson-num" style="color:var(--muted)">—</span>`:`<span class="lesson-num active">${row.lesson}</span>`}
       <div class="date-cell">${row.date}</div>
       <div class="weekday-badge">週${row.weekday}</div>
       <div>${unitName?`<span class="unit-badge ${isExamUnit?'exam-badge':''}">${unitName}</span>`:''}</div>
@@ -526,90 +609,112 @@ function renderPreview(data) {
   });
 }
 
-// ── Create Class ──
 async function doCreate() {
-  if (!selectedClient)   return toast('請先選擇補習班', 'err');
-  if (!authCode)         return toast('請先登入', 'err');
-  if (!currentSchedule)  return toast('請先預覽課表', 'err');
-  if (!currentSpec)      return toast('請選擇課程規格', 'err');
-
+  if (!selectedClient||!authCode||!currentSchedule||!currentSpec) return toast('請確認所有參數已填寫', 'err');
   const className = document.getElementById('className').value.trim();
   if (!className) return toast('請填寫班級名稱', 'err');
-
-  const startDate     = document.getElementById('startDate').value;
+  const startDate = document.getElementById('startDate').value;
   const dayTeacherMap = buildDayTeacherMap();
-  const lastReal      = [...currentSchedule.schedule].filter(r => !r.isHoliday).pop();
-
-  if (!confirm(
-    `確認建立班級「${className}」？\n` +
-    `補習班：${selectedClient.name}\n` +
-    `規格：${currentSpec.displayName}（${currentSpec.totalLessons} 堂）\n` +
-    `預計結束：${lastReal ? lastReal.date : '—'}\n\n` +
-    `⚠ 建立後無法自動刪除，請確認參數正確！`
-  )) return;
-
+  const lastReal = [...currentSchedule.schedule].filter(r => !r.isHoliday).pop();
+  if (!confirm(`確認建立班級「${className}」？\n補習班：${selectedClient.name}\n規格：${currentSpec.displayName}（${currentSpec.totalLessons} 堂）\n預計結束：${lastReal?lastReal.date:'—'}\n\n⚠ 建立後無法自動刪除！`)) return;
   const btnCreate = document.getElementById('btnCreate');
-  btnCreate.disabled = true;
-  btnCreate.textContent = '建立中… Creating…';
+  btnCreate.disabled = true; btnCreate.textContent = '建立中… Creating…';
   toast('建立中，請稍候（約 30~60 秒）', 'ok', 60000);
-
   try {
-    const res = await postGAS({
-      action:      'createClassSheet',
-      authCode:    authCode,
-      sheetId:     selectedClient.sheetId,
-      className:   className,
-      startDate:   startDate,
-      days:        selectedDays,
-      targetLevel: currentSpec.system + currentSpec.level,
-      dayTeachers: JSON.stringify(dayTeacherMap),
-      students:    JSON.stringify([])   // 學生名單之後再加
-    });
-
-    btnCreate.disabled = false;
-    btnCreate.textContent = '✦ 正式建立班級 Create Class';
-
+    const res = await postGAS({ action: 'createClassSheet', authCode, sheetId: selectedClient.sheetId, className, startDate, days: selectedDays, targetLevel: currentSpec.system + currentSpec.level, dayTeachers: JSON.stringify(dayTeacherMap), students: JSON.stringify([]) });
+    btnCreate.disabled = false; btnCreate.textContent = '✦ 正式建立班級 Create Class';
     if (res.ok) {
       toast(`✓ 班級「${className}」建立成功！`, 'ok', 6000);
-      // 成功後顯示結果
       const pr = document.getElementById('panelRight');
-      const resultCard = document.createElement('div');
-      resultCard.style.cssText = `
-        background: rgba(232,255,71,.08); border: 1px solid var(--accent);
-        border-radius: var(--radius); padding: 20px 24px;
-        font-family: var(--mono); font-size: 0.85rem; color: var(--accent);
-        line-height: 2;
-      `;
-      resultCard.innerHTML = `
-        ✓ 班級建立完成<br>
-        <span style="color:var(--text)">班名：${className}</span><br>
-        <span style="color:var(--text)">補習班：${selectedClient.name}</span><br>
-        <span style="color:var(--text)">規格：${currentSpec.displayName}</span><br>
-        <span style="color:var(--text)">小考欄位：${(res.quizList||[]).join(', ')||'—'}</span><br>
-        <span style="color:var(--text)">大考欄位：${(res.testList||[]).join(', ')||'—'}</span>
-      `;
-      pr.insertBefore(resultCard, pr.firstChild);
+      const card = document.createElement('div');
+      card.style.cssText = 'background:rgba(232,255,71,.08);border:1px solid var(--accent);border-radius:var(--radius);padding:20px 24px;font-family:var(--mono);font-size:0.85rem;color:var(--accent);line-height:2';
+      card.innerHTML = `✓ 班級建立完成<br><span style="color:var(--text)">班名：${className}</span><br><span style="color:var(--text)">補習班：${selectedClient.name}</span><br><span style="color:var(--text)">規格：${currentSpec.displayName}</span><br><span style="color:var(--text)">小考：${(res.quizList||[]).join(', ')||'—'}</span><br><span style="color:var(--text)">大考：${(res.testList||[]).join(', ')||'—'}</span>`;
+      pr.insertBefore(card, pr.firstChild);
       btnCreate.classList.remove('visible');
     } else {
-      toast('✕ ' + (res.msg || '建立失敗'), 'err', 6000);
+      toast('✕ ' + (res.msg||'建立失敗'), 'err', 6000);
     }
   } catch(e) {
-    btnCreate.disabled = false;
-    btnCreate.textContent = '✦ 正式建立班級 Create Class';
+    btnCreate.disabled = false; btnCreate.textContent = '✦ 正式建立班級 Create Class';
     toast('連線失敗：' + e.message, 'err', 6000);
   }
 }
 
-function showError(msg) {
-  document.getElementById('panelRight').innerHTML =
-    `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
+// ── Teacher Management ──
+async function loadTeachers() {
+  if (!selectedClient) return;
+  const body = document.getElementById('teacherListBody');
+  body.innerHTML = `<div class="loading"><div class="spinner"></div>載入老師清單…</div>`;
+  try {
+    const res = await callGAS({ action: 'getTeachers', sheetId: selectedClient.sheetId });
+    if (!res.ok) { body.innerHTML = `<div style="color:var(--danger);padding:16px;font-family:var(--mono);font-size:.8rem">${res.error||'載入失敗'}</div>`; return; }
+    if (!res.teachers || !res.teachers.length) {
+      body.innerHTML = `<div style="color:var(--muted);padding:20px;font-family:var(--mono);font-size:.8rem;text-align:center">尚無老師資料</div>`;
+      return;
+    }
+    body.innerHTML = '';
+    res.teachers.forEach((t, i) => {
+      const div = document.createElement('div');
+      div.className = 'teacher-row-item';
+      div.innerHTML = `
+        <div class="auth-code-cell">${t.code}</div>
+        <div style="font-size:.85rem">${t.name}</div>
+        <div><span class="role-badge ${t.role}">${t.role}</span></div>
+        <div class="temp-class-cell">${t.tempClasses||'—'}</div>
+        <div class="action-btns">
+          <button class="btn-del" onclick="deleteTeacher(${i}, '${t.code}', '${t.name}')">刪除</button>
+        </div>
+      `;
+      body.appendChild(div);
+    });
+  } catch(e) {
+    body.innerHTML = `<div style="color:var(--danger);padding:16px;font-family:var(--mono);font-size:.8rem">連線失敗</div>`;
+  }
 }
 
-// Init
+async function addTeacher() {
+  if (!selectedClient) return toast('請先選擇補習班', 'err');
+  const name      = document.getElementById('newTeacherName').value.trim();
+  const code      = document.getElementById('newTeacherCode').value.trim();
+  const role      = document.getElementById('newTeacherRole').value;
+  const tempClass = document.getElementById('newTeacherTemp').value.trim();
+  if (!name) return toast('請填寫姓名', 'err');
+  if (!code) return toast('請填寫授權碼', 'err');
+
+  document.getElementById('btnAddTeacher').disabled = true;
+  try {
+    const res = await postGAS({ action: 'saveTeacher', authCode, sheetId: selectedClient.sheetId, name, code, role, tempClasses: tempClass });
+    if (res.ok) {
+      toast(`✓ 已新增 ${name}`, 'ok');
+      document.getElementById('newTeacherName').value = '';
+      document.getElementById('newTeacherCode').value = '';
+      document.getElementById('newTeacherTemp').value = '';
+      await loadTeachers();
+    } else {
+      toast('✕ ' + (res.msg||'新增失敗'), 'err');
+    }
+  } catch(e) {
+    toast('連線失敗', 'err');
+  }
+  document.getElementById('btnAddTeacher').disabled = false;
+}
+
+async function deleteTeacher(idx, code, name) {
+  if (!confirm(`確認刪除老師「${name}」（授權碼：${code}）？`)) return;
+  try {
+    const res = await postGAS({ action: 'deleteTeacher', authCode, sheetId: selectedClient.sheetId, code });
+    if (res.ok) { toast(`✓ 已刪除 ${name}`); await loadTeachers(); }
+    else toast('✕ ' + (res.msg||'刪除失敗'), 'err');
+  } catch(e) { toast('連線失敗', 'err'); }
+}
+
+function showError(msg) {
+  document.getElementById('panelRight').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
+}
+
 window.addEventListener('load', () => {
   const t = new Date();
-  document.getElementById('startDate').value =
-    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('startDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 });
 </script>
 </body>
