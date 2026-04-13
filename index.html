@@ -1472,8 +1472,11 @@ function renderSummaryTable() {
 // ══════════════════════════════════════════════
 function openAttPopup(event, studentIdx, lessonIdx) {
   event.stopPropagation();
-  var st  = summaryData.students[studentIdx];
+  if (!summaryData || !summaryData.students) return;
+  var st = summaryData.students[studentIdx];
+  if (!st || !st.lessonRecords) return;
   var rec = st.lessonRecords[lessonIdx];
+  if (!rec) return;
   var cellEl = event.currentTarget;
   attPopupContext = { studentIdx:studentIdx, lessonIdx:lessonIdx, cellEl:cellEl };
   var popup = document.getElementById('att-popup');
@@ -2084,7 +2087,7 @@ function downloadPDF() {
   win.document.write('for(var i=0;i<N;i++){var a=(i/N)*Math.PI*2-Math.PI/2;ctx.fillStyle=colors[i];ctx.fillText(labels[i],cx+(R+22)*Math.cos(a),cy+(R+22)*Math.sin(a));}');
   win.document.write('setTimeout(function(){window.print();},300);');
   win.document.write('};');
-  win.document.write('<'+'/script>');
+  win.document.write('\x3C/script\x3E');
   win.document.write('</body></html>');
   win.document.close();
 }
