@@ -426,7 +426,7 @@ async function loadAndShowClientModal() {
   document.getElementById('btnConfirmClient').disabled = true;
   pendingClient = null;
   try {
-    const res = await callGAS({ action: 'getMasterClients' });
+    const res = await callGAS({ action: 'getMasterClients', authCode: authCode });
     if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">載入失敗</div>`; return; }
     clientsData = res.clients;
     listEl.innerHTML = '';
