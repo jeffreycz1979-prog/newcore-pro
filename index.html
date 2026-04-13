@@ -1609,29 +1609,31 @@ function wheelTap(val){
 }
 function openWheel(studentIdx, mode, lessonIdx) {
   wheelContext = { mode:mode, studentIdx:studentIdx, lessonIdx:lessonIdx };
-  var initVal = 80, name = '';
+  var initVal = null, name = '';
   if (mode === 'attend') {
     var st = classData.students[studentIdx];
     name = (st.eName||'')+(st.eName&&st.cName?'　':'')+(st.cName||'');
-    initVal = st.score!==''?parseInt(st.score):80;
+    initVal = (st.score!==''&&st.score!==null&&st.score!==undefined) ? parseInt(st.score) : null;
     wheelStudentIdx = studentIdx;
   } else {
     var st = summaryData.students[studentIdx];
     var rec = st.lessonRecords[lessonIdx];
     name = (st.eName||st.cName||'') + '　' + summaryData.lessons[lessonIdx].unit + ' ' + summaryData.lessons[lessonIdx].lesson;
-    initVal = rec.score!==''?parseInt(rec.score):80;
+    initVal = (rec.score!==''&&rec.score!==null&&rec.score!==undefined) ? parseInt(rec.score) : null;
   }
-  if(isNaN(initVal)) initVal=80;
-  wheelValue=initVal;
+  if(initVal !== null && isNaN(initVal)) initVal = null;
+  wheelValue = initVal !== null ? initVal : 80;
   document.getElementById('wheel-student-name').textContent=name;
-  document.getElementById('wheel-score-display').textContent=initVal;
+  document.getElementById('wheel-score-display').textContent = initVal !== null ? initVal : '--';
   document.getElementById('wheel-overlay').style.display='flex';
-  // 初始化九宮格
+  // 九宮格：有既有分數才預填，否則清空
   numpadReset(initVal !== null ? initVal : '');
   // 預設顯示鍵盤模式
   switchScoreMode(currentScoreMode);
-  highlightCenter(initVal);
-  setTimeout(function(){document.getElementById('wheel-scroll').scrollTop=initVal*ITEM_HEIGHT;},50);
+  // 滑輪重建（修復滑輪消失問題）
+  buildWheel();
+  highlightCenter(wheelValue);
+  setTimeout(function(){document.getElementById('wheel-scroll').scrollTop=wheelValue*ITEM_HEIGHT;},50);
 }
 function closeWheel(){
   document.getElementById('wheel-overlay').style.display='none';
