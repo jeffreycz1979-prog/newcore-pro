@@ -22,525 +22,124 @@
     --display:  'Syne', sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* ── Header ── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 32px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-  .logo {
-    font-family: var(--display);
-    font-size: 1.25rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--accent);
-    white-space: nowrap;
-  }
+  /* Header */
+  header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; gap: 16px; flex-wrap: wrap; }
+  .logo { font-family: var(--display); font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); white-space: nowrap; }
   .logo span { color: var(--text-dim); font-weight: 700; }
-
-  .auth-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .auth-bar input {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    padding: 7px 12px;
-    width: 140px;
-    outline: none;
-    transition: border-color .2s;
-  }
+  .auth-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .auth-bar input { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: var(--mono); font-size: 0.8rem; padding: 7px 12px; width: 140px; outline: none; transition: border-color .2s; }
   .auth-bar input:focus { border-color: var(--accent); }
-  .btn-sm {
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 6px;
-    font-family: var(--sans);
-    font-size: 0.8rem;
-    font-weight: 700;
-    padding: 7px 16px;
-    cursor: pointer;
-    transition: opacity .15s;
-    white-space: nowrap;
-  }
+  .btn-sm { background: var(--accent); color: #000; border: none; border-radius: 6px; font-family: var(--sans); font-size: 0.8rem; font-weight: 700; padding: 7px 16px; cursor: pointer; transition: opacity .15s; white-space: nowrap; }
   .btn-sm:hover { opacity: .85; }
-  .btn-sm.outline {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-  }
+  .btn-sm.outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
   .btn-sm.outline:hover { border-color: var(--accent2); color: var(--accent2); }
-
-  .auth-status {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    font-family: var(--mono);
-    white-space: nowrap;
-  }
+  .auth-status { font-size: 0.78rem; color: var(--text-dim); font-family: var(--mono); white-space: nowrap; }
   .auth-status.ok   { color: var(--accent); }
   .auth-status.fail { color: var(--danger); }
-
-  /* client badge in header */
-  .client-badge {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 12px;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--accent2);
-  }
+  .client-badge { display: none; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; font-family: var(--mono); font-size: 0.75rem; color: var(--accent2); }
   .client-badge.visible { display: flex; }
-  .client-badge .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent2);
-    flex-shrink: 0;
-  }
+  .client-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
 
-  /* ── Client Select Overlay ── */
-  .overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.75);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-  }
+  /* Modal */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
   .overlay.visible { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 32px;
-    width: 480px;
-    max-width: 90vw;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    animation: modalIn .25s cubic-bezier(.34,1.56,.64,1);
-  }
-  @keyframes modalIn {
-    from { transform: scale(.92); opacity: 0; }
-    to   { transform: scale(1);   opacity: 1; }
-  }
-  .modal-title {
-    font-family: var(--display);
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--text);
-  }
-  .modal-subtitle {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--text-dim);
-    margin-top: -12px;
-  }
-
-  .client-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  .client-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    cursor: pointer;
-    transition: all .15s;
-    gap: 12px;
-  }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 480px; max-width: 90vw; display: flex; flex-direction: column; gap: 20px; animation: modalIn .25s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes modalIn { from { transform: scale(.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal-title { font-family: var(--display); font-size: 1.1rem; font-weight: 800; color: var(--text); }
+  .client-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .client-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: all .15s; gap: 12px; }
   .client-item:hover { border-color: var(--accent); }
   .client-item.selected { border-color: var(--accent); background: rgba(232,255,71,.05); }
-  .client-item-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-  .client-item-meta {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    margin-top: 3px;
-  }
-  .client-item-valid {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--muted);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .client-check {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    color: #000;
-    transition: all .15s;
-  }
-  .client-item.selected .client-check {
-    background: var(--accent);
-    border-color: var(--accent);
-  }
+  .client-item-name { font-size: 0.9rem; font-weight: 500; color: var(--text); }
+  .client-item-meta { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); margin-top: 3px; }
+  .client-item-valid { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+  .client-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: #000; transition: all .15s; }
+  .client-item.selected .client-check { background: var(--accent); border-color: var(--accent); }
   .client-item.selected .client-check::after { content: '✓'; }
-
-  .btn-confirm {
-    width: 100%;
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    color: #000;
-    font-family: var(--display);
-    font-size: 0.95rem;
-    font-weight: 800;
-    padding: 13px;
-    cursor: pointer;
-    transition: opacity .15s;
-  }
+  .btn-confirm { width: 100%; background: var(--accent); border: none; border-radius: var(--radius); color: #000; font-family: var(--display); font-size: 0.95rem; font-weight: 800; padding: 13px; cursor: pointer; transition: opacity .15s; }
   .btn-confirm:hover { opacity: .85; }
   .btn-confirm:disabled { opacity: .35; cursor: not-allowed; }
 
-  /* ── Main Layout ── */
-  main {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    flex: 1;
-    height: calc(100vh - 61px);
-  }
+  /* Layout */
+  main { display: grid; grid-template-columns: 380px 1fr; flex: 1; height: calc(100vh - 61px); }
+  .panel-left { background: var(--surface); border-right: 1px solid var(--border); padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; }
+  .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
 
-  /* ── Left Panel ── */
-  .panel-left {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 28px 24px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-  }
-
-  .section-title {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    font-weight: 500;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
+  .section-title { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
   .field-group { display: flex; flex-direction: column; gap: 14px; }
-  .field label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-bottom: 5px;
-    font-family: var(--mono);
-  }
-  .field input,
-  .field select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 0.88rem;
-    padding: 10px 12px;
-    outline: none;
-    transition: border-color .2s;
-    appearance: none;
-  }
-  .field input:focus,
-  .field select:focus { border-color: var(--accent); }
+  .field label { display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 5px; font-family: var(--mono); }
+  .field input, .field select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--sans); font-size: 0.88rem; padding: 10px 12px; outline: none; transition: border-color .2s; appearance: none; }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
   .field select option { background: var(--surface); }
 
   /* Days */
-  .days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-  }
-  .day-btn {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-dim);
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    padding: 8px 0;
-    text-align: center;
-    cursor: pointer;
-    transition: all .15s;
-    user-select: none;
-  }
+  .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .day-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-family: var(--mono); font-size: 0.75rem; padding: 8px 0; text-align: center; cursor: pointer; transition: all .15s; user-select: none; }
   .day-btn:hover { border-color: var(--accent); color: var(--accent); }
   .day-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 500; }
 
   /* Teacher rows */
   .teacher-rows { display: flex; flex-direction: column; gap: 7px; margin-top: 4px; }
-  .teacher-row  { display: flex; align-items: center; gap: 8px; }
-  .day-label {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--accent);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    padding: 6px 10px;
-    min-width: 38px;
-    text-align: center;
-    flex-shrink: 0;
-  }
-  .teacher-row input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 0.82rem;
-    padding: 8px 12px;
-    outline: none;
-    transition: border-color .2s;
-  }
+  .teacher-row { display: flex; align-items: center; gap: 8px; }
+  .day-label { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); background: var(--bg); border: 1px solid var(--border); border-radius: 5px; padding: 6px 10px; min-width: 38px; text-align: center; flex-shrink: 0; }
+  .teacher-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--sans); font-size: 0.82rem; padding: 8px 12px; outline: none; transition: border-color .2s; }
   .teacher-row input:focus { border-color: var(--accent); }
 
   /* Spec summary */
-  .spec-summary {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    line-height: 1.8;
-  }
+  .spec-summary { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); line-height: 1.8; }
   .spec-summary strong { color: var(--accent); font-weight: 500; }
   .unit-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-  .unit-pill {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    padding: 2px 7px;
-    color: var(--text-dim);
-  }
+  .unit-pill { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; font-family: var(--mono); font-size: 0.68rem; padding: 2px 7px; color: var(--text-dim); }
   .unit-pill.exam { border-color: var(--accent2); color: var(--accent2); }
 
   .divider { height: 1px; background: var(--border); }
 
   /* Buttons */
-  .btn-preview {
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--accent);
-    border-radius: var(--radius);
-    color: var(--accent);
-    font-family: var(--display);
-    font-size: 0.95rem;
-    font-weight: 700;
-    padding: 12px;
-    cursor: pointer;
-    transition: all .15s;
-  }
+  .btn-preview { width: 100%; background: transparent; border: 1px solid var(--accent); border-radius: var(--radius); color: var(--accent); font-family: var(--display); font-size: 0.95rem; font-weight: 700; padding: 12px; cursor: pointer; transition: all .15s; }
   .btn-preview:hover { background: var(--accent); color: #000; }
   .btn-preview:disabled { opacity: .35; cursor: not-allowed; }
-
-  .btn-create {
-    width: 100%;
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius);
-    color: #000;
-    font-family: var(--display);
-    font-size: 0.95rem;
-    font-weight: 800;
-    padding: 14px;
-    cursor: pointer;
-    transition: opacity .15s;
-    display: none;
-  }
+  .btn-create { width: 100%; background: var(--accent); border: none; border-radius: var(--radius); color: #000; font-family: var(--display); font-size: 0.95rem; font-weight: 800; padding: 14px; cursor: pointer; transition: opacity .15s; display: none; }
   .btn-create:hover { opacity: .85; }
+  .btn-create:disabled { opacity: .35; cursor: not-allowed; }
   .btn-create.visible { display: block; }
-
-  /* ── Right Panel ── */
-  .panel-right {
-    padding: 28px 32px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
 
   /* Stats */
   .stats-bar { display: flex; gap: 16px; flex-wrap: wrap; }
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 20px;
-    flex: 1;
-    min-width: 120px;
-  }
-  .stat-card .val {
-    font-family: var(--display);
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--accent);
-    line-height: 1;
-  }
-  .stat-card .lbl {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    margin-top: 4px;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-  }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; flex: 1; min-width: 120px; }
+  .stat-card .val { font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: var(--accent); line-height: 1; }
+  .stat-card .lbl { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); margin-top: 4px; letter-spacing: .06em; text-transform: uppercase; }
   .stat-card.holiday .val { color: var(--danger); }
-  .stat-card.end .val    { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
+  .stat-card.end .val { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
 
   /* Table */
-  .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .table-header {
-    display: grid;
-    grid-template-columns: 60px 110px 50px 80px 1fr 1fr;
-    padding: 10px 16px;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    gap: 8px;
-  }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-header { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
   .schedule-body { max-height: calc(100vh - 340px); overflow-y: auto; }
-  .schedule-row {
-    display: grid;
-    grid-template-columns: 60px 110px 50px 80px 1fr 1fr;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    align-items: center;
-    gap: 8px;
-    transition: background .1s;
-    font-size: 0.85rem;
-  }
+  .schedule-row { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; transition: background .1s; font-size: 0.85rem; }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row:hover { background: rgba(255,255,255,.03); }
   .schedule-row.holiday { background: rgba(255,71,87,.06); }
-  .schedule-row.holiday:hover { background: rgba(255,71,87,.10); }
-
   .lesson-num { font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim); font-weight: 500; }
   .lesson-num.active { color: var(--accent); }
   .date-cell { font-family: var(--mono); font-size: 0.82rem; color: var(--text); }
-  .weekday-badge {
-    font-family: var(--mono); font-size: 0.72rem;
-    padding: 2px 7px; border-radius: 4px;
-    background: var(--bg); border: 1px solid var(--border);
-    color: var(--text-dim); text-align: center;
-  }
-  .unit-badge {
-    font-family: var(--mono); font-size: 0.75rem;
-    padding: 3px 8px; border-radius: 4px;
-    background: rgba(232,255,71,.08);
-    border: 1px solid rgba(232,255,71,.2);
-    color: var(--accent); display: inline-block;
-  }
-  .unit-badge.exam-badge {
-    background: rgba(71,200,255,.08);
-    border-color: rgba(71,200,255,.2);
-    color: var(--accent2);
-  }
+  .weekday-badge { font-family: var(--mono); font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); color: var(--text-dim); text-align: center; }
+  .unit-badge { font-family: var(--mono); font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; background: rgba(232,255,71,.08); border: 1px solid rgba(232,255,71,.2); color: var(--accent); display: inline-block; }
+  .unit-badge.exam-badge { background: rgba(71,200,255,.08); border-color: rgba(71,200,255,.2); color: var(--accent2); }
   .teacher-cell { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
-  .holiday-tag {
-    font-family: var(--mono); font-size: 0.72rem;
-    color: var(--danger); display: flex; align-items: center; gap: 5px;
-  }
+  .holiday-tag { font-family: var(--mono); font-size: 0.72rem; color: var(--danger); display: flex; align-items: center; gap: 5px; }
   .holiday-tag::before { content: '✕'; font-size: 0.65rem; }
 
   /* Empty / Loading */
-  .empty-state {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    flex: 1; gap: 12px;
-    color: var(--muted); font-family: var(--mono);
-    font-size: 0.85rem; text-align: center; padding: 60px;
-  }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; color: var(--muted); font-family: var(--mono); font-size: 0.85rem; text-align: center; padding: 60px; }
   .empty-icon { font-size: 2.5rem; opacity: .4; }
-
-  .loading {
-    display: flex; align-items: center; gap: 10px;
-    color: var(--text-dim); font-family: var(--mono);
-    font-size: 0.82rem; padding: 40px; justify-content: center;
-  }
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-  }
+  .loading { display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-family: var(--mono); font-size: 0.82rem; padding: 40px; justify-content: center; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* Toast */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 12px 18px;
-    font-family: var(--mono); font-size: 0.8rem; color: var(--text);
-    box-shadow: 0 8px 32px rgba(0,0,0,.4);
-    transform: translateY(80px); opacity: 0;
-    transition: all .3s cubic-bezier(.34,1.56,.64,1);
-    z-index: 999; max-width: 320px;
-  }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 18px; font-family: var(--mono); font-size: 0.8rem; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.4); transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 999; max-width: 320px; }
   .toast.show { transform: translateY(0); opacity: 1; }
   .toast.ok  { border-color: var(--accent); color: var(--accent); }
   .toast.err { border-color: var(--danger); color: var(--danger); }
@@ -552,46 +151,32 @@
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="logo">NewCore <span>Admin</span></div>
   <div class="auth-bar">
-    <input type="password" id="authInput" placeholder="授權碼 Auth Code"
-           onkeydown="if(event.key==='Enter') doLogin()" />
+    <input type="password" id="authInput" placeholder="授權碼 Auth Code" onkeydown="if(event.key==='Enter') doLogin()" />
     <button class="btn-sm" onclick="doLogin()">登入 Login</button>
     <span class="auth-status" id="authStatus">— 未登入</span>
-    <div class="client-badge" id="clientBadge">
-      <div class="dot"></div>
-      <span id="clientBadgeName">—</span>
-    </div>
-    <button class="btn-sm outline" id="btnSwitchClient"
-            style="display:none" onclick="showClientModal()">
-      切換 Switch
-    </button>
+    <div class="client-badge" id="clientBadge"><div class="dot"></div><span id="clientBadgeName">—</span></div>
+    <button class="btn-sm outline" id="btnSwitchClient" style="display:none" onclick="loadAndShowClientModal()">切換 Switch</button>
   </div>
 </header>
 
-<!-- Client Select Modal -->
+<!-- Client Modal -->
 <div class="overlay" id="clientOverlay">
   <div class="modal">
     <div>
       <div class="modal-title">選擇補習班 Select Client</div>
-      <div class="modal-subtitle" style="margin-top:6px">請選擇要操作的補習班資料庫</div>
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:6px">請選擇要操作的補習班資料庫</div>
     </div>
-    <div class="client-list" id="clientList">
-      <div class="loading"><div class="spinner"></div>載入中…</div>
-    </div>
-    <button class="btn-confirm" id="btnConfirmClient"
-            disabled onclick="confirmClient()">
-      確認 Confirm
-    </button>
+    <div class="client-list" id="clientList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+    <button class="btn-confirm" id="btnConfirmClient" disabled onclick="confirmClient()">確認 Confirm</button>
   </div>
 </div>
 
 <main>
-  <!-- Left Panel -->
+  <!-- Left -->
   <div class="panel-left">
-
     <div>
       <div class="section-title">班級資訊 Class Info</div>
       <div class="field-group">
@@ -636,9 +221,7 @@
         <div class="field">
           <label>授課老師 Teacher（每個上課日）</label>
           <div class="teacher-rows" id="teacherRows">
-            <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">
-              請先選擇上課星期 ↑
-            </div>
+            <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">請先選擇上課星期 ↑</div>
           </div>
         </div>
       </div>
@@ -646,23 +229,16 @@
 
     <div class="divider"></div>
 
-    <button class="btn-preview" id="btnPreview" onclick="doPreview()">
-      ▶ 預覽課表 Preview Schedule
-    </button>
-    <button class="btn-create" id="btnCreate" onclick="doCreate()">
-      ✦ 正式建立班級 Create Class
-    </button>
-
+    <button class="btn-preview" id="btnPreview" onclick="doPreview()">▶ 預覽課表 Preview Schedule</button>
+    <button class="btn-create" id="btnCreate" onclick="doCreate()">✦ 正式建立班級 Create Class</button>
   </div>
 
-  <!-- Right Panel -->
+  <!-- Right -->
   <div class="panel-right" id="panelRight">
     <div class="empty-state">
       <div class="empty-icon">📅</div>
       <div>登入後選擇補習班<br>再設定排課參數</div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:6px">
-        Login → Select Client → Configure → Preview
-      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:6px">Login → Select Client → Configure → Preview</div>
     </div>
   </div>
 </main>
@@ -679,9 +255,10 @@ let authCode        = '';
 let specsData       = [];
 let selectedDays    = '';
 let currentSchedule = null;
-let clientsData     = [];       // 補習班清單
-let selectedClient  = null;     // 目前選中的補習班 { name, sheetId, ... }
-let pendingClient   = null;     // modal 裡暫選的
+let currentSpec     = null;
+let clientsData     = [];
+let selectedClient  = null;
+let pendingClient   = null;
 
 // ── JSONP ──
 function callGAS(params) {
@@ -695,6 +272,15 @@ function callGAS(params) {
     script.onerror = () => reject(new Error('Network error'));
     document.body.appendChild(script);
   });
+}
+
+// POST（建班用，資料較大）
+async function postGAS(payload) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  return await res.json();
 }
 
 // ── Toast ──
@@ -718,11 +304,7 @@ async function doLogin() {
       authCode = code;
       statusEl.textContent = `✓ ${res.name} (${res.role})`;
       statusEl.className = 'auth-status ok';
-      if (res.role !== 'admin') {
-        toast('⚠ 僅 Admin 可使用建班功能', 'err', 4000);
-        return;
-      }
-      // 登入成功 → 自動開啟補習班選擇
+      if (res.role !== 'admin') { toast('⚠ 僅 Admin 可使用建班功能', 'err', 4000); return; }
       await loadAndShowClientModal();
     } else {
       statusEl.textContent = '✕ ' + (res.msg || '驗證失敗');
@@ -734,89 +316,61 @@ async function doLogin() {
   }
 }
 
-// ── Load clients & show modal ──
+// ── Client Modal ──
 async function loadAndShowClientModal() {
-  showClientModal();
+  document.getElementById('clientOverlay').classList.add('visible');
   const listEl = document.getElementById('clientList');
   listEl.innerHTML = `<div class="loading"><div class="spinner"></div>載入補習班清單…</div>`;
   document.getElementById('btnConfirmClient').disabled = true;
   pendingClient = null;
-
   try {
     const res = await callGAS({ action: 'getMasterClients' });
-    if (!res.ok) {
-      listEl.innerHTML = `<div style="color:var(--danger);font-family:var(--mono);font-size:.8rem;padding:12px">載入失敗：${res.error || ''}</div>`;
-      return;
-    }
+    if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);font-family:var(--mono);font-size:.8rem;padding:12px">載入失敗</div>`; return; }
     clientsData = res.clients;
-    renderClientList();
+    listEl.innerHTML = '';
+    clientsData.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'client-item' + (selectedClient && selectedClient.sheetId === c.sheetId ? ' selected' : '');
+      div.innerHTML = `
+        <div style="flex:1;min-width:0">
+          <div class="client-item-name">${c.name}</div>
+          <div class="client-item-meta">${c.sheetId.slice(0,24)}…</div>
+        </div>
+        <div class="client-item-valid">到期 ${c.validTo}</div>
+        <div class="client-check"></div>
+      `;
+      div.onclick = () => {
+        document.querySelectorAll('.client-item').forEach(i => i.classList.remove('selected'));
+        div.classList.add('selected');
+        pendingClient = c;
+        document.getElementById('btnConfirmClient').disabled = false;
+      };
+      listEl.appendChild(div);
+    });
   } catch(e) {
     listEl.innerHTML = `<div style="color:var(--danger);font-family:var(--mono);font-size:.8rem;padding:12px">連線失敗</div>`;
   }
 }
 
-function renderClientList() {
-  const listEl = document.getElementById('clientList');
-  listEl.innerHTML = '';
-  clientsData.forEach((c, i) => {
-    const div = document.createElement('div');
-    div.className = 'client-item' + (selectedClient && selectedClient.sheetId === c.sheetId ? ' selected' : '');
-    div.innerHTML = `
-      <div style="flex:1;min-width:0">
-        <div class="client-item-name">${c.name}</div>
-        <div class="client-item-meta">${c.sheetId.slice(0,20)}…</div>
-      </div>
-      <div class="client-item-valid">到期 ${c.validTo}</div>
-      <div class="client-check"></div>
-    `;
-    div.onclick = () => selectClientItem(div, c);
-    listEl.appendChild(div);
-  });
-}
-
-function selectClientItem(el, client) {
-  document.querySelectorAll('.client-item').forEach(i => i.classList.remove('selected'));
-  el.classList.add('selected');
-  pendingClient = client;
-  document.getElementById('btnConfirmClient').disabled = false;
-}
-
-function showClientModal() {
-  document.getElementById('clientOverlay').classList.add('visible');
-}
-
-function hideClientModal() {
-  document.getElementById('clientOverlay').classList.remove('visible');
-}
-
 async function confirmClient() {
   if (!pendingClient) return;
   selectedClient = pendingClient;
-  hideClientModal();
-
-  // 更新 header badge
+  document.getElementById('clientOverlay').classList.remove('visible');
   document.getElementById('clientBadgeName').textContent = selectedClient.name;
   document.getElementById('clientBadge').classList.add('visible');
   document.getElementById('btnSwitchClient').style.display = 'flex';
-
   toast(`已切換至：${selectedClient.name} ✓`);
-
-  // 載入該補習班的規格（用選定的 sheetId）
   await loadSpecs();
 }
 
-// ── Load Specs（帶 sheetId）──
+// ── Load Specs ──
 async function loadSpecs() {
   const sel = document.getElementById('specSelect');
   sel.innerHTML = '<option value="">載入規格中…</option>';
   specsData = [];
-
   try {
-    const res = await callGAS({
-      action:  'getAvailableSpecs',
-      sheetId: selectedClient.sheetId   // 帶入選定的補習班
-    });
-    if (!res.ok) return toast('無法載入規格：' + (res.error || ''), 'err');
+    const res = await callGAS({ action: 'getAvailableSpecs', sheetId: selectedClient.sheetId });
+    if (!res.ok) return toast('無法載入規格', 'err');
     specsData = res.specs;
     sel.innerHTML = '<option value="">— 選擇規格 —</option>';
     specsData.forEach((sp, i) => {
@@ -828,25 +382,23 @@ async function loadSpecs() {
     toast('規格載入完成 ✓');
   } catch(e) {
     toast('載入規格失敗', 'err');
-    sel.innerHTML = '<option value="">— 載入失敗，請重試 —</option>';
+    sel.innerHTML = '<option value="">— 載入失敗 —</option>';
   }
 }
 
 // ── Spec Change ──
 function onSpecChange() {
-  const idx    = document.getElementById('specSelect').value;
+  const idx = document.getElementById('specSelect').value;
   const wrapEl = document.getElementById('specSummaryWrap');
-  const contEl = document.getElementById('specSummaryContent');
-  if (idx === '') { wrapEl.style.display = 'none'; return; }
-
-  const sp = specsData[parseInt(idx)];
+  if (idx === '') { wrapEl.style.display = 'none'; currentSpec = null; return; }
+  currentSpec = specsData[parseInt(idx)];
   wrapEl.style.display = 'block';
-  const pills = sp.units.map(u => {
+  const pills = currentSpec.units.map(u => {
     const isExam = /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(u.unit);
-    return `<span class="unit-pill ${isExam ? 'exam' : ''}">${u.unit} ×${u.lessons}</span>`;
+    return `<span class="unit-pill ${isExam?'exam':''}">${u.unit} ×${u.lessons}</span>`;
   }).join('');
-  contEl.innerHTML = `
-    <strong>${sp.displayName}</strong> &nbsp;·&nbsp; 共 <strong>${sp.totalLessons}</strong> 堂
+  document.getElementById('specSummaryContent').innerHTML = `
+    <strong>${currentSpec.displayName}</strong> &nbsp;·&nbsp; 共 <strong>${currentSpec.totalLessons}</strong> 堂
     <div class="unit-pills">${pills}</div>
   `;
 }
@@ -854,25 +406,15 @@ function onSpecChange() {
 // ── Day Toggle ──
 function toggleDay(el) {
   el.classList.toggle('active');
-  updateSelectedDays();
+  selectedDays = [...document.querySelectorAll('.day-btn.active')].map(e=>e.dataset.day).sort().join('');
   renderTeacherInputs();
 }
-function updateSelectedDays() {
-  selectedDays = [...document.querySelectorAll('.day-btn.active')]
-    .map(el => el.dataset.day).sort().join('');
-}
 
-// ── Teacher Inputs ──
 function renderTeacherInputs() {
-  const container  = document.getElementById('teacherRows');
-  const activeDays = [...document.querySelectorAll('.day-btn.active')]
-    .map(el => el.dataset.day).sort();
-
+  const container = document.getElementById('teacherRows');
+  const activeDays = [...document.querySelectorAll('.day-btn.active')].map(e=>e.dataset.day).sort();
   const existing = {};
-  container.querySelectorAll('input[data-day]').forEach(inp => {
-    existing[inp.dataset.day] = inp.value;
-  });
-
+  container.querySelectorAll('input[data-day]').forEach(inp => { existing[inp.dataset.day] = inp.value; });
   container.innerHTML = '';
   if (!activeDays.length) {
     container.innerHTML = `<div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">請先選擇上課星期 ↑</div>`;
@@ -882,8 +424,7 @@ function renderTeacherInputs() {
     const row = document.createElement('div');
     row.className = 'teacher-row';
     const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.dataset.day = day;
+    inp.type = 'text'; inp.dataset.day = day;
     inp.placeholder = '外師/中師，如 Jeffrey/Sandy';
     inp.value = existing[day] || '';
     inp.addEventListener('focus', () => inp.style.borderColor = 'var(--accent)');
@@ -897,7 +438,7 @@ function renderTeacherInputs() {
 function buildDayTeacherMap() {
   const map = {};
   document.querySelectorAll('#teacherRows input[data-day]').forEach(inp => {
-    map[inp.dataset.day] = inp.value.trim();
+    if (inp.value.trim()) map[inp.dataset.day] = inp.value.trim();
   });
   return map;
 }
@@ -906,30 +447,26 @@ function buildDayTeacherMap() {
 async function doPreview() {
   if (!selectedClient) return toast('請先選擇補習班', 'err');
   const startDate = document.getElementById('startDate').value;
-  const specIdx   = document.getElementById('specSelect').value;
-
   if (!startDate)     return toast('請選擇開始日期', 'err');
   if (!selectedDays)  return toast('請選擇上課星期', 'err');
-  if (specIdx === '') return toast('請選擇課程規格', 'err');
+  if (!currentSpec)   return toast('請選擇課程規格', 'err');
 
-  const spec = specsData[parseInt(specIdx)];
-  const pr   = document.getElementById('panelRight');
-  pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中 Generating schedule…</div>`;
+  const pr = document.getElementById('panelRight');
+  pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中…</div>`;
   document.getElementById('btnPreview').disabled = true;
 
   try {
     const res = await callGAS({
-      action:    'getPreviewSchedule',
-      startDate: startDate,
-      days:      selectedDays,
-      lessons:   spec.totalLessons,
-      sheetId:   selectedClient.sheetId,
-      teacher:   ''
+      action: 'getPreviewSchedule',
+      startDate, days: selectedDays,
+      lessons: currentSpec.totalLessons,
+      sheetId: selectedClient.sheetId,
+      teacher: ''
     });
     document.getElementById('btnPreview').disabled = false;
     if (!res.ok) return showError(res.error || '預覽失敗');
     currentSchedule = res;
-    renderPreview(res, spec);
+    renderPreview(res);
     document.getElementById('btnCreate').classList.add('visible');
   } catch(e) {
     document.getElementById('btnPreview').disabled = false;
@@ -938,60 +475,33 @@ async function doPreview() {
 }
 
 // ── Render Preview ──
-function renderPreview(data, spec) {
+function renderPreview(data) {
   const unitMap = {};
   let cursor = 1;
-  spec.units.forEach(u => {
+  currentSpec.units.forEach(u => {
     for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; }
   });
-
   const dayTeacherMap = buildDayTeacherMap();
   const lastReal = [...data.schedule].filter(r => !r.isHoliday).pop();
-
   const pr = document.getElementById('panelRight');
   pr.innerHTML = '';
 
-  // Stats
+  const teacherSummary = Object.entries(dayTeacherMap).map(([d,v])=>`週${DAY_NAMES[d]}&nbsp;${v}`).join('&emsp;');
   const stats = document.createElement('div');
   stats.className = 'stats-bar';
-  const teacherSummary = Object.entries(dayTeacherMap)
-    .filter(([,v]) => v)
-    .map(([d,v]) => `週${DAY_NAMES[d]}&nbsp;${v}`)
-    .join('&emsp;');
-
   stats.innerHTML = `
-    <div class="stat-card">
-      <div class="val">${data.totalLessons}</div>
-      <div class="lbl">Total Lessons</div>
-    </div>
-    <div class="stat-card holiday">
-      <div class="val">${data.holidayCount}</div>
-      <div class="lbl">Holidays Skipped</div>
-    </div>
-    <div class="stat-card">
-      <div class="val">${selectedDays.split('').map(d=>'一二三四五六日'[parseInt(d)-1]).join('・')}</div>
-      <div class="lbl">Days / Week</div>
-    </div>
-    <div class="stat-card end">
-      <div class="lbl">預計結束 End Date</div>
-      <div class="val">${lastReal ? lastReal.date : '—'}</div>
-    </div>
-    ${teacherSummary ? `
-    <div class="stat-card" style="flex-basis:100%">
-      <div class="lbl">授課老師 Teachers</div>
-      <div style="font-family:var(--mono);font-size:0.82rem;color:var(--text-dim);margin-top:6px">${teacherSummary}</div>
-    </div>` : ''}
+    <div class="stat-card"><div class="val">${data.totalLessons}</div><div class="lbl">Total Lessons</div></div>
+    <div class="stat-card holiday"><div class="val">${data.holidayCount}</div><div class="lbl">Holidays Skipped</div></div>
+    <div class="stat-card"><div class="val">${selectedDays.split('').map(d=>'一二三四五六日'[parseInt(d)-1]).join('・')}</div><div class="lbl">Days / Week</div></div>
+    <div class="stat-card end"><div class="lbl">預計結束 End Date</div><div class="val">${lastReal?lastReal.date:'—'}</div></div>
+    ${teacherSummary?`<div class="stat-card" style="flex-basis:100%"><div class="lbl">授課老師 Teachers</div><div style="font-family:var(--mono);font-size:0.82rem;color:var(--text-dim);margin-top:6px">${teacherSummary}</div></div>`:''}
   `;
   pr.appendChild(stats);
 
-  // Table
   const tableWrap = document.createElement('div');
   tableWrap.className = 'table-wrap';
   tableWrap.innerHTML = `
-    <div class="table-header">
-      <div>Lesson</div><div>Date</div><div>Day</div>
-      <div>Unit</div><div>Teacher</div><div>Note</div>
-    </div>
+    <div class="table-header"><div>Lesson</div><div>Date</div><div>Day</div><div>Unit</div><div>Teacher</div><div>Note</div></div>
     <div class="schedule-body" id="scheduleBody"></div>
   `;
   pr.appendChild(tableWrap);
@@ -1000,31 +510,17 @@ function renderPreview(data, spec) {
   data.schedule.forEach(row => {
     const div = document.createElement('div');
     div.className = 'schedule-row' + (row.isHoliday ? ' holiday' : '');
-
-    const lessonDisplay = row.isHoliday
-      ? `<span class="lesson-num" style="color:var(--muted)">—</span>`
-      : `<span class="lesson-num active">${row.lesson}</span>`;
-
-    const unitName    = row.lesson ? (unitMap[row.lesson] || '') : '';
-    const isExamUnit  = unitName && /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(unitName);
-    const unitDisplay = unitName
-      ? `<span class="unit-badge ${isExamUnit ? 'exam-badge' : ''}">${unitName}</span>` : '';
-
-    const dayNum         = WEEKDAY_TO_NUM[row.weekday] || '';
-    const rowTeacher     = dayTeacherMap[dayNum] || '';
-    const teacherDisplay = (!row.isHoliday && rowTeacher)
-      ? `<span class="teacher-cell">${rowTeacher}</span>` : '';
-
-    const noteDisplay = row.isHoliday
-      ? `<span class="holiday-tag">${row.holidayName}</span>` : '';
-
+    const unitName   = row.lesson ? (unitMap[row.lesson]||'') : '';
+    const isExamUnit = unitName && /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(unitName);
+    const dayNum     = WEEKDAY_TO_NUM[row.weekday]||'';
+    const rowTeacher = dayTeacherMap[dayNum]||'';
     div.innerHTML = `
-      ${lessonDisplay}
+      ${row.isHoliday ? `<span class="lesson-num" style="color:var(--muted)">—</span>` : `<span class="lesson-num active">${row.lesson}</span>`}
       <div class="date-cell">${row.date}</div>
       <div class="weekday-badge">週${row.weekday}</div>
-      <div>${unitDisplay}</div>
-      <div>${teacherDisplay}</div>
-      <div>${noteDisplay}</div>
+      <div>${unitName?`<span class="unit-badge ${isExamUnit?'exam-badge':''}">${unitName}</span>`:''}</div>
+      <div>${(!row.isHoliday&&rowTeacher)?`<span class="teacher-cell">${rowTeacher}</span>`:''}</div>
+      <div>${row.isHoliday?`<span class="holiday-tag">${row.holidayName}</span>`:''}</div>
     `;
     body.appendChild(div);
   });
@@ -1033,21 +529,75 @@ function renderPreview(data, spec) {
 // ── Create Class ──
 async function doCreate() {
   if (!selectedClient)   return toast('請先選擇補習班', 'err');
-  const className = document.getElementById('className').value.trim();
-  if (!className)        return toast('請填寫班級名稱', 'err');
-  if (!authCode)         return toast('請先登入 Admin 帳號', 'err');
+  if (!authCode)         return toast('請先登入', 'err');
   if (!currentSchedule)  return toast('請先預覽課表', 'err');
+  if (!currentSpec)      return toast('請選擇課程規格', 'err');
 
-  const lastReal = [...currentSchedule.schedule].filter(r => !r.isHoliday).pop();
+  const className = document.getElementById('className').value.trim();
+  if (!className) return toast('請填寫班級名稱', 'err');
+
+  const startDate     = document.getElementById('startDate').value;
+  const dayTeacherMap = buildDayTeacherMap();
+  const lastReal      = [...currentSchedule.schedule].filter(r => !r.isHoliday).pop();
+
   if (!confirm(
     `確認建立班級「${className}」？\n` +
     `補習班：${selectedClient.name}\n` +
-    `共 ${currentSchedule.totalLessons} 堂，預計結束於 ${lastReal ? lastReal.date : '—'}`
+    `規格：${currentSpec.displayName}（${currentSpec.totalLessons} 堂）\n` +
+    `預計結束：${lastReal ? lastReal.date : '—'}\n\n` +
+    `⚠ 建立後無法自動刪除，請確認參數正確！`
   )) return;
 
-  toast('建立中…請稍候', 'ok', 8000);
-  // 🚧 第三階段：接 createClassSheet action（帶 sheetId）
-  setTimeout(() => toast('🚧 建班 API 尚未完成（第三階段）', 'err', 4000), 1000);
+  const btnCreate = document.getElementById('btnCreate');
+  btnCreate.disabled = true;
+  btnCreate.textContent = '建立中… Creating…';
+  toast('建立中，請稍候（約 30~60 秒）', 'ok', 60000);
+
+  try {
+    const res = await postGAS({
+      action:      'createClassSheet',
+      authCode:    authCode,
+      sheetId:     selectedClient.sheetId,
+      className:   className,
+      startDate:   startDate,
+      days:        selectedDays,
+      targetLevel: currentSpec.system + currentSpec.level,
+      dayTeachers: JSON.stringify(dayTeacherMap),
+      students:    JSON.stringify([])   // 學生名單之後再加
+    });
+
+    btnCreate.disabled = false;
+    btnCreate.textContent = '✦ 正式建立班級 Create Class';
+
+    if (res.ok) {
+      toast(`✓ 班級「${className}」建立成功！`, 'ok', 6000);
+      // 成功後顯示結果
+      const pr = document.getElementById('panelRight');
+      const resultCard = document.createElement('div');
+      resultCard.style.cssText = `
+        background: rgba(232,255,71,.08); border: 1px solid var(--accent);
+        border-radius: var(--radius); padding: 20px 24px;
+        font-family: var(--mono); font-size: 0.85rem; color: var(--accent);
+        line-height: 2;
+      `;
+      resultCard.innerHTML = `
+        ✓ 班級建立完成<br>
+        <span style="color:var(--text)">班名：${className}</span><br>
+        <span style="color:var(--text)">補習班：${selectedClient.name}</span><br>
+        <span style="color:var(--text)">規格：${currentSpec.displayName}</span><br>
+        <span style="color:var(--text)">小考欄位：${(res.quizList||[]).join(', ')||'—'}</span><br>
+        <span style="color:var(--text)">大考欄位：${(res.testList||[]).join(', ')||'—'}</span>
+      `;
+      pr.insertBefore(resultCard, pr.firstChild);
+      btnCreate.classList.remove('visible');
+    } else {
+      toast('✕ ' + (res.msg || '建立失敗'), 'err', 6000);
+    }
+  } catch(e) {
+    btnCreate.disabled = false;
+    btnCreate.textContent = '✦ 正式建立班級 Create Class';
+    toast('連線失敗：' + e.message, 'err', 6000);
+  }
 }
 
 function showError(msg) {
@@ -1055,12 +605,11 @@ function showError(msg) {
     `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
 }
 
-// ── Init ──
+// Init
 window.addEventListener('load', () => {
-  const t  = new Date();
-  const mm = String(t.getMonth()+1).padStart(2,'0');
-  const dd = String(t.getDate()).padStart(2,'0');
-  document.getElementById('startDate').value = `${t.getFullYear()}-${mm}-${dd}`;
+  const t = new Date();
+  document.getElementById('startDate').value =
+    `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 });
 </script>
 </body>
