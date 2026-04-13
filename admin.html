@@ -89,13 +89,13 @@
     color: var(--text-dim);
     font-family: var(--mono);
   }
-  .auth-status.ok { color: var(--accent); }
+  .auth-status.ok   { color: var(--accent); }
   .auth-status.fail { color: var(--danger); }
 
   /* ── Main Layout ── */
   main {
     display: grid;
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 380px 1fr;
     gap: 0;
     flex: 1;
     height: calc(100vh - 61px);
@@ -109,7 +109,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 22px;
   }
 
   .section-title {
@@ -126,7 +126,7 @@
 
   .field label {
     display: block;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: var(--text-dim);
     margin-bottom: 5px;
     font-family: var(--mono);
@@ -176,7 +176,45 @@
     font-weight: 500;
   }
 
-  /* Summary strip */
+  /* Per-day teacher inputs */
+  .teacher-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 4px;
+  }
+  .teacher-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-label {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 10px;
+    min-width: 38px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .teacher-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .teacher-row input:focus { border-color: var(--accent); }
+
+  /* Spec summary */
   .spec-summary {
     background: var(--bg);
     border: 1px solid var(--border);
@@ -189,12 +227,11 @@
   }
   .spec-summary strong { color: var(--accent); font-weight: 500; }
 
-  /* Unit pills */
   .unit-pills {
     display: flex;
     flex-wrap: wrap;
     gap: 5px;
-    margin-top: 4px;
+    margin-top: 8px;
   }
   .unit-pill {
     background: var(--bg);
@@ -207,13 +244,9 @@
   }
   .unit-pill.exam { border-color: var(--accent2); color: var(--accent2); }
 
-  /* Divider */
-  .divider {
-    height: 1px;
-    background: var(--border);
-  }
+  .divider { height: 1px; background: var(--border); }
 
-  /* Preview button */
+  /* Buttons */
   .btn-preview {
     width: 100%;
     background: transparent;
@@ -228,16 +261,9 @@
     transition: all .15s;
     letter-spacing: .02em;
   }
-  .btn-preview:hover {
-    background: var(--accent);
-    color: #000;
-  }
-  .btn-preview:disabled {
-    opacity: .35;
-    cursor: not-allowed;
-  }
+  .btn-preview:hover { background: var(--accent); color: #000; }
+  .btn-preview:disabled { opacity: .35; cursor: not-allowed; }
 
-  /* Create button */
   .btn-create {
     width: 100%;
     background: var(--accent);
@@ -265,7 +291,6 @@
     gap: 20px;
   }
 
-  /* Stats bar */
   .stats-bar {
     display: flex;
     gap: 16px;
@@ -297,7 +322,7 @@
   .stat-card.holiday .val { color: var(--danger); }
   .stat-card.end .val { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
 
-  /* Schedule table */
+  /* Table */
   .table-wrap {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -306,7 +331,7 @@
   }
   .table-header {
     display: grid;
-    grid-template-columns: 60px 110px 50px 1fr 180px;
+    grid-template-columns: 60px 110px 50px 80px 1fr 1fr;
     padding: 10px 16px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -317,10 +342,10 @@
     color: var(--muted);
     gap: 8px;
   }
-  .schedule-body { max-height: calc(100vh - 320px); overflow-y: auto; }
+  .schedule-body { max-height: calc(100vh - 340px); overflow-y: auto; }
   .schedule-row {
     display: grid;
-    grid-template-columns: 60px 110px 50px 1fr 180px;
+    grid-template-columns: 60px 110px 50px 80px 1fr 1fr;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
     align-items: center;
@@ -330,12 +355,9 @@
   }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row:hover { background: rgba(255,255,255,.03); }
-  .schedule-row.holiday {
-    background: rgba(255,71,87,.06);
-  }
-  .schedule-row.holiday:hover {
-    background: rgba(255,71,87,.10);
-  }
+  .schedule-row.holiday { background: rgba(255,71,87,.06); }
+  .schedule-row.holiday:hover { background: rgba(255,71,87,.10); }
+
   .lesson-num {
     font-family: var(--mono);
     font-size: 0.78rem;
@@ -343,11 +365,7 @@
     font-weight: 500;
   }
   .lesson-num.active { color: var(--accent); }
-  .date-cell {
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    color: var(--text);
-  }
+  .date-cell { font-family: var(--mono); font-size: 0.82rem; color: var(--text); }
   .weekday-badge {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -373,6 +391,7 @@
     border-color: rgba(71,200,255,.2);
     color: var(--accent2);
   }
+  .teacher-cell { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
   .holiday-tag {
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -381,12 +400,8 @@
     align-items: center;
     gap: 5px;
   }
-  .holiday-tag::before {
-    content: '✕';
-    font-size: 0.65rem;
-  }
+  .holiday-tag::before { content: '✕'; font-size: 0.65rem; }
 
-  /* Empty state */
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -400,12 +415,8 @@
     text-align: center;
     padding: 60px;
   }
-  .empty-icon {
-    font-size: 2.5rem;
-    opacity: .4;
-  }
+  .empty-icon { font-size: 2.5rem; opacity: .4; }
 
-  /* Loading */
   .loading {
     display: flex;
     align-items: center;
@@ -425,11 +436,9 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Toast */
   .toast {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 24px; right: 24px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -445,10 +454,9 @@
     max-width: 320px;
   }
   .toast.show { transform: translateY(0); opacity: 1; }
-  .toast.ok { border-color: var(--accent); color: var(--accent); }
+  .toast.ok  { border-color: var(--accent); color: var(--accent); }
   .toast.err { border-color: var(--danger); color: var(--danger); }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -456,18 +464,18 @@
 </head>
 <body>
 
-<!-- Header -->
 <header>
   <div class="logo">NewCore <span>Admin</span></div>
   <div class="auth-bar">
-    <input type="password" id="authInput" placeholder="授權碼 Auth Code" />
+    <input type="password" id="authInput" placeholder="授權碼 Auth Code"
+           onkeydown="if(event.key==='Enter') doLogin()" />
     <button class="btn-login" onclick="doLogin()">登入 Login</button>
     <span class="auth-status" id="authStatus">— 未登入</span>
   </div>
 </header>
 
 <main>
-  <!-- Left Panel: Parameters -->
+  <!-- Left Panel -->
   <div class="panel-left">
 
     <div>
@@ -480,14 +488,14 @@
         <div class="field">
           <label>課程規格 Curriculum Spec</label>
           <select id="specSelect" onchange="onSpecChange()">
-            <option value="">— 選擇規格 —</option>
+            <option value="">— 選擇規格（請先登入）—</option>
           </select>
         </div>
-        <div class="field">
-          <label>授課老師 Teacher</label>
-          <input type="text" id="teacherName" placeholder="老師姓名" />
-        </div>
       </div>
+    </div>
+
+    <div id="specSummaryWrap" style="display:none">
+      <div class="spec-summary" id="specSummaryContent"></div>
     </div>
 
     <div class="divider"></div>
@@ -511,12 +519,15 @@
             <div class="day-btn" data-day="7" onclick="toggleDay(this)">日</div>
           </div>
         </div>
+        <div class="field">
+          <label>授課老師 Teacher（每個上課日）</label>
+          <div class="teacher-rows" id="teacherRows">
+            <div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">
+              請先選擇上課星期 ↑
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- Spec summary -->
-    <div id="specSummary" style="display:none">
-      <div class="spec-summary" id="specSummaryContent"></div>
     </div>
 
     <div class="divider"></div>
@@ -531,37 +542,37 @@
 
   </div>
 
-  <!-- Right Panel: Preview -->
+  <!-- Right Panel -->
   <div class="panel-right" id="panelRight">
-    <div class="empty-state" id="emptyState">
+    <div class="empty-state">
       <div class="empty-icon">📅</div>
       <div>設定左側參數後<br>點擊「預覽課表」</div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Configure params → Preview Schedule</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:6px">
+        Configure params → Preview Schedule
+      </div>
     </div>
   </div>
 </main>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxE7aSryLEDxBqi-28EpdjvK9lhQwvGMKnWJlCbcHIG9Rc6FEPN3UrZwSIqMNVJ1GPs/exec';
 
-let authCode   = '';
-let specsData  = [];
-let currentSchedule = null;
-let selectedDays = [];
+const DAY_NAMES     = {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'日'};
+const WEEKDAY_TO_NUM = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','日':'7'};
 
-// ── GAS 呼叫 ──
+let authCode        = '';
+let specsData       = [];
+let selectedDays    = '';
+let currentSchedule = null;
+
+// ── JSONP ──
 function callGAS(params) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const script = document.createElement('script');
-    window[cbName] = data => {
-      resolve(data);
-      delete window[cbName];
-      script.remove();
-    };
+    window[cbName] = data => { resolve(data); delete window[cbName]; script.remove(); };
     const qs = Object.entries({ ...params, callback: cbName })
       .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     script.src = `${GAS_URL}?${qs}`;
@@ -582,26 +593,27 @@ function toast(msg, type='ok', dur=3000) {
 async function doLogin() {
   const code = document.getElementById('authInput').value.trim();
   if (!code) return toast('請輸入授權碼', 'err');
-  const el = document.getElementById('authStatus');
-  el.textContent = '驗證中...';
-  el.className = 'auth-status';
+  const statusEl = document.getElementById('authStatus');
+  statusEl.textContent = '驗證中…';
+  statusEl.className = 'auth-status';
   try {
     const res = await callGAS({ action: 'verifyAuth', authCode: code });
     if (res.ok) {
       authCode = code;
-      el.textContent = `✓ ${res.name} (${res.role})`;
-      el.className = 'auth-status ok';
+      statusEl.textContent = `✓ ${res.name} (${res.role})`;
+      statusEl.className = 'auth-status ok';
       if (res.role !== 'admin') {
         toast('⚠ 僅 Admin 可使用建班功能', 'err', 4000);
+      } else {
+        loadSpecs();
       }
-      loadSpecs();
     } else {
-      el.textContent = '✕ ' + res.msg;
-      el.className = 'auth-status fail';
+      statusEl.textContent = '✕ ' + (res.msg || '驗證失敗');
+      statusEl.className = 'auth-status fail';
     }
   } catch(e) {
-    el.textContent = '✕ 連線失敗';
-    el.className = 'auth-status fail';
+    statusEl.textContent = '✕ 連線失敗';
+    statusEl.className = 'auth-status fail';
   }
 }
 
@@ -609,7 +621,7 @@ async function doLogin() {
 async function loadSpecs() {
   try {
     const res = await callGAS({ action: 'getAvailableSpecs' });
-    if (!res.ok) return toast('無法載入規格：' + res.error, 'err');
+    if (!res.ok) return toast('無法載入規格：' + (res.error || ''), 'err');
     specsData = res.specs;
     const sel = document.getElementById('specSelect');
     sel.innerHTML = '<option value="">— 選擇規格 —</option>';
@@ -627,22 +639,22 @@ async function loadSpecs() {
 
 // ── Spec Change ──
 function onSpecChange() {
-  const idx = document.getElementById('specSelect').value;
-  const summaryEl = document.getElementById('specSummary');
-  const contentEl = document.getElementById('specSummaryContent');
-  if (idx === '') { summaryEl.style.display = 'none'; return; }
+  const idx     = document.getElementById('specSelect').value;
+  const wrapEl  = document.getElementById('specSummaryWrap');
+  const contEl  = document.getElementById('specSummaryContent');
+  if (idx === '') { wrapEl.style.display = 'none'; return; }
 
   const sp = specsData[parseInt(idx)];
-  summaryEl.style.display = 'block';
+  wrapEl.style.display = 'block';
 
   const pills = sp.units.map(u => {
-    const isExam = /^(R|Ac|Ho|Review|GP|FP)/i.test(u.unit);
+    const isExam = /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(u.unit);
     return `<span class="unit-pill ${isExam ? 'exam' : ''}">${u.unit} ×${u.lessons}</span>`;
   }).join('');
 
-  contentEl.innerHTML = `
-    <strong>${sp.displayName}</strong> &nbsp;·&nbsp; 共 <strong>${sp.totalLessons}</strong> 堂<br>
-    <div class="unit-pills" style="margin-top:8px">${pills}</div>
+  contEl.innerHTML = `
+    <strong>${sp.displayName}</strong> &nbsp;·&nbsp; 共 <strong>${sp.totalLessons}</strong> 堂
+    <div class="unit-pills">${pills}</div>
   `;
 }
 
@@ -650,28 +662,69 @@ function onSpecChange() {
 function toggleDay(el) {
   el.classList.toggle('active');
   updateSelectedDays();
+  renderTeacherInputs();
 }
 
 function updateSelectedDays() {
   selectedDays = [...document.querySelectorAll('.day-btn.active')]
-    .map(el => el.dataset.day)
-    .sort()
-    .join('');
+    .map(el => el.dataset.day).sort().join('');
+}
+
+// ── Teacher Inputs per Day ──
+function renderTeacherInputs() {
+  const container  = document.getElementById('teacherRows');
+  const activeDays = [...document.querySelectorAll('.day-btn.active')]
+    .map(el => el.dataset.day).sort();
+
+  // 保留已輸入的值
+  const existing = {};
+  container.querySelectorAll('input[data-day]').forEach(inp => {
+    existing[inp.dataset.day] = inp.value;
+  });
+
+  container.innerHTML = '';
+
+  if (!activeDays.length) {
+    container.innerHTML = `<div style="font-family:var(--mono);font-size:0.72rem;color:var(--muted)">請先選擇上課星期 ↑</div>`;
+    return;
+  }
+
+  activeDays.forEach(day => {
+    const row = document.createElement('div');
+    row.className = 'teacher-row';
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.dataset.day = day;
+    inp.placeholder = '外師/中師，如 Jeffrey/Sandy';
+    inp.value = existing[day] || '';
+    inp.addEventListener('focus', () => inp.style.borderColor = 'var(--accent)');
+    inp.addEventListener('blur',  () => inp.style.borderColor = 'var(--border)');
+    row.innerHTML = `<span class="day-label">週${DAY_NAMES[day]}</span>`;
+    row.appendChild(inp);
+    container.appendChild(row);
+  });
+}
+
+// ── Build day→teacher map ──
+function buildDayTeacherMap() {
+  const map = {};
+  document.querySelectorAll('#teacherRows input[data-day]').forEach(inp => {
+    map[inp.dataset.day] = inp.value.trim();
+  });
+  return map;
 }
 
 // ── Preview ──
 async function doPreview() {
-  const className  = document.getElementById('className').value.trim();
-  const startDate  = document.getElementById('startDate').value;
-  const teacherVal = document.getElementById('teacherName').value.trim();
-  const specIdx    = document.getElementById('specSelect').value;
+  const startDate = document.getElementById('startDate').value;
+  const specIdx   = document.getElementById('specSelect').value;
 
-  if (!startDate)      return toast('請選擇開始日期', 'err');
-  if (!selectedDays)   return toast('請選擇上課星期', 'err');
-  if (specIdx === '')  return toast('請選擇課程規格', 'err');
+  if (!startDate)     return toast('請選擇開始日期', 'err');
+  if (!selectedDays)  return toast('請選擇上課星期', 'err');
+  if (specIdx === '') return toast('請選擇課程規格', 'err');
 
   const spec = specsData[parseInt(specIdx)];
-  const pr = document.getElementById('panelRight');
+  const pr   = document.getElementById('panelRight');
   pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中 Generating schedule…</div>`;
   document.getElementById('btnPreview').disabled = true;
 
@@ -681,13 +734,13 @@ async function doPreview() {
       startDate: startDate,
       days:      selectedDays,
       lessons:   spec.totalLessons,
-      teacher:   teacherVal
+      teacher:   ''
     });
     document.getElementById('btnPreview').disabled = false;
 
     if (!res.ok) return showError(res.error || '預覽失敗');
     currentSchedule = res;
-    renderPreview(res, spec, className, teacherVal);
+    renderPreview(res, spec);
     document.getElementById('btnCreate').classList.add('visible');
   } catch(e) {
     document.getElementById('btnPreview').disabled = false;
@@ -696,26 +749,30 @@ async function doPreview() {
 }
 
 // ── Render Preview ──
-function renderPreview(data, spec, className, teacher) {
-  // Build unit map: lesson number → unit name
+function renderPreview(data, spec) {
+  // lesson → unit
   const unitMap = {};
-  let lessonCursor = 1;
+  let cursor = 1;
   spec.units.forEach(u => {
-    for (let i = 0; i < u.lessons; i++) {
-      unitMap[lessonCursor] = u.unit;
-      lessonCursor++;
-    }
+    for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; }
   });
 
-  const lastDate = data.schedule.filter(r => !r.isHoliday).slice(-1)[0];
+  const dayTeacherMap = buildDayTeacherMap();
+  const lastReal = [...data.schedule].filter(r => !r.isHoliday).pop();
 
   const pr = document.getElementById('panelRight');
   pr.innerHTML = '';
 
-  // Stats bar
-  const statsBar = document.createElement('div');
-  statsBar.className = 'stats-bar';
-  statsBar.innerHTML = `
+  // Stats
+  const stats = document.createElement('div');
+  stats.className = 'stats-bar';
+
+  const teacherSummary = Object.entries(dayTeacherMap)
+    .filter(([,v]) => v)
+    .map(([d,v]) => `週${DAY_NAMES[d]}&nbsp;${v}`)
+    .join('&emsp;');
+
+  stats.innerHTML = `
     <div class="stat-card">
       <div class="val">${data.totalLessons}</div>
       <div class="lbl">Total Lessons</div>
@@ -725,15 +782,20 @@ function renderPreview(data, spec, className, teacher) {
       <div class="lbl">Holidays Skipped</div>
     </div>
     <div class="stat-card">
-      <div class="val">${selectedDays.split('').map(d => '一二三四五六日'[parseInt(d)-1]).join('・')}</div>
+      <div class="val">${selectedDays.split('').map(d=>'一二三四五六日'[parseInt(d)-1]).join('・')}</div>
       <div class="lbl">Days / Week</div>
     </div>
     <div class="stat-card end">
       <div class="lbl">預計結束 End Date</div>
-      <div class="val">${lastDate ? lastDate.date : '—'}</div>
+      <div class="val">${lastReal ? lastReal.date : '—'}</div>
     </div>
+    ${teacherSummary ? `
+    <div class="stat-card" style="flex-basis:100%">
+      <div class="lbl">授課老師 Teachers</div>
+      <div style="font-family:var(--mono);font-size:0.82rem;color:var(--text-dim);margin-top:6px">${teacherSummary}</div>
+    </div>` : ''}
   `;
-  pr.appendChild(statsBar);
+  pr.appendChild(stats);
 
   // Table
   const tableWrap = document.createElement('div');
@@ -744,6 +806,7 @@ function renderPreview(data, spec, className, teacher) {
       <div>Date</div>
       <div>Day</div>
       <div>Unit</div>
+      <div>Teacher</div>
       <div>Note</div>
     </div>
     <div class="schedule-body" id="scheduleBody"></div>
@@ -759,21 +822,26 @@ function renderPreview(data, spec, className, teacher) {
       ? `<span class="lesson-num" style="color:var(--muted)">—</span>`
       : `<span class="lesson-num active">${row.lesson}</span>`;
 
-    const unitName = row.lesson ? (unitMap[row.lesson] || '') : '';
-    const isExamUnit = unitName && /^(R|Ac|Ho|Review|GP|FP)/i.test(unitName);
+    const unitName    = row.lesson ? (unitMap[row.lesson] || '') : '';
+    const isExamUnit  = unitName && /^(R|Ac|Ho|Review|GP|FP|Maker|Activity)/i.test(unitName);
     const unitDisplay = unitName
       ? `<span class="unit-badge ${isExamUnit ? 'exam-badge' : ''}">${unitName}</span>`
       : '';
 
+    const dayNum       = WEEKDAY_TO_NUM[row.weekday] || '';
+    const rowTeacher   = dayTeacherMap[dayNum] || '';
+    const teacherDisplay = (!row.isHoliday && rowTeacher)
+      ? `<span class="teacher-cell">${rowTeacher}</span>` : '';
+
     const noteDisplay = row.isHoliday
-      ? `<span class="holiday-tag">${row.holidayName}</span>`
-      : (teacher ? `<span style="color:var(--text-dim);font-size:.78rem;font-family:var(--mono)">${teacher}</span>` : '');
+      ? `<span class="holiday-tag">${row.holidayName}</span>` : '';
 
     div.innerHTML = `
       ${lessonDisplay}
       <div class="date-cell">${row.date}</div>
       <div class="weekday-badge">週${row.weekday}</div>
       <div>${unitDisplay}</div>
+      <div>${teacherDisplay}</div>
       <div>${noteDisplay}</div>
     `;
     body.appendChild(div);
@@ -783,29 +851,29 @@ function renderPreview(data, spec, className, teacher) {
 // ── Create Class ──
 async function doCreate() {
   const className = document.getElementById('className').value.trim();
-  if (!className) return toast('請填寫班級名稱', 'err');
-  if (!authCode)  return toast('請先登入 Admin 帳號', 'err');
-  if (!currentSchedule) return toast('請先預覽課表', 'err');
+  if (!className)        return toast('請填寫班級名稱', 'err');
+  if (!authCode)         return toast('請先登入 Admin 帳號', 'err');
+  if (!currentSchedule)  return toast('請先預覽課表', 'err');
 
-  if (!confirm(`確認要建立班級「${className}」？\n共 ${currentSchedule.totalLessons} 堂，預計結束於 ${currentSchedule.lastDate}`)) return;
+  const lastReal = [...currentSchedule.schedule].filter(r => !r.isHoliday).pop();
+  if (!confirm(`確認建立班級「${className}」？\n共 ${currentSchedule.totalLessons} 堂，預計結束於 ${lastReal ? lastReal.date : '—'}`)) return;
 
   toast('建立中…請稍候', 'ok', 8000);
-  // TODO: 第三階段接 createClassSheet action
+  // 🚧 第三階段接 createClassSheet action
   setTimeout(() => toast('🚧 建班 API 尚未完成（第三階段）', 'err', 4000), 1000);
 }
 
 function showError(msg) {
-  const pr = document.getElementById('panelRight');
-  pr.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
+  document.getElementById('panelRight').innerHTML =
+    `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
 }
 
-// Init: set default date to today
+// ── Init ──
 window.addEventListener('load', () => {
-  const today = new Date();
-  const yyyy  = today.getFullYear();
-  const mm    = String(today.getMonth()+1).padStart(2,'0');
-  const dd    = String(today.getDate()).padStart(2,'0');
-  document.getElementById('startDate').value = `${yyyy}-${mm}-${dd}`;
+  const t  = new Date();
+  const mm = String(t.getMonth()+1).padStart(2,'0');
+  const dd = String(t.getDate()).padStart(2,'0');
+  document.getElementById('startDate').value = `${t.getFullYear()}-${mm}-${dd}`;
 });
 </script>
 </body>
