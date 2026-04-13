@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NewCore Admin — 班級生成</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f0f11;
+    --surface:   #1a1a1f;
+    --border:    #2a2a32;
+    --accent:    #e8ff47;
+    --accent2:   #47c8ff;
+    --danger:    #ff4757;
+    --muted:     #555566;
+    --text:      #e8e8f0;
+    --text-dim:  #888899;
+    --radius:    10px;
+    --mono:      'DM Mono', monospace;
+    --sans:      'Noto Sans TC', sans-serif;
+    --display:   'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text-dim); font-weight: 700; }
+  .auth-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .auth-bar input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 7px 12px;
+    width: 140px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .auth-bar input:focus { border-color: var(--accent); }
+  .btn-login {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn-login:hover { opacity: .85; }
+  .auth-status {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .auth-status.ok { color: var(--accent); }
+  .auth-status.fail { color: var(--danger); }
+
+  /* ── Main Layout ── */
+  main {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 0;
+    flex: 1;
+    height: calc(100vh - 61px);
+  }
+
+  /* ── Left Panel ── */
+  .panel-left {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .field-group { display: flex; flex-direction: column; gap: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    font-family: var(--mono);
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.88rem;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color .2s;
+    appearance: none;
+  }
+  .field input:focus,
+  .field select:focus { border-color: var(--accent); }
+  .field select option { background: var(--surface); }
+
+  /* Days checkboxes */
+  .days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+  }
+  .day-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 8px 0;
+    text-align: center;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .day-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .day-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+
+  /* Summary strip */
+  .spec-summary {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .spec-summary strong { color: var(--accent); font-weight: 500; }
+
+  /* Unit pills */
+  .unit-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 4px;
+  }
+  .unit-pill {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    color: var(--text-dim);
+  }
+  .unit-pill.exam { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Divider */
+  .divider {
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Preview button */
+  .btn-preview {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    color: var(--accent);
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    letter-spacing: .02em;
+  }
+  .btn-preview:hover {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-preview:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+  }
+
+  /* Create button */
+  .btn-create {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 800;
+    padding: 14px;
+    cursor: pointer;
+    transition: opacity .15s;
+    letter-spacing: .02em;
+    display: none;
+  }
+  .btn-create:hover { opacity: .85; }
+  .btn-create.visible { display: block; }
+
+  /* ── Right Panel ── */
+  .panel-right {
+    padding: 28px 32px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .stat-card .val {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-card .lbl {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .stat-card.holiday .val { color: var(--danger); }
+  .stat-card.end .val { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
+
+  /* Schedule table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .table-header {
+    display: grid;
+    grid-template-columns: 60px 110px 50px 1fr 180px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    gap: 8px;
+  }
+  .schedule-body { max-height: calc(100vh - 320px); overflow-y: auto; }
+  .schedule-row {
+    display: grid;
+    grid-template-columns: 60px 110px 50px 1fr 180px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    gap: 8px;
+    transition: background .1s;
+    font-size: 0.85rem;
+  }
+  .schedule-row:last-child { border-bottom: none; }
+  .schedule-row:hover { background: rgba(255,255,255,.03); }
+  .schedule-row.holiday {
+    background: rgba(255,71,87,.06);
+  }
+  .schedule-row.holiday:hover {
+    background: rgba(255,71,87,.10);
+  }
+  .lesson-num {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .lesson-num.active { color: var(--accent); }
+  .date-cell {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .weekday-badge {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .unit-badge {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(232,255,71,.08);
+    border: 1px solid rgba(232,255,71,.2);
+    color: var(--accent);
+    display: inline-block;
+  }
+  .unit-badge.exam-badge {
+    background: rgba(71,200,255,.08);
+    border-color: rgba(71,200,255,.2);
+    color: var(--accent2);
+  }
+  .holiday-tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .holiday-tag::before {
+    content: '✕';
+    font-size: 0.65rem;
+  }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 60px;
+  }
+  .empty-icon {
+    font-size: 2.5rem;
+    opacity: .4;
+  }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 40px;
+    justify-content: center;
+  }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text);
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    max-width: 320px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok { border-color: var(--accent); color: var(--accent); }
+  .toast.err { border-color: var(--danger); color: var(--danger); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">NewCore <span>Admin</span></div>
+  <div class="auth-bar">
+    <input type="password" id="authInput" placeholder="授權碼 Auth Code" />
+    <button class="btn-login" onclick="doLogin()">登入 Login</button>
+    <span class="auth-status" id="authStatus">— 未登入</span>
+  </div>
+</header>
+
+<main>
+  <!-- Left Panel: Parameters -->
+  <div class="panel-left">
+
+    <div>
+      <div class="section-title">班級資訊 Class Info</div>
+      <div class="field-group">
+        <div class="field">
+          <label>班級名稱 Class Name</label>
+          <input type="text" id="className" placeholder="e.g. G1/THC5, 114-2 ESL04" />
+        </div>
+        <div class="field">
+          <label>課程規格 Curriculum Spec</label>
+          <select id="specSelect" onchange="onSpecChange()">
+            <option value="">— 選擇規格 —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>授課老師 Teacher</label>
+          <input type="text" id="teacherName" placeholder="老師姓名" />
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+      <div class="section-title">排課設定 Schedule Config</div>
+      <div class="field-group">
+        <div class="field">
+          <label>開始日期 Start Date</label>
+          <input type="date" id="startDate" />
+        </div>
+        <div class="field">
+          <label>上課星期 Days of Week</label>
+          <div class="days-grid" id="daysGrid">
+            <div class="day-btn" data-day="1" onclick="toggleDay(this)">一</div>
+            <div class="day-btn" data-day="2" onclick="toggleDay(this)">二</div>
+            <div class="day-btn" data-day="3" onclick="toggleDay(this)">三</div>
+            <div class="day-btn" data-day="4" onclick="toggleDay(this)">四</div>
+            <div class="day-btn" data-day="5" onclick="toggleDay(this)">五</div>
+            <div class="day-btn" data-day="6" onclick="toggleDay(this)">六</div>
+            <div class="day-btn" data-day="7" onclick="toggleDay(this)">日</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spec summary -->
+    <div id="specSummary" style="display:none">
+      <div class="spec-summary" id="specSummaryContent"></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="btn-preview" id="btnPreview" onclick="doPreview()">
+      ▶ 預覽課表 Preview Schedule
+    </button>
+
+    <button class="btn-create" id="btnCreate" onclick="doCreate()">
+      ✦ 正式建立班級 Create Class
+    </button>
+
+  </div>
+
+  <!-- Right Panel: Preview -->
+  <div class="panel-right" id="panelRight">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">📅</div>
+      <div>設定左側參數後<br>點擊「預覽課表」</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:4px">Configure params → Preview Schedule</div>
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzL4d3rUQyqXyqIVNBvK-Jx1Bxtg3Va7yDSECUCu_UEaKNKvDn_fIooIPH_QTJo71Ev/exec';
+
+let authCode   = '';
+let specsData  = [];
+let currentSchedule = null;
+let selectedDays = [];
+
+// ── GAS 呼叫 ──
+function callGAS(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    window[cbName] = data => {
+      resolve(data);
+      delete window[cbName];
+      script.remove();
+    };
+    const qs = Object.entries({ ...params, callback: cbName })
+      .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    script.src = `${GAS_URL}?${qs}`;
+    script.onerror = () => reject(new Error('Network error'));
+    document.body.appendChild(script);
+  });
+}
+
+// ── Toast ──
+function toast(msg, type='ok', dur=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.className = 'toast', dur);
+}
+
+// ── Login ──
+async function doLogin() {
+  const code = document.getElementById('authInput').value.trim();
+  if (!code) return toast('請輸入授權碼', 'err');
+  const el = document.getElementById('authStatus');
+  el.textContent = '驗證中...';
+  el.className = 'auth-status';
+  try {
+    const res = await callGAS({ action: 'verifyAuth', authCode: code });
+    if (res.ok) {
+      authCode = code;
+      el.textContent = `✓ ${res.name} (${res.role})`;
+      el.className = 'auth-status ok';
+      if (res.role !== 'admin') {
+        toast('⚠ 僅 Admin 可使用建班功能', 'err', 4000);
+      }
+      loadSpecs();
+    } else {
+      el.textContent = '✕ ' + res.msg;
+      el.className = 'auth-status fail';
+    }
+  } catch(e) {
+    el.textContent = '✕ 連線失敗';
+    el.className = 'auth-status fail';
+  }
+}
+
+// ── Load Specs ──
+async function loadSpecs() {
+  try {
+    const res = await callGAS({ action: 'getAvailableSpecs' });
+    if (!res.ok) return toast('無法載入規格：' + res.error, 'err');
+    specsData = res.specs;
+    const sel = document.getElementById('specSelect');
+    sel.innerHTML = '<option value="">— 選擇規格 —</option>';
+    specsData.forEach((sp, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${sp.displayName}（${sp.totalLessons} 堂）`;
+      sel.appendChild(opt);
+    });
+    toast('規格載入完成 ✓');
+  } catch(e) {
+    toast('載入規格失敗', 'err');
+  }
+}
+
+// ── Spec Change ──
+function onSpecChange() {
+  const idx = document.getElementById('specSelect').value;
+  const summaryEl = document.getElementById('specSummary');
+  const contentEl = document.getElementById('specSummaryContent');
+  if (idx === '') { summaryEl.style.display = 'none'; return; }
+
+  const sp = specsData[parseInt(idx)];
+  summaryEl.style.display = 'block';
+
+  const pills = sp.units.map(u => {
+    const isExam = /^(R|Ac|Ho|Review|GP|FP)/i.test(u.unit);
+    return `<span class="unit-pill ${isExam ? 'exam' : ''}">${u.unit} ×${u.lessons}</span>`;
+  }).join('');
+
+  contentEl.innerHTML = `
+    <strong>${sp.displayName}</strong> &nbsp;·&nbsp; 共 <strong>${sp.totalLessons}</strong> 堂<br>
+    <div class="unit-pills" style="margin-top:8px">${pills}</div>
+  `;
+}
+
+// ── Day Toggle ──
+function toggleDay(el) {
+  el.classList.toggle('active');
+  updateSelectedDays();
+}
+
+function updateSelectedDays() {
+  selectedDays = [...document.querySelectorAll('.day-btn.active')]
+    .map(el => el.dataset.day)
+    .sort()
+    .join('');
+}
+
+// ── Preview ──
+async function doPreview() {
+  const className  = document.getElementById('className').value.trim();
+  const startDate  = document.getElementById('startDate').value;
+  const teacherVal = document.getElementById('teacherName').value.trim();
+  const specIdx    = document.getElementById('specSelect').value;
+
+  if (!startDate)      return toast('請選擇開始日期', 'err');
+  if (!selectedDays)   return toast('請選擇上課星期', 'err');
+  if (specIdx === '')  return toast('請選擇課程規格', 'err');
+
+  const spec = specsData[parseInt(specIdx)];
+  const pr = document.getElementById('panelRight');
+  pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中 Generating schedule…</div>`;
+  document.getElementById('btnPreview').disabled = true;
+
+  try {
+    const res = await callGAS({
+      action:    'getPreviewSchedule',
+      startDate: startDate,
+      days:      selectedDays,
+      lessons:   spec.totalLessons,
+      teacher:   teacherVal
+    });
+    document.getElementById('btnPreview').disabled = false;
+
+    if (!res.ok) return showError(res.error || '預覽失敗');
+    currentSchedule = res;
+    renderPreview(res, spec, className, teacherVal);
+    document.getElementById('btnCreate').classList.add('visible');
+  } catch(e) {
+    document.getElementById('btnPreview').disabled = false;
+    showError('連線失敗：' + e.message);
+  }
+}
+
+// ── Render Preview ──
+function renderPreview(data, spec, className, teacher) {
+  // Build unit map: lesson number → unit name
+  const unitMap = {};
+  let lessonCursor = 1;
+  spec.units.forEach(u => {
+    for (let i = 0; i < u.lessons; i++) {
+      unitMap[lessonCursor] = u.unit;
+      lessonCursor++;
+    }
+  });
+
+  const lastDate = data.schedule.filter(r => !r.isHoliday).slice(-1)[0];
+
+  const pr = document.getElementById('panelRight');
+  pr.innerHTML = '';
+
+  // Stats bar
+  const statsBar = document.createElement('div');
+  statsBar.className = 'stats-bar';
+  statsBar.innerHTML = `
+    <div class="stat-card">
+      <div class="val">${data.totalLessons}</div>
+      <div class="lbl">Total Lessons</div>
+    </div>
+    <div class="stat-card holiday">
+      <div class="val">${data.holidayCount}</div>
+      <div class="lbl">Holidays Skipped</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">${selectedDays.split('').map(d => '一二三四五六日'[parseInt(d)-1]).join('・')}</div>
+      <div class="lbl">Days / Week</div>
+    </div>
+    <div class="stat-card end">
+      <div class="lbl">預計結束 End Date</div>
+      <div class="val">${lastDate ? lastDate.date : '—'}</div>
+    </div>
+  `;
+  pr.appendChild(statsBar);
+
+  // Table
+  const tableWrap = document.createElement('div');
+  tableWrap.className = 'table-wrap';
+  tableWrap.innerHTML = `
+    <div class="table-header">
+      <div>Lesson</div>
+      <div>Date</div>
+      <div>Day</div>
+      <div>Unit</div>
+      <div>Note</div>
+    </div>
+    <div class="schedule-body" id="scheduleBody"></div>
+  `;
+  pr.appendChild(tableWrap);
+
+  const body = tableWrap.querySelector('#scheduleBody');
+  data.schedule.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'schedule-row' + (row.isHoliday ? ' holiday' : '');
+
+    const lessonDisplay = row.isHoliday
+      ? `<span class="lesson-num" style="color:var(--muted)">—</span>`
+      : `<span class="lesson-num active">${row.lesson}</span>`;
+
+    const unitName = row.lesson ? (unitMap[row.lesson] || '') : '';
+    const isExamUnit = unitName && /^(R|Ac|Ho|Review|GP|FP)/i.test(unitName);
+    const unitDisplay = unitName
+      ? `<span class="unit-badge ${isExamUnit ? 'exam-badge' : ''}">${unitName}</span>`
+      : '';
+
+    const noteDisplay = row.isHoliday
+      ? `<span class="holiday-tag">${row.holidayName}</span>`
+      : (teacher ? `<span style="color:var(--text-dim);font-size:.78rem;font-family:var(--mono)">${teacher}</span>` : '');
+
+    div.innerHTML = `
+      ${lessonDisplay}
+      <div class="date-cell">${row.date}</div>
+      <div class="weekday-badge">週${row.weekday}</div>
+      <div>${unitDisplay}</div>
+      <div>${noteDisplay}</div>
+    `;
+    body.appendChild(div);
+  });
+}
+
+// ── Create Class ──
+async function doCreate() {
+  const className = document.getElementById('className').value.trim();
+  if (!className) return toast('請填寫班級名稱', 'err');
+  if (!authCode)  return toast('請先登入 Admin 帳號', 'err');
+  if (!currentSchedule) return toast('請先預覽課表', 'err');
+
+  if (!confirm(`確認要建立班級「${className}」？\n共 ${currentSchedule.totalLessons} 堂，預計結束於 ${currentSchedule.lastDate}`)) return;
+
+  toast('建立中…請稍候', 'ok', 8000);
+  // TODO: 第三階段接 createClassSheet action
+  setTimeout(() => toast('🚧 建班 API 尚未完成（第三階段）', 'err', 4000), 1000);
+}
+
+function showError(msg) {
+  const pr = document.getElementById('panelRight');
+  pr.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠</div><div>${msg}</div></div>`;
+}
+
+// Init: set default date to today
+window.addEventListener('load', () => {
+  const today = new Date();
+  const yyyy  = today.getFullYear();
+  const mm    = String(today.getMonth()+1).padStart(2,'0');
+  const dd    = String(today.getDate()).padStart(2,'0');
+  document.getElementById('startDate').value = `${yyyy}-${mm}-${dd}`;
+});
+</script>
+</body>
+</html>
