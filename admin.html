@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NewCore Admin — 管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
   :root {
     --bg:       #0f0f11;
@@ -73,7 +75,7 @@
 
   /* Layout - Class Builder */
   .panel-left { background: var(--surface); border-right: 1px solid var(--border); padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; width: 380px; flex-shrink: 0; }
-  .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; }
+  .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
 
   .section-title { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
   .field-group { display: flex; flex-direction: column; gap: 14px; }
@@ -120,7 +122,7 @@
   /* Schedule Table */
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .table-header { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
-  .schedule-body { max-height: calc(100vh - 340px); overflow-y: auto; }
+  .schedule-body { max-height: 280px; overflow-y: auto; }
   .schedule-row { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; transition: background .1s; font-size: 0.85rem; }
   .schedule-row:last-child { border-bottom: none; }
   .schedule-row:hover { background: rgba(255,255,255,.03); }
@@ -182,6 +184,75 @@
   .toast.show { transform: translateY(0); opacity: 1; }
   .toast.ok  { border-color: var(--accent); color: var(--accent); }
   .toast.err { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Student Roster ── */
+  .roster-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .roster-hdr { padding: 13px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .roster-hdr-title { font-family: var(--mono); font-size: 0.72rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--accent2); }
+  .roster-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .roster-tab-btn { font-family: var(--mono); font-size: 0.72rem; padding: 9px 16px; color: var(--text-dim); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; letter-spacing: .04em; }
+  .roster-tab-btn:hover { color: var(--text); }
+  .roster-tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .roster-pane { display: none; padding: 16px 20px; }
+  .roster-pane.active { display: block; }
+
+  /* Select from list */
+  .stu-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+  .stu-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; transition: all .15s; user-select: none; }
+  .stu-item:hover { border-color: var(--accent2); }
+  .stu-item.on { border-color: var(--accent2); background: rgba(71,200,255,.05); }
+  .stu-item input[type=checkbox] { accent-color: var(--accent2); width: 14px; height: 14px; flex-shrink: 0; cursor: pointer; }
+  .stu-cn { font-size: 0.88rem; color: var(--text); min-width: 78px; }
+  .stu-en { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); min-width: 78px; }
+  .stu-grade { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); min-width: 36px; }
+  .stu-cls { font-family: var(--mono); font-size: 0.65rem; color: var(--accent); background: rgba(232,255,71,.08); border: 1px solid rgba(232,255,71,.2); border-radius: 3px; padding: 1px 6px; }
+  .btn-sel-all { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.68rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
+  .btn-sel-all:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Manual table */
+  .stu-tbl { width: 100%; border-collapse: collapse; }
+  .stu-tbl th { text-align: left; padding: 5px 7px; font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .stu-tbl td { padding: 3px 2px; border-bottom: 1px solid rgba(42,42,50,.5); }
+  .stu-tbl td:last-child { width: 28px; }
+  .stu-tbl input { width: 100%; background: transparent; border: 1px solid transparent; border-radius: 4px; color: var(--text); font-family: var(--sans); font-size: 0.82rem; padding: 5px 7px; outline: none; transition: border-color .15s; min-width: 56px; }
+  .stu-tbl input:focus { border-color: var(--accent); background: var(--bg); }
+  .del-row { background: transparent; border: none; color: var(--muted); font-size: 0.78rem; cursor: pointer; padding: 4px 6px; border-radius: 3px; transition: color .15s; }
+  .del-row:hover { color: var(--danger); }
+  .btn-add-row { background: transparent; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-dim); font-family: var(--mono); font-size: 0.72rem; padding: 7px 14px; cursor: pointer; margin-top: 10px; transition: all .15s; }
+  .btn-add-row:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  /* Gemini OCR */
+  .gem-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 26px; text-align: center; cursor: pointer; transition: border-color .2s; position: relative; overflow: hidden; }
+  .gem-zone:hover { border-color: var(--accent2); }
+  .gem-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .gem-zone-icon { font-size: 1.8rem; opacity: .4; margin-bottom: 7px; }
+  .gem-zone-txt { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); line-height: 1.6; }
+  .gem-zone-txt strong { color: var(--accent2); }
+  .gem-img-preview { max-width: 100%; max-height: 150px; border-radius: 7px; border: 1px solid var(--border); margin-top: 10px; object-fit: contain; display: none; }
+  .btn-ocr { width: 100%; background: rgba(71,200,255,.1); border: 1px solid rgba(71,200,255,.3); border-radius: var(--radius); color: var(--accent2); font-family: var(--display); font-size: 0.88rem; font-weight: 700; padding: 10px 20px; cursor: pointer; transition: all .15s; margin-top: 10px; }
+  .btn-ocr:hover { background: rgba(71,200,255,.2); }
+  .btn-ocr:disabled { opacity: .4; cursor: not-allowed; }
+  .gem-status { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); margin-top: 8px; min-height: 18px; }
+
+  /* File type tags */
+  .file-type-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; justify-content: center; }
+  .file-type-tag { font-family: var(--mono); font-size: 0.6rem; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-dim); }
+  .gem-file-name { font-family: var(--mono); font-size: 0.75rem; color: var(--accent2); margin-top: 8px; display: none; }
+
+  /* Google Sheet import */
+  .gs-import { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .gs-import-label { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; }
+  .gs-input-row { display: flex; gap: 8px; }
+  .gs-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--mono); font-size: 0.78rem; padding: 8px 12px; outline: none; transition: border-color .2s; min-width: 0; }
+  .gs-input:focus { border-color: var(--accent2); }
+  .btn-gs-import { background: rgba(71,200,255,.1); border: 1px solid rgba(71,200,255,.3); border-radius: var(--radius); color: var(--accent2); font-family: var(--display); font-size: 0.82rem; font-weight: 700; padding: 8px 16px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+  .btn-gs-import:hover { background: rgba(71,200,255,.2); }
+  .btn-gs-import:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Roster footer */
+  .roster-footer { padding: 10px 20px; border-top: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: space-between; }
+  .count-txt { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
+  .count-txt strong { color: var(--accent); }
 
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -355,6 +426,13 @@ let clientsData     = [];
 let selectedClient  = null;
 let pendingClient   = null;
 
+// ── Roster state ──
+let rosterSelectStudents = [];
+let geminiKey            = null;
+let geminiFileBase64     = null;
+let geminiFileMime       = null;
+let geminiFileText       = null; // extracted text from Excel / Word
+
 // ── JSONP ──
 function callGAS(params) {
   return new Promise((resolve, reject) => {
@@ -426,7 +504,7 @@ async function loadAndShowClientModal() {
   document.getElementById('btnConfirmClient').disabled = true;
   pendingClient = null;
   try {
-    const res = await callGAS({ action: 'getMasterClients' });
+    const res = await callGAS({ action: 'getMasterClients', authCode: authCode });
     if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">載入失敗</div>`; return; }
     clientsData = res.clients;
     listEl.innerHTML = '';
@@ -567,6 +645,11 @@ async function doPreview() {
 }
 
 function renderPreview(data) {
+  // Reset roster state on each new preview
+  rosterSelectStudents = [];
+  geminiFileBase64 = null;
+  geminiFileMime   = null;
+  geminiFileText   = null;
   const unitMap = {};
   let cursor = 1;
   currentSpec.units.forEach(u => { for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; } });
@@ -607,6 +690,12 @@ function renderPreview(data) {
     `;
     body.appendChild(div);
   });
+
+  // Append student roster section below schedule
+  const rosterEl = renderRosterSection();
+  pr.appendChild(rosterEl);
+  setTimeout(() => rosterEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  loadStudentsForSelect();
 }
 
 async function doCreate() {
@@ -621,7 +710,7 @@ async function doCreate() {
   btnCreate.disabled = true; btnCreate.textContent = '建立中… Creating…';
   toast('建立中，請稍候（約 30~60 秒）', 'ok', 60000);
   try {
-    const res = await postGAS({ action: 'createClassSheet', authCode, sheetId: selectedClient.sheetId, className, startDate, days: selectedDays, targetLevel: currentSpec.system + currentSpec.level, dayTeachers: JSON.stringify(dayTeacherMap), students: JSON.stringify([]) });
+    const res = await postGAS({ action: 'createClassSheet', authCode, sheetId: selectedClient.sheetId, className, startDate, days: selectedDays, targetLevel: currentSpec.system + currentSpec.level, dayTeachers: JSON.stringify(dayTeacherMap), students: JSON.stringify(collectRosterStudents()) });
     btnCreate.disabled = false; btnCreate.textContent = '✦ 正式建立班級 Create Class';
     if (res.ok) {
       toast(`✓ 班級「${className}」建立成功！`, 'ok', 6000);
@@ -638,6 +727,342 @@ async function doCreate() {
     btnCreate.disabled = false; btnCreate.textContent = '✦ 正式建立班級 Create Class';
     toast('連線失敗：' + e.message, 'err', 6000);
   }
+}
+
+// ── Roster: render section DOM ──
+function renderRosterSection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'roster-section';
+  wrap.innerHTML = `
+    <div class="roster-hdr">
+      <span class="roster-hdr-title">學生名單設定 Student Roster</span>
+      <span class="count-txt">已選 <strong id="rosterCount">0</strong> 位</span>
+    </div>
+    <div class="roster-tabs">
+      <button class="roster-tab-btn active" onclick="switchRosterTab('select')">從名單選取</button>
+      <button class="roster-tab-btn"        onclick="switchRosterTab('manual')">手動輸入</button>
+      <button class="roster-tab-btn"        onclick="switchRosterTab('gemini')">Gemini 辨識</button>
+    </div>
+    <div class="roster-pane active" id="rosterPane-select">
+      <div id="stuSelectWrap"><div class="loading"><div class="spinner"></div>載入學生名單…</div></div>
+    </div>
+    <div class="roster-pane" id="rosterPane-manual">
+      <table class="stu-tbl">
+        <thead><tr>
+          <th>中文姓名</th><th>英文姓名</th><th>學校年級</th><th>電話</th><th>備註/Email</th><th></th>
+        </tr></thead>
+        <tbody id="manualTbody"></tbody>
+      </table>
+      <button class="btn-add-row" onclick="addManualRow()">＋ 新增一列</button>
+    </div>
+    <div class="roster-pane" id="rosterPane-gemini">
+      <div class="gem-zone" id="gemZone">
+        <input type="file" id="gemFile" accept="image/*,.pdf,.xlsx,.xls,.docx,.doc" />
+        <div class="gem-zone-icon">📄</div>
+        <div class="gem-zone-txt">點擊選取或拖曳檔案</div>
+        <div class="file-type-tags">
+          <span class="file-type-tag">JPG</span>
+          <span class="file-type-tag">PNG</span>
+          <span class="file-type-tag">PDF</span>
+          <span class="file-type-tag">Excel</span>
+          <span class="file-type-tag">Word</span>
+        </div>
+      </div>
+      <img id="gemPreview" class="gem-img-preview" />
+      <div class="gem-file-name" id="gemFileName"></div>
+      <button class="btn-ocr" id="btnOCR" disabled onclick="runGeminiOCR()">✦ Gemini 辨識學生名單</button>
+      <div class="gem-status" id="gemStatus"></div>
+      <div class="gs-import">
+        <div class="gs-import-label">或從 Google Sheet 匯入</div>
+        <div class="gs-input-row">
+          <input type="text" class="gs-input" id="gsInput" placeholder="貼上 Google Sheet 網址或 ID" />
+          <button class="btn-gs-import" id="btnGsImport" onclick="importFromGoogleSheet()">匯入</button>
+        </div>
+        <div class="gem-status" id="gsStatus"></div>
+      </div>
+    </div>
+    <div class="roster-footer">
+      <span class="count-txt">已設定 <strong id="rosterCountFooter">0</strong> 位（可留空，建班後仍可手動加入）</span>
+    </div>
+  `;
+  wrap.querySelector('#gemFile').addEventListener('change', onGeminiFileSelect);
+  return wrap;
+}
+
+function switchRosterTab(tab) {
+  const tabs = ['select','manual','gemini'];
+  document.querySelectorAll('.roster-tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === tab));
+  tabs.forEach(t => {
+    const p = document.getElementById('rosterPane-' + t);
+    if (p) p.classList.toggle('active', t === tab);
+  });
+}
+
+// ── Roster: select from existing list ──
+async function loadStudentsForSelect() {
+  const wrap = document.getElementById('stuSelectWrap');
+  if (!wrap) return;
+  rosterSelectStudents = [];
+  const className = document.getElementById('className').value.trim();
+  try {
+    const res = await callGAS({ action: 'getStudentsByClass', sheetId: selectedClient.sheetId, className });
+    if (!res.ok || !res.students) {
+      wrap.innerHTML = `<div style="font-family:var(--mono);font-size:.78rem;color:var(--muted);padding:12px">${res.error||'無法載入學生名單'}</div>`;
+      return;
+    }
+    rosterSelectStudents = res.students;
+    if (!res.students.length) {
+      wrap.innerHTML = `<div style="font-family:var(--mono);font-size:.78rem;color:var(--muted);padding:12px">
+        學生名單中無符合資料（未分班 或 班名：${className||'（空）'}）<br>
+        <span style="color:var(--text-dim)">可使用「手動輸入」或「Gemini 辨識」</span></div>`;
+      return;
+    }
+    wrap.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <button class="btn-sel-all" onclick="toggleSelectAll()">全選 / 全消</button></div>`;
+    const list = document.createElement('div');
+    list.className = 'stu-list';
+    res.students.forEach((s, i) => {
+      const lbl = document.createElement('label');
+      lbl.className = 'stu-item';
+      lbl.innerHTML = `
+        <input type="checkbox" data-idx="${i}" />
+        <span class="stu-cn">${s.name||'—'}</span>
+        <span class="stu-en">${s.enName||''}</span>
+        <span class="stu-grade">${s.grade||''}</span>
+        ${s.class ? `<span class="stu-cls">${s.class}</span>` : `<span class="stu-cls" style="opacity:.35">未分班</span>`}
+      `;
+      lbl.querySelector('input').addEventListener('change', () => {
+        lbl.classList.toggle('on', lbl.querySelector('input').checked);
+        updateRosterCount();
+      });
+      list.appendChild(lbl);
+    });
+    wrap.appendChild(list);
+  } catch(e) {
+    wrap.innerHTML = `<div style="font-family:var(--mono);font-size:.78rem;color:var(--danger);padding:12px">連線失敗：${e.message}</div>`;
+  }
+}
+
+function toggleSelectAll() {
+  const cbs = [...document.querySelectorAll('#stuSelectWrap input[type=checkbox]')];
+  const allOn = cbs.every(c => c.checked);
+  cbs.forEach(c => {
+    c.checked = !allOn;
+    c.closest('.stu-item').classList.toggle('on', !allOn);
+  });
+  updateRosterCount();
+}
+
+// ── Roster: manual input ──
+function addManualRow(preset = {}) {
+  const tbody = document.getElementById('manualTbody');
+  if (!tbody) return;
+  const fields = [
+    { key:'name',   ph:'王小明' },
+    { key:'enName', ph:'Timmy' },
+    { key:'grade',  ph:'G3' },
+    { key:'phone',  ph:'0912345678' },
+    { key:'note',   ph:'家長Email' },
+  ];
+  const tr = document.createElement('tr');
+  fields.forEach((f, fi) => {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = f.ph; inp.dataset.field = f.key;
+    inp.value = preset[f.key] || '';
+    inp.addEventListener('input', updateRosterCount);
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Tab' && !e.shiftKey && fi === fields.length - 1) {
+        e.preventDefault();
+        addManualRow();
+        setTimeout(() => document.querySelector('#manualTbody tr:last-child input')?.focus(), 10);
+      }
+    });
+    td.appendChild(inp);
+    tr.appendChild(td);
+  });
+  const delTd = document.createElement('td');
+  delTd.innerHTML = `<button class="del-row" onclick="this.closest('tr').remove();updateRosterCount()" title="刪除">✕</button>`;
+  tr.appendChild(delTd);
+  tbody.appendChild(tr);
+}
+
+// ── Roster: Gemini OCR ──
+function onGeminiFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  // Reset all state
+  geminiFileBase64 = null; geminiFileMime = null; geminiFileText = null;
+  const img        = document.getElementById('gemPreview');
+  const fileNameEl = document.getElementById('gemFileName');
+  const statusEl   = document.getElementById('gemStatus');
+  const zone       = document.getElementById('gemZone');
+  const btn        = document.getElementById('btnOCR');
+  if (statusEl) { statusEl.style.color = 'var(--text-dim)'; statusEl.textContent = ''; }
+
+  const ext     = file.name.split('.').pop().toLowerCase();
+  const isImage = file.type.startsWith('image/');
+  const isPDF   = file.type === 'application/pdf' || ext === 'pdf';
+  const isExcel = ['xlsx','xls'].includes(ext);
+  const isWord  = ['docx','doc'].includes(ext);
+
+  function markReady(label) {
+    if (zone) zone.style.borderColor = 'var(--accent2)';
+    if (fileNameEl) { fileNameEl.textContent = label; fileNameEl.style.display = 'block'; }
+    btn.disabled = false;
+  }
+
+  if (isImage) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      geminiFileBase64 = dataUrl.split(',')[1];
+      geminiFileMime   = file.type;
+      img.src = dataUrl; img.style.display = 'block';
+      if (fileNameEl) fileNameEl.style.display = 'none';
+      if (zone) zone.style.borderColor = 'var(--accent2)';
+      btn.disabled = false;
+    };
+    reader.readAsDataURL(file);
+
+  } else if (isPDF) {
+    img.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      geminiFileBase64 = btoa(String.fromCharCode(...new Uint8Array(ev.target.result)));
+      geminiFileMime   = 'application/pdf';
+      markReady('📄 ' + file.name);
+    };
+    reader.readAsArrayBuffer(file);
+
+  } else if (isExcel) {
+    img.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        geminiFileText = XLSX.utils.sheet_to_csv(ws);
+        markReady('📊 ' + file.name);
+      } catch(err) {
+        if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = '讀取 Excel 失敗：' + err.message; }
+      }
+    };
+    reader.readAsArrayBuffer(file);
+
+  } else if (isWord) {
+    img.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = ev => {
+      mammoth.extractRawText({ arrayBuffer: ev.target.result })
+        .then(result => { geminiFileText = result.value; markReady('📝 ' + file.name); })
+        .catch(err => {
+          if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = '讀取 Word 失敗：' + err.message; }
+        });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+async function loadGeminiKey() {
+  if (geminiKey) return geminiKey;
+  try {
+    const res = await callGAS({ action: 'getGeminiKey', sheetId: selectedClient.sheetId });
+    geminiKey = res.key || (typeof res === 'string' ? res : null);
+    return geminiKey;
+  } catch { return null; }
+}
+
+async function runGeminiOCR() {
+  if (!geminiFileBase64 && !geminiFileText) return;
+  const btn    = document.getElementById('btnOCR');
+  const status = document.getElementById('gemStatus');
+  btn.disabled = true; btn.textContent = '辨識中…';
+  status.style.color = 'var(--text-dim)'; status.textContent = '載入 Gemini Key…';
+  try {
+    const key = await loadGeminiKey();
+    if (!key) { status.style.color = 'var(--danger)'; status.textContent = '無法取得 Gemini Key'; btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單'; return; }
+    status.textContent = '呼叫 Gemini API 辨識中…';
+    const prompt = '以下是學生名單資料，請辨識所有學生並以JSON陣列回傳，每筆物件包含：name（中文姓名）、enName（英文姓名，無則空字串）、grade（年級如G3，無則空字串）、phone（電話，無則空字串）、note（備註，無則空字串）。只回傳JSON陣列，不要其他文字。';
+    const parts = geminiFileBase64
+      ? [{ text: prompt }, { inline_data: { mime_type: geminiFileMime, data: geminiFileBase64 } }]
+      : [{ text: prompt + '\n\n資料內容：\n' + geminiFileText }];
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+    const result = await resp.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const m = text.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error('無法從回應中解析學生資料');
+    const students = JSON.parse(m[0]);
+    status.style.color = 'var(--success)'; status.textContent = `✓ 辨識 ${students.length} 位，已填入手動輸入`;
+    switchRosterTab('manual');
+    students.forEach(s => addManualRow(s));
+    updateRosterCount();
+    toast(`Gemini 辨識完成：${students.length} 位學生`, 'ok');
+  } catch(e) {
+    status.style.color = 'var(--danger)'; status.textContent = '辨識失敗：' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單';
+}
+
+// ── Roster: Google Sheet import ──
+async function importFromGoogleSheet() {
+  const input  = document.getElementById('gsInput');
+  const status = document.getElementById('gsStatus');
+  const btn    = document.getElementById('btnGsImport');
+  if (!input || !input.value.trim()) return;
+
+  // Accept full URL or raw Sheet ID
+  let sourceSheetId = input.value.trim();
+  const urlMatch = sourceSheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if (urlMatch) sourceSheetId = urlMatch[1];
+
+  btn.disabled = true;
+  status.style.color = 'var(--text-dim)'; status.textContent = '匯入中…';
+  try {
+    const res = await callGAS({ action: 'importFromGoogleSheet', sheetId: selectedClient.sheetId, sourceSheetId });
+    if (!res.ok) throw new Error(res.error || '匯入失敗');
+    if (!res.students || !res.students.length) {
+      status.style.color = 'var(--muted)'; status.textContent = '找不到學生資料（請確認分頁格式）';
+      btn.disabled = false; return;
+    }
+    status.style.color = 'var(--success)'; status.textContent = `✓ 匯入 ${res.students.length} 位，已填入手動輸入`;
+    switchRosterTab('manual');
+    res.students.forEach(s => addManualRow(s));
+    updateRosterCount();
+    toast(`Google Sheet 匯入完成：${res.students.length} 位學生`, 'ok');
+  } catch(e) {
+    status.style.color = 'var(--danger)'; status.textContent = '匯入失敗：' + e.message;
+  }
+  btn.disabled = false;
+}
+
+// ── Roster: collect & count ──
+function collectRosterStudents() {
+  const result = [];
+  // From select tab
+  document.querySelectorAll('#stuSelectWrap input[type=checkbox]:checked').forEach(cb => {
+    const s = rosterSelectStudents[parseInt(cb.dataset.idx)];
+    if (s) result.push({ name: s.name, enName: s.enName, grade: s.grade, phone: s.phone, note: s.note });
+  });
+  // From manual tab
+  document.querySelectorAll('#manualTbody tr').forEach(tr => {
+    const obj = {};
+    tr.querySelectorAll('input[data-field]').forEach(inp => { obj[inp.dataset.field] = inp.value.trim(); });
+    if (obj.name || obj.enName) result.push(obj);
+  });
+  return result;
+}
+
+function updateRosterCount() {
+  const n = collectRosterStudents().length;
+  ['rosterCount','rosterCountFooter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = n;
+  });
 }
 
 // ── Teacher Management ──
