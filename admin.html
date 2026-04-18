@@ -27,7 +27,6 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; flex-direction: column; }
 
-  /* Header */
   header { display: flex; align-items: center; justify-content: space-between; padding: 18px 32px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; gap: 16px; flex-wrap: wrap; }
   .logo { font-family: var(--display); font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); white-space: nowrap; }
   .logo span { color: var(--text-dim); font-weight: 700; }
@@ -45,7 +44,6 @@
   .client-badge.visible { display: flex; }
   .client-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); flex-shrink: 0; }
 
-  /* Tabs */
   .tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--surface); padding: 0 32px; }
   .tab-btn { font-family: var(--mono); font-size: 0.78rem; padding: 12px 20px; color: var(--text-dim); border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; letter-spacing: .04em; }
   .tab-btn:hover { color: var(--text); }
@@ -53,7 +51,6 @@
   .tab-content { display: none; flex: 1; }
   .tab-content.active { display: flex; }
 
-  /* Modal */
   .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
   .overlay.visible { display: flex; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 480px; max-width: 90vw; display: flex; flex-direction: column; gap: 20px; animation: modalIn .25s cubic-bezier(.34,1.56,.64,1); max-height: 80vh; overflow-y: auto; }
@@ -73,7 +70,6 @@
   .btn-confirm:hover { opacity: .85; }
   .btn-confirm:disabled { opacity: .35; cursor: not-allowed; }
 
-  /* Layout - Class Builder */
   .panel-left { background: var(--surface); border-right: 1px solid var(--border); padding: 28px 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 22px; width: 380px; flex-shrink: 0; }
   .panel-right { padding: 28px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; flex: 1; min-height: 0; }
 
@@ -111,7 +107,6 @@
   .btn-create:disabled { opacity: .35; cursor: not-allowed; }
   .btn-create.visible { display: block; }
 
-  /* Stats */
   .stats-bar { display: flex; gap: 16px; flex-wrap: wrap; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; flex: 1; min-width: 120px; }
   .stat-card .val { font-family: var(--display); font-size: 1.6rem; font-weight: 800; color: var(--accent); line-height: 1; }
@@ -119,7 +114,6 @@
   .stat-card.holiday .val { color: var(--danger); }
   .stat-card.end .val { color: var(--accent2); font-size: 1rem; margin-top: 4px; }
 
-  /* Schedule Table */
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .table-header { display: grid; grid-template-columns: 60px 110px 50px 80px 1fr 1fr; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
   .schedule-body { max-height: 280px; overflow-y: auto; }
@@ -137,12 +131,9 @@
   .holiday-tag { font-family: var(--mono); font-size: 0.72rem; color: var(--danger); display: flex; align-items: center; gap: 5px; }
   .holiday-tag::before { content: '✕'; font-size: 0.65rem; }
 
-  /* Teacher Management Tab */
   .teacher-mgmt { padding: 28px 32px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
   .teacher-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .teacher-toolbar h2 { font-family: var(--display); font-size: 1rem; font-weight: 800; }
-
-  /* Teacher table */
   .teacher-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .teacher-table-header { display: grid; grid-template-columns: 140px 120px 90px 1fr 120px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); gap: 8px; }
   .teacher-row-item { display: grid; grid-template-columns: 140px 120px 90px 1fr 120px; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: center; gap: 8px; transition: background .1s; }
@@ -155,12 +146,9 @@
   .auth-code-cell { font-family: var(--mono); font-size: 0.8rem; color: var(--text); }
   .temp-class-cell { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
   .action-btns { display: flex; gap: 6px; }
-  .btn-edit { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.7rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
-  .btn-edit:hover { border-color: var(--accent2); color: var(--accent2); }
   .btn-del { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.7rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
   .btn-del:hover { border-color: var(--danger); color: var(--danger); }
 
-  /* Add Teacher Form */
   .add-teacher-form { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
   .form-title { font-family: var(--mono); font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
@@ -172,20 +160,18 @@
   .btn-add-teacher:hover { opacity: .85; }
   .btn-add-teacher:disabled { opacity: .35; cursor: not-allowed; }
 
-  /* Empty / Loading */
   .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 12px; color: var(--muted); font-family: var(--mono); font-size: 0.85rem; text-align: center; padding: 60px; }
   .empty-icon { font-size: 2.5rem; opacity: .4; }
   .loading { display: flex; align-items: center; gap: 10px; color: var(--text-dim); font-family: var(--mono); font-size: 0.82rem; padding: 40px; justify-content: center; }
   .spinner { width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Toast */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 18px; font-family: var(--mono); font-size: 0.8rem; color: var(--text); box-shadow: 0 8px 32px rgba(0,0,0,.4); transform: translateY(80px); opacity: 0; transition: all .3s cubic-bezier(.34,1.56,.64,1); z-index: 999; max-width: 320px; }
   .toast.show { transform: translateY(0); opacity: 1; }
   .toast.ok  { border-color: var(--accent); color: var(--accent); }
   .toast.err { border-color: var(--danger); color: var(--danger); }
 
-  /* ── Student Roster ── */
+  /* Roster */
   .roster-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
   .roster-hdr { padding: 13px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .roster-hdr-title { font-family: var(--mono); font-size: 0.72rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--accent2); }
@@ -195,8 +181,6 @@
   .roster-tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
   .roster-pane { display: none; padding: 16px 20px; }
   .roster-pane.active { display: block; }
-
-  /* Select from list */
   .stu-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
   .stu-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; transition: all .15s; user-select: none; }
   .stu-item:hover { border-color: var(--accent2); }
@@ -208,8 +192,6 @@
   .stu-cls { font-family: var(--mono); font-size: 0.65rem; color: var(--accent); background: rgba(232,255,71,.08); border: 1px solid rgba(232,255,71,.2); border-radius: 3px; padding: 1px 6px; }
   .btn-sel-all { background: transparent; border: 1px solid var(--border); border-radius: 5px; color: var(--text-dim); font-family: var(--mono); font-size: 0.68rem; padding: 4px 10px; cursor: pointer; transition: all .15s; }
   .btn-sel-all:hover { border-color: var(--accent2); color: var(--accent2); }
-
-  /* Manual table */
   .stu-tbl { width: 100%; border-collapse: collapse; }
   .stu-tbl th { text-align: left; padding: 5px 7px; font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .stu-tbl td { padding: 3px 2px; border-bottom: 1px solid rgba(42,42,50,.5); }
@@ -220,8 +202,6 @@
   .del-row:hover { color: var(--danger); }
   .btn-add-row { background: transparent; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-dim); font-family: var(--mono); font-size: 0.72rem; padding: 7px 14px; cursor: pointer; margin-top: 10px; transition: all .15s; }
   .btn-add-row:hover { border-color: var(--accent2); color: var(--accent2); }
-
-  /* Gemini OCR */
   .gem-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 26px; text-align: center; cursor: pointer; transition: border-color .2s; position: relative; overflow: hidden; }
   .gem-zone:hover { border-color: var(--accent2); }
   .gem-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
@@ -233,13 +213,9 @@
   .btn-ocr:hover { background: rgba(71,200,255,.2); }
   .btn-ocr:disabled { opacity: .4; cursor: not-allowed; }
   .gem-status { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); margin-top: 8px; min-height: 18px; }
-
-  /* File type tags */
   .file-type-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; justify-content: center; }
   .file-type-tag { font-family: var(--mono); font-size: 0.6rem; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-dim); }
   .gem-file-name { font-family: var(--mono); font-size: 0.75rem; color: var(--accent2); margin-top: 8px; display: none; }
-
-  /* Google Sheet import */
   .gs-import { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
   .gs-import-label { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); letter-spacing: .06em; text-transform: uppercase; }
   .gs-input-row { display: flex; gap: 8px; }
@@ -248,8 +224,6 @@
   .btn-gs-import { background: rgba(71,200,255,.1); border: 1px solid rgba(71,200,255,.3); border-radius: var(--radius); color: var(--accent2); font-family: var(--display); font-size: 0.82rem; font-weight: 700; padding: 8px 16px; cursor: pointer; transition: all .15s; white-space: nowrap; }
   .btn-gs-import:hover { background: rgba(71,200,255,.2); }
   .btn-gs-import:disabled { opacity: .4; cursor: not-allowed; }
-
-  /* Roster footer */
   .roster-footer { padding: 10px 20px; border-top: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: space-between; }
   .count-txt { font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); }
   .count-txt strong { color: var(--accent); }
@@ -272,13 +246,11 @@
   </div>
 </header>
 
-<!-- Tabs -->
 <div class="tab-bar" id="tabBar" style="display:none">
   <button class="tab-btn active" onclick="switchTab('build')">📅 建班 Class Builder</button>
   <button class="tab-btn" onclick="switchTab('teachers')">👥 老師管理 Teachers</button>
 </div>
 
-<!-- Client Modal -->
 <div class="overlay" id="clientOverlay">
   <div class="modal">
     <div>
@@ -357,26 +329,12 @@
 <!-- Tab: Teacher Management -->
 <div class="tab-content" id="tab-teachers" style="height:calc(100vh - 110px)">
   <div class="teacher-mgmt">
-
-    <!-- Add Teacher Form -->
     <div class="add-teacher-form">
       <div class="form-title">新增老師 Add Teacher</div>
       <div class="form-row">
-        <div class="form-field">
-          <label>姓名 Name</label>
-          <input type="text" id="newTeacherName" placeholder="e.g. Sandy" />
-        </div>
-        <div class="form-field">
-          <label>授權碼 Auth Code</label>
-          <input type="text" id="newTeacherCode" placeholder="e.g. Sandy2026" />
-        </div>
-        <div class="form-field">
-          <label>角色 Role</label>
-          <select id="newTeacherRole">
-            <option value="teacher">Teacher 老師</option>
-            <option value="admin">Admin 管理員</option>
-          </select>
-        </div>
+        <div class="form-field"><label>姓名 Name</label><input type="text" id="newTeacherName" placeholder="e.g. Sandy" /></div>
+        <div class="form-field"><label>授權碼 Auth Code</label><input type="text" id="newTeacherCode" placeholder="e.g. Sandy2026" /></div>
+        <div class="form-field"><label>角色 Role</label><select id="newTeacherRole"><option value="teacher">Teacher 老師</option><option value="admin">Admin 管理員</option></select></div>
       </div>
       <div class="form-field" style="width:100%">
         <label>臨時班級 Temp Classes（逗號分隔，可留空）</label>
@@ -384,8 +342,6 @@
       </div>
       <button class="btn-add-teacher" id="btnAddTeacher" onclick="addTeacher()">+ 新增 Add</button>
     </div>
-
-    <!-- Teacher List -->
     <div>
       <div class="teacher-toolbar">
         <h2>老師清單 Teacher List</h2>
@@ -394,11 +350,7 @@
       <div style="margin-top:14px">
         <div class="teacher-table">
           <div class="teacher-table-header">
-            <div>授權碼 Code</div>
-            <div>姓名 Name</div>
-            <div>角色 Role</div>
-            <div>臨時班級</div>
-            <div>操作</div>
+            <div>授權碼 Code</div><div>姓名 Name</div><div>角色 Role</div><div>臨時班級</div><div>操作</div>
           </div>
           <div id="teacherListBody">
             <div class="loading"><div class="spinner"></div>請先選擇補習班</div>
@@ -412,7 +364,12 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxE7aSryLEDxBqi-28EpdjvK9lhQwvGMKnWJlCbcHIG9Rc6FEPN3UrZwSIqMNVJ1GPs/exec';
+// ── 兩個 GAS 端點 ──
+// 授權中心：verifyMasterAuth, getMasterClients, getAvailableSpecs
+const BRAIN_URL = 'https://script.google.com/macros/s/AKfycbyF9mEn3_pijcuQaZgGI1gug1Pxrrh3c7WhBHMHLvMdLk00dkpPfKc0bvsLUlDfRhF8/exec';
+// 客戶端：getPreviewSchedule, createClassSheet, getTeachers, saveTeacher, deleteTeacher 等
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxE7aSryLEDxBqi-28EpdjvK9lhQwvGMKnWJlCbcHIG9Rc6FEPN3UrZwSIqMNVJ1GPs/exec';
+
 const DAY_NAMES      = {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'日'};
 const WEEKDAY_TO_NUM = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','日':'7'};
 
@@ -425,15 +382,27 @@ let currentSpec     = null;
 let clientsData     = [];
 let selectedClient  = null;
 let pendingClient   = null;
-
-// ── Roster state ──
 let rosterSelectStudents = [];
 let geminiKey            = null;
 let geminiFileBase64     = null;
 let geminiFileMime       = null;
-let geminiFileText       = null; // extracted text from Excel / Word
+let geminiFileText       = null;
 
-// ── JSONP ──
+// ── 授權中心 JSONP ──
+function callBrain(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    window[cbName] = data => { resolve(data); delete window[cbName]; script.remove(); };
+    const qs = Object.entries({ ...params, callback: cbName })
+      .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    script.src = `${BRAIN_URL}?${qs}`;
+    script.onerror = () => reject(new Error('Brain network error'));
+    document.body.appendChild(script);
+  });
+}
+
+// ── 客戶端 JSONP ──
 function callGAS(params) {
   return new Promise((resolve, reject) => {
     const cbName = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2);
@@ -447,6 +416,7 @@ function callGAS(params) {
   });
 }
 
+// ── 客戶端 POST ──
 async function postGAS(payload) {
   const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
   return await res.json();
@@ -462,26 +432,22 @@ function toast(msg, type='ok', dur=3000) {
 
 // ── Tabs ──
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => {
-    b.classList.toggle('active', ['build','teachers'][i] === tab);
-  });
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['build','teachers'][i] === tab));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'teachers' && selectedClient) loadTeachers();
 }
 
-// ── Login（走授權中心）──
+// ── Login → 走授權中心 ──
 async function doLogin() {
   const code = document.getElementById('authInput').value.trim();
   if (!code) return toast('請輸入授權碼', 'err');
   const statusEl = document.getElementById('authStatus');
-  statusEl.textContent = '驗證中…';
-  statusEl.className = 'auth-status';
+  statusEl.textContent = '驗證中…'; statusEl.className = 'auth-status';
   try {
-    const res = await callGAS({ action: 'verifyMasterAuth', authCode: code });
+    const res = await callBrain({ action: 'verifyMasterAuth', authCode: code });
     if (res.ok) {
-      authCode = code;
-      userRole = res.role;
+      authCode = code; userRole = res.role;
       statusEl.textContent = `✓ ${res.name} (${res.role})`;
       statusEl.className = 'auth-status ok';
       document.getElementById('tabBar').style.display = 'flex';
@@ -491,12 +457,11 @@ async function doLogin() {
       statusEl.className = 'auth-status fail';
     }
   } catch(e) {
-    statusEl.textContent = '✕ 連線失敗';
-    statusEl.className = 'auth-status fail';
+    statusEl.textContent = '✕ 連線失敗'; statusEl.className = 'auth-status fail';
   }
 }
 
-// ── Client Modal ──
+// ── Client Modal → 走授權中心 ──
 async function loadAndShowClientModal() {
   document.getElementById('clientOverlay').classList.add('visible');
   const listEl = document.getElementById('clientList');
@@ -504,10 +469,17 @@ async function loadAndShowClientModal() {
   document.getElementById('btnConfirmClient').disabled = true;
   pendingClient = null;
   try {
-    const res = await callGAS({ action: 'getMasterClients', authCode: authCode });
-    if (!res.ok) { listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">載入失敗</div>`; return; }
+    const res = await callBrain({ action: 'getMasterClients', authCode: authCode });
+    if (!res.ok) {
+      listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">${res.msg||'載入失敗'}</div>`;
+      return;
+    }
     clientsData = res.clients;
     listEl.innerHTML = '';
+    if (!clientsData || !clientsData.length) {
+      listEl.innerHTML = `<div style="color:var(--muted);padding:12px;font-family:var(--mono);font-size:.8rem">沒有可用的補習班</div>`;
+      return;
+    }
     clientsData.forEach(c => {
       const div = document.createElement('div');
       div.className = 'client-item' + (selectedClient && selectedClient.sheetId === c.sheetId ? ' selected' : '');
@@ -528,7 +500,7 @@ async function loadAndShowClientModal() {
       listEl.appendChild(div);
     });
   } catch(e) {
-    listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">連線失敗</div>`;
+    listEl.innerHTML = `<div style="color:var(--danger);padding:12px;font-family:var(--mono);font-size:.8rem">連線失敗：${e.message}</div>`;
   }
 }
 
@@ -543,14 +515,14 @@ async function confirmClient() {
   await loadSpecs();
 }
 
-// ── Load Specs ──
+// ── Load Specs → 走授權中心（已有 getAvailableSpecs）──
 async function loadSpecs() {
   const sel = document.getElementById('specSelect');
   sel.innerHTML = '<option value="">載入規格中…</option>';
   specsData = []; currentSpec = null;
   try {
-    const res = await callGAS({ action: 'getAvailableSpecs', sheetId: selectedClient.sheetId });
-    if (!res.ok) return toast('無法載入規格', 'err');
+    const res = await callBrain({ action: 'getAvailableSpecs', sheetId: selectedClient.sheetId });
+    if (!res.ok) return toast('無法載入規格：' + (res.msg||''), 'err');
     specsData = res.specs;
     sel.innerHTML = '<option value="">— 選擇規格 —</option>';
     specsData.forEach((sp, i) => {
@@ -621,6 +593,7 @@ function buildDayTeacherMap() {
   return map;
 }
 
+// ── Preview → 走客戶端 GAS ──
 async function doPreview() {
   if (!selectedClient) return toast('請先選擇補習班', 'err');
   const startDate = document.getElementById('startDate').value;
@@ -632,7 +605,10 @@ async function doPreview() {
   pr.innerHTML = `<div class="loading"><div class="spinner"></div>計算課表中…</div>`;
   document.getElementById('btnPreview').disabled = true;
   try {
-    const res = await callGAS({ action: 'getPreviewSchedule', startDate, days: selectedDays, lessons: currentSpec.totalLessons, sheetId: selectedClient.sheetId, teacher: '' });
+    const res = await callGAS({
+      action: 'getPreviewSchedule', startDate, days: selectedDays,
+      lessons: currentSpec.totalLessons, sheetId: selectedClient.sheetId, teacher: ''
+    });
     document.getElementById('btnPreview').disabled = false;
     if (!res.ok) return showError(res.error || '預覽失敗');
     currentSchedule = res;
@@ -645,11 +621,7 @@ async function doPreview() {
 }
 
 function renderPreview(data) {
-  // Reset roster state on each new preview
-  rosterSelectStudents = [];
-  geminiFileBase64 = null;
-  geminiFileMime   = null;
-  geminiFileText   = null;
+  rosterSelectStudents = []; geminiFileBase64 = null; geminiFileMime = null; geminiFileText = null;
   const unitMap = {};
   let cursor = 1;
   currentSpec.units.forEach(u => { for (let i = 0; i < u.lessons; i++) { unitMap[cursor] = u.unit; cursor++; } });
@@ -690,14 +662,13 @@ function renderPreview(data) {
     `;
     body.appendChild(div);
   });
-
-  // Append student roster section below schedule
   const rosterEl = renderRosterSection();
   pr.appendChild(rosterEl);
   setTimeout(() => rosterEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
   loadStudentsForSelect();
 }
 
+// ── Create → 走客戶端 GAS (POST) ──
 async function doCreate() {
   if (!selectedClient||!authCode||!currentSchedule||!currentSpec) return toast('請確認所有參數已填寫', 'err');
   const className = document.getElementById('className').value.trim();
@@ -710,14 +681,20 @@ async function doCreate() {
   btnCreate.disabled = true; btnCreate.textContent = '建立中… Creating…';
   toast('建立中，請稍候（約 30~60 秒）', 'ok', 60000);
   try {
-    const res = await postGAS({ action: 'createClassSheet', authCode, sheetId: selectedClient.sheetId, className, startDate, days: selectedDays, targetLevel: currentSpec.system + currentSpec.level, dayTeachers: JSON.stringify(dayTeacherMap), students: JSON.stringify(collectRosterStudents()) });
+    const res = await postGAS({
+      action: 'createClassSheet', authCode, sheetId: selectedClient.sheetId,
+      className, startDate, days: selectedDays,
+      targetLevel: currentSpec.system + currentSpec.level,
+      dayTeachers: JSON.stringify(dayTeacherMap),
+      students: JSON.stringify(collectRosterStudents())
+    });
     btnCreate.disabled = false; btnCreate.textContent = '✦ 正式建立班級 Create Class';
     if (res.ok) {
       toast(`✓ 班級「${className}」建立成功！`, 'ok', 6000);
       const pr = document.getElementById('panelRight');
       const card = document.createElement('div');
       card.style.cssText = 'background:rgba(232,255,71,.08);border:1px solid var(--accent);border-radius:var(--radius);padding:20px 24px;font-family:var(--mono);font-size:0.85rem;color:var(--accent);line-height:2';
-      card.innerHTML = `✓ 班級建立完成<br><span style="color:var(--text)">班名：${className}</span><br><span style="color:var(--text)">補習班：${selectedClient.name}</span><br><span style="color:var(--text)">規格：${currentSpec.displayName}</span><br><span style="color:var(--text)">小考：${(res.quizList||[]).join(', ')||'—'}</span><br><span style="color:var(--text)">大考：${(res.testList||[]).join(', ')||'—'}</span>`;
+      card.innerHTML = `✓ 班級建立完成<br><span style="color:var(--text)">班名：${className}</span><br><span style="color:var(--text)">補習班：${selectedClient.name}</span><br><span style="color:var(--text)">規格：${currentSpec.displayName}</span>`;
       pr.insertBefore(card, pr.firstChild);
       btnCreate.classList.remove('visible');
     } else {
@@ -729,7 +706,7 @@ async function doCreate() {
   }
 }
 
-// ── Roster: render section DOM ──
+// ── Roster ──
 function renderRosterSection() {
   const wrap = document.createElement('div');
   wrap.className = 'roster-section';
@@ -748,9 +725,7 @@ function renderRosterSection() {
     </div>
     <div class="roster-pane" id="rosterPane-manual">
       <table class="stu-tbl">
-        <thead><tr>
-          <th>中文姓名</th><th>英文姓名</th><th>學校年級</th><th>電話</th><th>備註/Email</th><th></th>
-        </tr></thead>
+        <thead><tr><th>中文姓名</th><th>英文姓名</th><th>學校年級</th><th>電話</th><th>備註/Email</th><th></th></tr></thead>
         <tbody id="manualTbody"></tbody>
       </table>
       <button class="btn-add-row" onclick="addManualRow()">＋ 新增一列</button>
@@ -761,11 +736,8 @@ function renderRosterSection() {
         <div class="gem-zone-icon">📄</div>
         <div class="gem-zone-txt">點擊選取或拖曳檔案</div>
         <div class="file-type-tags">
-          <span class="file-type-tag">JPG</span>
-          <span class="file-type-tag">PNG</span>
-          <span class="file-type-tag">PDF</span>
-          <span class="file-type-tag">Excel</span>
-          <span class="file-type-tag">Word</span>
+          <span class="file-type-tag">JPG</span><span class="file-type-tag">PNG</span>
+          <span class="file-type-tag">PDF</span><span class="file-type-tag">Excel</span><span class="file-type-tag">Word</span>
         </div>
       </div>
       <img id="gemPreview" class="gem-img-preview" />
@@ -792,13 +764,10 @@ function renderRosterSection() {
 function switchRosterTab(tab) {
   const tabs = ['select','manual','gemini'];
   document.querySelectorAll('.roster-tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === tab));
-  tabs.forEach(t => {
-    const p = document.getElementById('rosterPane-' + t);
-    if (p) p.classList.toggle('active', t === tab);
-  });
+  tabs.forEach(t => { const p = document.getElementById('rosterPane-' + t); if (p) p.classList.toggle('active', t === tab); });
 }
 
-// ── Roster: select from existing list ──
+// ── 從名單選取 → 走客戶端 GAS ──
 async function loadStudentsForSelect() {
   const wrap = document.getElementById('stuSelectWrap');
   if (!wrap) return;
@@ -812,13 +781,10 @@ async function loadStudentsForSelect() {
     }
     rosterSelectStudents = res.students;
     if (!res.students.length) {
-      wrap.innerHTML = `<div style="font-family:var(--mono);font-size:.78rem;color:var(--muted);padding:12px">
-        學生名單中無符合資料（未分班 或 班名：${className||'（空）'}）<br>
-        <span style="color:var(--text-dim)">可使用「手動輸入」或「Gemini 辨識」</span></div>`;
+      wrap.innerHTML = `<div style="font-family:var(--mono);font-size:.78rem;color:var(--muted);padding:12px">學生名單中無符合資料<br><span style="color:var(--text-dim)">可使用「手動輸入」或「Gemini 辨識」</span></div>`;
       return;
     }
-    wrap.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button class="btn-sel-all" onclick="toggleSelectAll()">全選 / 全消</button></div>`;
+    wrap.innerHTML = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn-sel-all" onclick="toggleSelectAll()">全選 / 全消</button></div>`;
     const list = document.createElement('div');
     list.className = 'stu-list';
     res.students.forEach((s, i) => {
@@ -846,23 +812,16 @@ async function loadStudentsForSelect() {
 function toggleSelectAll() {
   const cbs = [...document.querySelectorAll('#stuSelectWrap input[type=checkbox]')];
   const allOn = cbs.every(c => c.checked);
-  cbs.forEach(c => {
-    c.checked = !allOn;
-    c.closest('.stu-item').classList.toggle('on', !allOn);
-  });
+  cbs.forEach(c => { c.checked = !allOn; c.closest('.stu-item').classList.toggle('on', !allOn); });
   updateRosterCount();
 }
 
-// ── Roster: manual input ──
 function addManualRow(preset = {}) {
   const tbody = document.getElementById('manualTbody');
   if (!tbody) return;
   const fields = [
-    { key:'name',   ph:'王小明' },
-    { key:'enName', ph:'Timmy' },
-    { key:'grade',  ph:'G3' },
-    { key:'phone',  ph:'0912345678' },
-    { key:'note',   ph:'家長Email' },
+    { key:'name', ph:'王小明' }, { key:'enName', ph:'Timmy' },
+    { key:'grade', ph:'G3' }, { key:'phone', ph:'0912345678' }, { key:'note', ph:'家長Email' }
   ];
   const tr = document.createElement('tr');
   fields.forEach((f, fi) => {
@@ -873,68 +832,55 @@ function addManualRow(preset = {}) {
     inp.addEventListener('input', updateRosterCount);
     inp.addEventListener('keydown', e => {
       if (e.key === 'Tab' && !e.shiftKey && fi === fields.length - 1) {
-        e.preventDefault();
-        addManualRow();
+        e.preventDefault(); addManualRow();
         setTimeout(() => document.querySelector('#manualTbody tr:last-child input')?.focus(), 10);
       }
     });
-    td.appendChild(inp);
-    tr.appendChild(td);
+    td.appendChild(inp); tr.appendChild(td);
   });
   const delTd = document.createElement('td');
   delTd.innerHTML = `<button class="del-row" onclick="this.closest('tr').remove();updateRosterCount()" title="刪除">✕</button>`;
-  tr.appendChild(delTd);
-  tbody.appendChild(tr);
+  tr.appendChild(delTd); tbody.appendChild(tr);
 }
 
-// ── Roster: Gemini OCR ──
 function onGeminiFileSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  // Reset all state
+  const file = e.target.files[0]; if (!file) return;
   geminiFileBase64 = null; geminiFileMime = null; geminiFileText = null;
-  const img        = document.getElementById('gemPreview');
+  const img = document.getElementById('gemPreview');
   const fileNameEl = document.getElementById('gemFileName');
-  const statusEl   = document.getElementById('gemStatus');
-  const zone       = document.getElementById('gemZone');
-  const btn        = document.getElementById('btnOCR');
+  const statusEl = document.getElementById('gemStatus');
+  const zone = document.getElementById('gemZone');
+  const btn = document.getElementById('btnOCR');
   if (statusEl) { statusEl.style.color = 'var(--text-dim)'; statusEl.textContent = ''; }
-
-  const ext     = file.name.split('.').pop().toLowerCase();
+  const ext = file.name.split('.').pop().toLowerCase();
   const isImage = file.type.startsWith('image/');
   const isPDF   = file.type === 'application/pdf' || ext === 'pdf';
   const isExcel = ['xlsx','xls'].includes(ext);
   const isWord  = ['docx','doc'].includes(ext);
-
   function markReady(label) {
     if (zone) zone.style.borderColor = 'var(--accent2)';
     if (fileNameEl) { fileNameEl.textContent = label; fileNameEl.style.display = 'block'; }
     btn.disabled = false;
   }
-
   if (isImage) {
     const reader = new FileReader();
     reader.onload = ev => {
       const dataUrl = ev.target.result;
-      geminiFileBase64 = dataUrl.split(',')[1];
-      geminiFileMime   = file.type;
+      geminiFileBase64 = dataUrl.split(',')[1]; geminiFileMime = file.type;
       img.src = dataUrl; img.style.display = 'block';
       if (fileNameEl) fileNameEl.style.display = 'none';
       if (zone) zone.style.borderColor = 'var(--accent2)';
       btn.disabled = false;
     };
     reader.readAsDataURL(file);
-
   } else if (isPDF) {
     img.style.display = 'none';
     const reader = new FileReader();
     reader.onload = ev => {
       geminiFileBase64 = btoa(String.fromCharCode(...new Uint8Array(ev.target.result)));
-      geminiFileMime   = 'application/pdf';
-      markReady('📄 ' + file.name);
+      geminiFileMime = 'application/pdf'; markReady('📄 ' + file.name);
     };
     reader.readAsArrayBuffer(file);
-
   } else if (isExcel) {
     img.style.display = 'none';
     const reader = new FileReader();
@@ -942,14 +888,12 @@ function onGeminiFileSelect(e) {
       try {
         const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        geminiFileText = XLSX.utils.sheet_to_csv(ws);
-        markReady('📊 ' + file.name);
+        geminiFileText = XLSX.utils.sheet_to_csv(ws); markReady('📊 ' + file.name);
       } catch(err) {
         if (statusEl) { statusEl.style.color = 'var(--danger)'; statusEl.textContent = '讀取 Excel 失敗：' + err.message; }
       }
     };
     reader.readAsArrayBuffer(file);
-
   } else if (isWord) {
     img.style.display = 'none';
     const reader = new FileReader();
@@ -964,32 +908,32 @@ function onGeminiFileSelect(e) {
   }
 }
 
+// ── Gemini Key → 走客戶端 GAS ──
 async function loadGeminiKey() {
   if (geminiKey) return geminiKey;
   try {
     const res = await callGAS({ action: 'getGeminiKey', sheetId: selectedClient.sheetId });
-    geminiKey = res.key || (typeof res === 'string' ? res : null);
+    geminiKey = res.key || null;
     return geminiKey;
   } catch { return null; }
 }
 
 async function runGeminiOCR() {
   if (!geminiFileBase64 && !geminiFileText) return;
-  const btn    = document.getElementById('btnOCR');
+  const btn = document.getElementById('btnOCR');
   const status = document.getElementById('gemStatus');
   btn.disabled = true; btn.textContent = '辨識中…';
   status.style.color = 'var(--text-dim)'; status.textContent = '載入 Gemini Key…';
   try {
     const key = await loadGeminiKey();
     if (!key) { status.style.color = 'var(--danger)'; status.textContent = '無法取得 Gemini Key'; btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單'; return; }
-    status.textContent = '呼叫 Gemini API 辨識中…';
+    status.textContent = '辨識中…';
     const prompt = '以下是學生名單資料，請辨識所有學生並以JSON陣列回傳，每筆物件包含：name（中文姓名）、enName（英文姓名，無則空字串）、grade（年級如G3，無則空字串）、phone（電話，無則空字串）、note（備註，無則空字串）。只回傳JSON陣列，不要其他文字。';
     const parts = geminiFileBase64
       ? [{ text: prompt }, { inline_data: { mime_type: geminiFileMime, data: geminiFileBase64 } }]
       : [{ text: prompt + '\n\n資料內容：\n' + geminiFileText }];
     const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts }] })
     });
     const result = await resp.json();
@@ -1008,28 +952,25 @@ async function runGeminiOCR() {
   btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單';
 }
 
-// ── Roster: Google Sheet import ──
+// ── Google Sheet 匯入 → 走客戶端 GAS ──
 async function importFromGoogleSheet() {
-  const input  = document.getElementById('gsInput');
+  const input = document.getElementById('gsInput');
   const status = document.getElementById('gsStatus');
-  const btn    = document.getElementById('btnGsImport');
+  const btn = document.getElementById('btnGsImport');
   if (!input || !input.value.trim()) return;
-
-  // Accept full URL or raw Sheet ID
   let sourceSheetId = input.value.trim();
   const urlMatch = sourceSheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
   if (urlMatch) sourceSheetId = urlMatch[1];
-
   btn.disabled = true;
   status.style.color = 'var(--text-dim)'; status.textContent = '匯入中…';
   try {
     const res = await callGAS({ action: 'importFromGoogleSheet', sheetId: selectedClient.sheetId, sourceSheetId });
     if (!res.ok) throw new Error(res.error || '匯入失敗');
     if (!res.students || !res.students.length) {
-      status.style.color = 'var(--muted)'; status.textContent = '找不到學生資料（請確認分頁格式）';
+      status.style.color = 'var(--muted)'; status.textContent = '找不到學生資料';
       btn.disabled = false; return;
     }
-    status.style.color = 'var(--success)'; status.textContent = `✓ 匯入 ${res.students.length} 位，已填入手動輸入`;
+    status.style.color = 'var(--success)'; status.textContent = `✓ 匯入 ${res.students.length} 位`;
     switchRosterTab('manual');
     res.students.forEach(s => addManualRow(s));
     updateRosterCount();
@@ -1040,15 +981,12 @@ async function importFromGoogleSheet() {
   btn.disabled = false;
 }
 
-// ── Roster: collect & count ──
 function collectRosterStudents() {
   const result = [];
-  // From select tab
   document.querySelectorAll('#stuSelectWrap input[type=checkbox]:checked').forEach(cb => {
     const s = rosterSelectStudents[parseInt(cb.dataset.idx)];
     if (s) result.push({ name: s.name, enName: s.enName, grade: s.grade, phone: s.phone, note: s.note });
   });
-  // From manual tab
   document.querySelectorAll('#manualTbody tr').forEach(tr => {
     const obj = {};
     tr.querySelectorAll('input[data-field]').forEach(inp => { obj[inp.dataset.field] = inp.value.trim(); });
@@ -1059,13 +997,10 @@ function collectRosterStudents() {
 
 function updateRosterCount() {
   const n = collectRosterStudents().length;
-  ['rosterCount','rosterCountFooter'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = n;
-  });
+  ['rosterCount','rosterCountFooter'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = n; });
 }
 
-// ── Teacher Management ──
+// ── 老師管理 → 走客戶端 GAS ──
 async function loadTeachers() {
   if (!selectedClient) return;
   const body = document.getElementById('teacherListBody');
@@ -1086,9 +1021,7 @@ async function loadTeachers() {
         <div style="font-size:.85rem">${t.name}</div>
         <div><span class="role-badge ${t.role}">${t.role}</span></div>
         <div class="temp-class-cell">${t.tempClasses||'—'}</div>
-        <div class="action-btns">
-          <button class="btn-del" onclick="deleteTeacher(${i}, '${t.code}', '${t.name}')">刪除</button>
-        </div>
+        <div class="action-btns"><button class="btn-del" onclick="deleteTeacher(${i}, '${t.code}', '${t.name}')">刪除</button></div>
       `;
       body.appendChild(div);
     });
@@ -1099,13 +1032,12 @@ async function loadTeachers() {
 
 async function addTeacher() {
   if (!selectedClient) return toast('請先選擇補習班', 'err');
-  const name      = document.getElementById('newTeacherName').value.trim();
-  const code      = document.getElementById('newTeacherCode').value.trim();
-  const role      = document.getElementById('newTeacherRole').value;
+  const name = document.getElementById('newTeacherName').value.trim();
+  const code = document.getElementById('newTeacherCode').value.trim();
+  const role = document.getElementById('newTeacherRole').value;
   const tempClass = document.getElementById('newTeacherTemp').value.trim();
   if (!name) return toast('請填寫姓名', 'err');
   if (!code) return toast('請填寫授權碼', 'err');
-
   document.getElementById('btnAddTeacher').disabled = true;
   try {
     const res = await postGAS({ action: 'saveTeacher', authCode, sheetId: selectedClient.sheetId, name, code, role, tempClasses: tempClass });
@@ -1115,12 +1047,8 @@ async function addTeacher() {
       document.getElementById('newTeacherCode').value = '';
       document.getElementById('newTeacherTemp').value = '';
       await loadTeachers();
-    } else {
-      toast('✕ ' + (res.msg||'新增失敗'), 'err');
-    }
-  } catch(e) {
-    toast('連線失敗', 'err');
-  }
+    } else { toast('✕ ' + (res.msg||'新增失敗'), 'err'); }
+  } catch(e) { toast('連線失敗', 'err'); }
   document.getElementById('btnAddTeacher').disabled = false;
 }
 
