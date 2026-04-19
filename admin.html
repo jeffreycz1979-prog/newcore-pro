@@ -512,7 +512,85 @@ async function confirmClient() {
   document.getElementById('clientBadge').classList.add('visible');
   document.getElementById('btnSwitchClient').style.display = 'flex';
   toast(`已切換至：${selectedClient.name} ✓`);
+
+  // ── 檢查方案並套用限制 ──
+  try {
+    const lic = await callBrain({ action: 'checkLicense', sheetId: selectedClient.sheetId });
+    applyPlanRestrictions(lic.valid ? (lic.plan || 'Free') : 'Free', lic.classLimit || 3);
+  } catch(e) {
+    console.warn('checkLicense failed', e);
+    applyPlanRestrictions('Free', 3);
+  }
+
   await loadSpecs();
+}
+  // ── 方案限制 ──
+function applyPlanRestrictions(plan, classLimit) {
+  const oldTag = document.getElementById('planLimitTag');
+  if (oldTag) oldTag.remove();
+  const btnPreview = document.getElementById('btnPreview');
+  const btnCreate  = document.getElementById('btnCreate');
+
+  if (plan === 'Free') {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      if (btn.textContent.includes('建班')) btn.style.display = 'none';
+    });
+    const pr = document.getElementById('panelRight');
+    if (pr) pr.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+        height:100%;padding:3rem;text-align:center;gap:1.2rem;">
+        <div style="font-size:3.5rem;">🔒</div>
+        <div style="font-family:var(--mono);color:var(--accent);font-size:1.1rem;font-weight:700;letter-spacing:.04em;">
+          免費版不包含建班功能
+        </div>
+        <div style="color:var(--text-dim);font-size:0.85rem;line-height:1.8;max-width:320px;">
+          免費版由 Jeffrey 老師協助建立班級（最多 3 班）<br>
+          如需自行管理建班，請升級至標準方案
+        </div>
+        <a href="https://jeffreycz1979-prog.github.io/JeffreysLab/index.html#pricing"
+           target="_blank"
+           style="display:inline-block;margin-top:0.5rem;background:var(--accent);color:#000;
+             padding:0.75rem 2rem;border-radius:100px;font-weight:700;font-size:0.9rem;
+             text-decoration:none;font-family:var(--display);">
+          查看升級方案 →
+        </a>
+      </div>`;
+    if (btnPreview) { btnPreview.disabled = true; btnPreview.title = '免費版不可使用'; }
+    if (btnCreate)  { btnCreate.disabled  = true; btnCreate.title  = '免費版不可使用'; }
+    toast('免費版不包含建班功能，班級由 Jeffrey 老師協助建立', 'err', 6000);
+    return;
+  }
+
+  const badge = document.getElementById('clientBadge');
+  if (badge) {
+    const tag = document.createElement('span');
+    tag.id = 'planLimitTag';
+    tag.style.cssText = 'font-size:0.68rem;background:rgba(232,255,71,0.12);color:var(--accent);' +
+      'padding:2px 9px;border-radius:100px;font-family:var(--mono);border:1px solid rgba(232,255,71,0.25);margin-left:4px;';
+    tag.textContent = plan === 'Pro' ? 'Pro · 無限班級' : `Standard · 最多 ${classLimit} 班`;
+    badge.appendChild(tag);
+  }
+
+  if (plan === 'Standard') {
+    const limit = classLimit || 10;
+    if (!window._origDoCreate) window._origDoCreate = doCreate;
+    window.doCreate = async function() {
+      try {
+        const res = await callGAS({ action: 'getClassCount', sheetId: selectedClient.sheetId });
+        const count = parseInt(res.count) || 0;
+        if (count >= limit) {
+          toast(`已達 ${limit} 班上限！請聯繫 Jeffrey 升級至 Pro 方案。`, 'err', 7000);
+          const btn = document.getElementById('btnCreate');
+          if (btn) { btn.disabled = true; btn.textContent = `⚠ 已達 ${limit} 班上限`; }
+          return;
+        }
+      } catch(e) {
+        console.warn('getClassCount 失敗，允許繼續', e);
+      }
+      return window._origDoCreate.apply(this, arguments);
+    };
+  }
+  // Pro → 無限制
 }
 
 // ── Load Specs → 走授權中心（已有 getAvailableSpecs）──
