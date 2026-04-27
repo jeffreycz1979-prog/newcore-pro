@@ -958,6 +958,7 @@ function checkLicense(sheetId, callback) {
 
 function onLoginSuccess(data, licData) {
   currentUser = data;
+  if (licData && licData.plan) currentUser.plan = licData.plan;
 
   // Trial 到期鎖定
   if (licData && licData.trialDaysLeft !== null && licData.trialDaysLeft !== undefined) {
