@@ -705,7 +705,8 @@
 // ══════════════════════════════════════════════
 // ── 固定網址（寫死在前端，老師不需填寫）──
 var API_URL   = localStorage.getItem('nc_api_url') || '';   // 各補習班自己的 GAS（由 sheetId 決定）
-var BRAIN_URL = 'https://script.google.com/macros/s/AKfycbyd852tVzBVNYAn7FVEmvOAnQB_ZQGkm3mR6ui9kFM9kRM8a8Ap1Uk-a24zVDm31n9x_g/exec';
+var GATEWAY_URL = 'https://script.google.com/macros/s/AKfycbz0O6eB9fVC3Xp7g0Kt4U-32Inmf9ieDYJygEf3jW78xaWx10glPscEefEQwgB0jCioug/exec';
+var GATEWAY_TOKEN = 'MYVIEWBOARDgoogleAPI'; // 之後從 GAS Script Properties 統一發放
 var AUTH_CODE   = localStorage.getItem('nc_auth_code') || '';
 var SHEET_ID    = localStorage.getItem('nc_sheet_id')  || '';
 var currentUser = null;
@@ -724,9 +725,9 @@ var GEMINI_URL     = '';
 // ══════════════════════════════════════════════
 // Gemini 模型設定（主力 + 備援）
 // ══════════════════════════════════════════════
-// 主力：gemini-2.5-flash（穩定版，平衡效能與速度）
-// 備援：gemini-2.5-flash-lite（穩定版，高流量低延遲，2026/02 GA）
-var GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+// 備援：gemini-2.5-flash（穩定版，平衡效能與速度）
+// 主力：gemini-2.5-flash-lite（穩定版，高流量低延遲，2026/02 GA）
+var GEMINI_MODELS = ['gemini-2.5-flash-lite','gemini-2.5-flash' ];
 
 function updateGeminiUrl() {
   GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODELS[0] + ':generateContent?key=' + GEMINI_API_KEY;
@@ -740,54 +741,68 @@ function updateGeminiUrl() {
  */
 function callGeminiWithFallback(parts, callback, retryCount) {
   retryCount = retryCount || 0;
-  var model = GEMINI_MODELS[retryCount % GEMINI_MODELS.length];
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent?key=' + GEMINI_API_KEY;
 
-  fetch(url, {
+  // 判斷方案：Pro 用 Paid，其他用 FreeTier
+  var useFreeKey = !(currentUser && currentUser.plan === 'Pro');
+  // 判斷是否含音訊（語音點名）
+  var hasAudio = parts.some(function(p) { return p.inline_data; });
+  var useLite  = hasAudio; // 語音用 Flash-Lite 省錢，純文字（評語）用 Flash
+
+  fetch(GATEWAY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contents: [{ parts: parts }],
-      generationConfig: {
-        response_mime_type: 'application/json',
-        temperature: 0.1
+      auth:   GATEWAY_TOKEN,
+      action: 'generate_text',
+      params: {
+        prompt:     extractText(parts),
+        audioData:  extractAudio(parts),
+        useFreeKey: useFreeKey,
+        useLite:    useLite
       }
     })
   })
-  .then(function(r) {
-    if (r.status === 503 && retryCount < 3) {
-      var delay = Math.pow(2, retryCount) * 800;
-      console.warn('⚠️ ' + model + ' 忙碌（503），' + delay + 'ms 後切換備援...');
-      setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, delay);
-      return null;
-    }
-    return r.json();
-  })
+  .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (!data) return;
-    if (data.error) {
-      if (retryCount < 3) {
-        console.warn('⚠️ ' + model + ' 錯誤，切換備援...');
-        setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, 800);
+    if (!data.ok) {
+      if (retryCount < 2) {
+        setTimeout(function() {
+          callGeminiWithFallback(parts, callback, retryCount + 1);
+        }, Math.pow(2, retryCount) * 800);
         return;
       }
-      throw new Error(data.error.message);
+      throw new Error(data.error || 'Gateway 回傳失敗');
     }
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      var reason = (data.promptFeedback && data.promptFeedback.blockReason) || '無回應';
-      throw new Error('Gemini ' + model + ' 無回應：' + reason);
-    }
-    var text = data.candidates[0].content.parts[0].text;
-    var cleaned = text.trim().replace(/^```json\s*/,'').replace(/```\s*$/,'').trim();
+    // Gateway 回傳純文字，解析 JSON
+    var text    = data.text || '';
+    var cleaned = text.trim().replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
     callback(null, JSON.parse(cleaned));
   })
   .catch(function(err) {
-    if (retryCount < 3) {
-      setTimeout(function() { callGeminiWithFallback(parts, callback, retryCount + 1); }, 800);
+    if (retryCount < 2) {
+      setTimeout(function() {
+        callGeminiWithFallback(parts, callback, retryCount + 1);
+      }, 800);
     } else {
-      callback(new Error('Gemini 服務暫時無法使用：' + err.message));
+      callback(new Error('Gateway 無法使用：' + err.message));
     }
   });
+}
+
+// 從 parts 取出文字 prompt
+function extractText(parts) {
+  var texts = parts.filter(function(p) { return p.text; }).map(function(p) { return p.text; });
+  return texts.join('\n');
+}
+
+// 從 parts 取出音訊（語音點名用）
+function extractAudio(parts) {
+  var audio = parts.find(function(p) { return p.inline_data; });
+  if (!audio) return null;
+  return {
+    mimeType: audio.inline_data.mime_type,
+    data:     audio.inline_data.data
+  };
 }
 
 // 錄音相關
