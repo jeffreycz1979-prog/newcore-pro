@@ -369,7 +369,8 @@
 const BRAIN_URL = 'https://script.google.com/macros/s/AKfycbyF9mEn3_pijcuQaZgGI1gug1Pxrrh3c7WhBHMHLvMdLk00dkpPfKc0bvsLUlDfRhF8/exec';
 // 客戶端：getPreviewSchedule, createClassSheet, getTeachers, saveTeacher, deleteTeacher 等
 const GAS_URL   = 'https://script.google.com/macros/s/AKfycbxE7aSryLEDxBqi-28EpdjvK9lhQwvGMKnWJlCbcHIG9Rc6FEPN3UrZwSIqMNVJ1GPs/exec';
-
+const GATEWAY_URL   = 'https://script.google.com/macros/s/AKfycbz0O6eB9fVC3Xp7g0Kt4U-32Inmf9ieDYJygEf3jW78xaWx10glPscEefEQwgB0jCioug/exec';
+const GATEWAY_TOKEN = 'MYVIEWBOARDgoogleAPI';
 const DAY_NAMES      = {'1':'一','2':'二','3':'三','4':'四','5':'五','6':'六','7':'日'};
 const WEEKDAY_TO_NUM = {'一':'1','二':'2','三':'3','四':'4','五':'5','六':'6','日':'7'};
 
@@ -1001,21 +1002,26 @@ async function runGeminiOCR() {
   const btn = document.getElementById('btnOCR');
   const status = document.getElementById('gemStatus');
   btn.disabled = true; btn.textContent = '辨識中…';
-  status.style.color = 'var(--text-dim)'; status.textContent = '載入 Gemini Key…';
+  status.style.color = 'var(--text-dim)'; status.textContent = '辨識中…';
   try {
-    const key = await loadGeminiKey();
-    if (!key) { status.style.color = 'var(--danger)'; status.textContent = '無法取得 Gemini Key'; btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單'; return; }
-    status.textContent = '辨識中…';
     const prompt = '以下是學生名單資料，請辨識所有學生並以JSON陣列回傳，每筆物件包含：name（中文姓名）、enName（英文姓名，無則空字串）、grade（年級如G3，無則空字串）、phone（電話，無則空字串）、note（備註，無則空字串）。只回傳JSON陣列，不要其他文字。';
-    const parts = geminiFileBase64
-      ? [{ text: prompt }, { inline_data: { mime_type: geminiFileMime, data: geminiFileBase64 } }]
-      : [{ text: prompt + '\n\n資料內容：\n' + geminiFileText }];
-    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts }] })
+    const resp = await fetch(GATEWAY_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({
+        auth:   GATEWAY_TOKEN,
+        action: 'generate_text',
+        params: {
+          prompt:    geminiFileText ? prompt + '\n\n資料內容：\n' + geminiFileText : prompt,
+          audioData: geminiFileBase64 ? { mimeType: geminiFileMime, data: geminiFileBase64 } : null,
+          useFreeKey: true,
+          useLite:    false
+        }
+      })
     });
-    const result = await resp.json();
-    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const gwResult = await resp.json();
+    if (!gwResult.ok) throw new Error(gwResult.error || 'Gateway 失敗');
+    const text = gwResult.text || '';
     const m = text.match(/\[[\s\S]*\]/);
     if (!m) throw new Error('無法從回應中解析學生資料');
     const students = JSON.parse(m[0]);
@@ -1029,7 +1035,6 @@ async function runGeminiOCR() {
   }
   btn.disabled = false; btn.textContent = '✦ Gemini 辨識學生名單';
 }
-
 // ── Google Sheet 匯入 → 走客戶端 GAS ──
 async function importFromGoogleSheet() {
   const input = document.getElementById('gsInput');
