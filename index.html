@@ -750,19 +750,19 @@ function callGeminiWithFallback(parts, callback, retryCount) {
   var useLite  = hasAudio; // 語音用 Flash-Lite 省錢，純文字（評語）用 Flash
 
   fetch(GATEWAY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      auth:   GATEWAY_TOKEN,
-      action: 'generate_text',
-      params: {
-        prompt:     extractText(parts),
-        audioData:  extractAudio(parts),
-        useFreeKey: useFreeKey,
-        useLite:    useLite
-      }
-    })
+  method: 'POST',
+  redirect: 'follow',
+  body: JSON.stringify({
+    auth:   GATEWAY_TOKEN,
+    action: 'generate_text',
+    params: {
+      prompt:     extractText(parts),
+      audioData:  extractAudio(parts),
+      useFreeKey: useFreeKey,
+      useLite:    useLite
+    }
   })
+})
   .then(function(r) { return r.json(); })
   .then(function(data) {
     if (!data.ok) {
