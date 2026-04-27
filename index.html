@@ -942,7 +942,24 @@ function checkLicense(sheetId, callback) {
 
 function onLoginSuccess(data, licData) {
   currentUser = data;
-  // 寬限期警告
+
+  // Trial 到期鎖定
+  if (licData && licData.trialDaysLeft !== null && licData.trialDaysLeft !== undefined) {
+    if (licData.trialDaysLeft <= 0) {
+      document.getElementById('login-err').textContent = '⏰ 免費試用已到期，請聯繫 Jeffrey 升級方案。';
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-btn').textContent = '登入';
+      return;
+    }
+  }
+
+  // 寬限期警告（Standard/Pro 到期）
+  if (licData && licData.isGrace) showToast('⚠️ ' + licData.message);
+
+  // Trial 剩餘天數提示（7天內顯示橫幅）
+  if (licData && licData.trialDaysLeft !== null && licData.trialDaysLeft !== undefined) {
+    if (licData.trialDaysLeft <= 7) showTrialBanner(licData.trialDaysLeft);
+  }
   if (licData && licData.isGrace) showToast('⚠️ ' + licData.message);
   document.getElementById('auth-name-display').textContent = data.name;
   var roleEl = document.getElementById('auth-role-display');
@@ -1017,7 +1034,15 @@ function callGemini(base64, mimeType, studentList, callback) {
   ];
   callGeminiWithFallback(parts, callback);
 }
-
+function showTrialBanner(daysLeft) {
+  var bar = document.getElementById('auth-bar');
+  if (!bar) return;
+  var banner = document.createElement('div');
+  banner.id = 'trial-banner';
+  banner.style.cssText = 'background:#fff3cd;color:#856404;font-size:12px;font-weight:700;padding:6px 18px;text-align:center;border-bottom:1px solid #ffc107;';
+  banner.textContent = '⏳ 免費試用剩餘 ' + daysLeft + ' 天，到期後需聯繫 Jeffrey 升級方案。';
+  bar.insertAdjacentElement('afterend', banner);
+}
 function showToast(msg) {
   var t = document.createElement('div');
   t.className = 'save-toast'; t.textContent = msg;
