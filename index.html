@@ -888,7 +888,7 @@ function callGeminiWithFallback(parts, callback, retryCount) {
   retryCount = retryCount || 0;
 
   // 判斷方案：Pro 用 Paid，其他用 FreeTier
-  var useFreeKey = !(currentUser && currentUser.plan === 'Pro');
+  var useFreeKey = false;
   // 判斷是否含音訊（語音點名）
   var hasAudio = parts.some(function(p) { return p.inline_data; });
   var useLite  = hasAudio; // 語音用 Flash-Lite 省錢，純文字（評語）用 Flash
