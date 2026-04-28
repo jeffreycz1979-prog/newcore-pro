@@ -1014,7 +1014,7 @@ async function runGeminiOCR() {
         params: {
           prompt:    geminiFileText ? prompt + '\n\n資料內容：\n' + geminiFileText : prompt,
           audioData: geminiFileBase64 ? { mimeType: geminiFileMime, data: geminiFileBase64 } : null,
-          useFreeKey: true,
+          useFreeKey: false,
           useLite:    false
         }
       })
