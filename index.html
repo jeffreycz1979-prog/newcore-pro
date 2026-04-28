@@ -373,6 +373,155 @@
   .alert-score { font-weight:700; color:#c0392b; min-width:36px; text-align:right; }
   .no-alert { color:#bbb; font-size:12px; padding:6px 0; }
   .overview-loading { text-align:center; color:#aaa; padding:30px; }
+/* ══════════════════════════════════════════════
+   手機響應式修正 — 貼到 </style> 之前
+   ══════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+
+  /* ── 頂部標題列 ── */
+  .top {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 12px 0;
+    gap: 8px;
+  }
+  .top h2 {
+    font-size: 16px;
+  }
+
+  /* tab-bar 橫向捲動，不換行不截斷 */
+  .tab-bar {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-wrap: nowrap;
+    padding-bottom: 10px;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* ── 登入資訊列 ── */
+  .auth-bar {
+    padding: 6px 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .auth-bar .auth-name { font-size: 12px; }
+  .auth-logout { margin-left: auto; }
+
+  /* ── 主內容區 ── */
+  .body { padding: 10px; }
+  .card { padding: 12px 12px; }
+
+  /* ── 點名頁：班級+堂次 改單欄 ── */
+  .row2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* ── 課堂資訊三格 ── */
+  .lesson-info {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  .info-box .val { font-size: 13px; }
+  .info-box .lbl { font-size: 9px; }
+
+  /* ── 錄音按鈕 ── */
+  .mic-btn { font-size: 14px; padding: 12px 10px; }
+
+  /* ── 總表 toolbar ── */
+  .summary-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .summary-toolbar select { width: 100%; }
+  .summary-toolbar > div:last-child {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-btn { flex: 1; text-align: center; font-size: 11px; padding: 6px 8px; }
+
+  /* ── 總表：語音輸入區 ── */
+  #sum-lesson-sel { width: 100%; }
+  #sum-mic-btn { width: 100%; margin-top: 6px; }
+
+  /* ── 警示卡片雙欄維持，但縮小字 ── */
+  .alert-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .alert-card .ac-num { font-size: 22px; }
+  .alert-card .ac-sub { font-size: 10px; }
+
+  /* ── 成績單 toolbar ── */
+  .report-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .report-toolbar select,
+  .report-toolbar button { width: 100%; }
+
+  /* ── 成績單圖表雙欄 → 單欄 ── */
+  .rpt-chart-row {
+    grid-template-columns: 1fr;
+  }
+  .rpt-radar-wrap canvas { max-width: 240px; margin: 0 auto; display: block; }
+
+  /* ── 成績單 meta 三欄 → 單欄 ── */
+  .rpt-meta {
+    grid-template-columns: 1fr;
+  }
+  .rpt-meta-cell {
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 8px 14px;
+  }
+  .rpt-meta-cell:last-child { border-bottom: none; }
+
+  /* ── 成績單分數格 ── */
+  .rpt-scores-grid { grid-template-columns: 1fr 1fr; }
+
+  /* ── 考試成績 toolbar ── */
+  .exam-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .exam-toolbar select { width: 100%; }
+
+  /* ── 總覽 toolbar ── */
+  .overview-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .overview-toolbar select { width: 100%; }
+  .threshold-box { width: 100%; justify-content: flex-start; }
+  .overview-toolbar .rpt-btn { width: 100%; }
+
+  /* ── 轉盤 Modal 全寬 ── */
+  .wheel-panel { border-radius: 16px 16px 0 0; }
+  .numpad-btn { padding: 14px 4px; font-size: 20px; }
+  .numpad-display { font-size: 36px; }
+
+  /* ── 出席表格橫向捲動（已有 overflow-x:auto，補觸控慣性）── */
+  .att-table-wrap { -webkit-overflow-scrolling: touch; }
+  .summary-table-wrap { -webkit-overflow-scrolling: touch; }
+
+  /* ── Email row 直排 ── */
+  .email-row { flex-direction: column; }
+  .email-row input { width: 100%; }
+  .email-row .rpt-btn { width: 100%; }
+
+  /* ── rpt-actions 按鈕直排 ── */
+  .rpt-actions { flex-direction: column; }
+  .rpt-actions .rpt-btn { width: 100%; }
+} 
 </style>
 </head>
 <body>
