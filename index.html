@@ -1219,6 +1219,12 @@ function switchTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
   document.getElementById('page-'+tab).classList.add('active');
   btn.classList.add('active');
+
+  // 切換到總表時自動重新載入（確保看到最新資料）
+  if (tab === 'summary') {
+    var cls = document.getElementById('sum-class-sel').value;
+    if (cls) onSumClassChange();
+  }
 }
 
 // ══════════════════════════════════════════════
