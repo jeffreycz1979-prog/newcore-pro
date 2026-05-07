@@ -2,136 +2,259 @@
 <html>
 <head>
   <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <style>
-    body { background-color: #f8f9fa; padding: 20px; }
-    .card { max-width: 500px; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    body { background-color: #f8f9fa; }
+    .app-container { max-width: 600px; margin: 0 auto; background: white; min-height: 100vh; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .nav-tabs .nav-link { font-weight: bold; color: #555; padding: 12px 5px; }
+    .student-card { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 12px; transition: 0.2s; }
+    .btn-state-v { background-color: #198754 !important; color: white !important; border-color: #198754 !important; }
+    .btn-state-x { background-color: #dc3545 !important; color: white !important; border-color: #dc3545 !important; }
+    .badge-day { background-color: #e9ecef; color: #adb5bd; border: 1px solid #dee2e6; margin-right: 2px; font-size: 0.75rem; }
+    .badge-day.active { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+    .badge-soc { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .badge-soc.active { background-color: #ffc107; color: #212529; border-color: #ffc107; font-weight: bold; }
+    .phone-btn { font-size: 0.75rem; padding: 2px 6px; text-decoration: none; border-radius: 4px; margin-right: 4px; display: inline-block; margin-top: 4px; }
+    .phone-btn:hover { opacity: 0.8; }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="card-header bg-primary text-white">
-    <h4 class="mb-0">➕ 新增學生資料</h4>
-  </div>
-  <div class="card-body">
-    <form id="studentForm">
-      
-      <div class="mb-3">
-        <label class="form-label">學生姓名</label>
-        <input type="text" class="form-control" id="name" required>
-      </div>
+<datalist id="schoolList"></datalist>
+<datalist id="classList"></datalist>
 
-      <div class="row mb-3">
-        <div class="col">
-          <label class="form-label">學校</label>
-          <input type="text" class="form-control" id="school" value="某某國小" required>
-        </div>
-        <div class="col">
-          <label class="form-label">年級</label>
-          <select class="form-select" id="grade">
-            <option value="1">1 年級</option>
-            <option value="2">2 年級</option>
-            <option value="3">3 年級</option>
-            <option value="4">4 年級</option>
-            <option value="5">5 年級</option>
-            <option value="6">6 年級</option>
-          </select>
-        </div>
-        <div class="col">
-          <label class="form-label">班級 (如:101)</label>
-          <input type="number" class="form-control" id="className" required>
-        </div>
-      </div>
+<div class="app-container">
+  <ul class="nav nav-tabs nav-fill pt-2" id="myTab" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#add" type="button" onclick="loadManagerList()">管理</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#attendance" type="button" onclick="initAttendance()">📱 點名</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#report" type="button">📅 月表</button></li>
+  </ul>
 
-      <div class="mb-3">
-        <label class="form-label">家長電話</label>
-        <input type="tel" class="form-control" id="phone">
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label d-block">學生身分</label>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="identity" id="id1" value="安親" checked onchange="toggleDays()">
-          <label class="form-check-label" for="id1">安親生 (預設全接)</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="identity" id="id2" value="外生" onchange="toggleDays()">
-          <label class="form-check-label" for="id2">外生 (自訂接送)</label>
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label d-block">每週接送日</label>
-        <div class="form-check form-check-inline"><input class="form-check-input day-chk" type="checkbox" id="day1" checked><label>一</label></div>
-        <div class="form-check form-check-inline"><input class="form-check-input day-chk" type="checkbox" id="day2" checked><label>二</label></div>
-        <div class="form-check form-check-inline"><input class="form-check-input day-chk" type="checkbox" id="day3" checked><label>三</label></div>
-        <div class="form-check form-check-inline"><input class="form-check-input day-chk" type="checkbox" id="day4" checked><label>四</label></div>
-        <div class="form-check form-check-inline"><input class="form-check-input day-chk" type="checkbox" id="day5" checked><label>五</label></div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">備註</label>
-        <input type="text" class="form-control" id="note">
-      </div>
-
-      <button type="submit" class="btn btn-success w-100" id="submitBtn">儲存資料</button>
-    </form>
+  <div class="tab-content p-3" id="myTabContent">
     
-    <div id="statusMessage" class="mt-3 text-center fw-bold text-success"></div>
+    <div class="tab-pane fade show active" id="add" role="tabpanel">
+      <button class="btn btn-primary w-100 mb-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#addFormCollapse">➕ 展開/收合 新增表單</button>
+      <div class="collapse mb-4" id="addFormCollapse">
+        <div class="card card-body bg-light">
+          <form id="studentForm">
+            <div class="mb-3"><label class="form-label">學生姓名</label><input type="text" class="form-control" id="name" required></div>
+            <div class="row mb-3">
+              <div class="col"><label class="form-label">學校</label><input type="text" class="form-control" id="school" list="schoolList" required></div>
+              <div class="col"><label class="form-label">年級</label><select class="form-select" id="grade"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+              <div class="col"><label class="form-label">班級</label><input type="text" class="form-control" id="className" list="classList" required></div>
+            </div>
+            
+            <div class="mb-3 p-2 bg-white border rounded">
+              <label class="form-label text-secondary fw-bold small">📞 家長聯絡電話</label>
+              <div class="row g-2">
+                <div class="col-4"><input type="tel" class="form-control form-control-sm" id="phoneMom" placeholder="媽媽"></div>
+                <div class="col-4"><input type="tel" class="form-control form-control-sm" id="phoneDad" placeholder="爸爸"></div>
+                <div class="col-4"><input type="tel" class="form-control form-control-sm" id="phoneOther" placeholder="其他(市話)"></div>
+              </div>
+            </div>
+
+            <div class="mb-3"><label class="form-label d-block text-primary fw-bold">1. 設定常規接送日</label>
+              <div class="form-check form-check-inline"><input class="form-check-input d-chk-a" type="checkbox" id="d1" checked><label>一</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input d-chk-a" type="checkbox" id="d2" checked><label>二</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input d-chk-a" type="checkbox" id="d3" checked><label>三</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input d-chk-a" type="checkbox" id="d4" checked><label>四</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input d-chk-a" type="checkbox" id="d5" checked><label>五</label></div>
+            </div>
+            <div class="mb-3 p-2 border rounded border-warning bg-white"><label class="form-label d-block text-warning fw-bold">2. 設定社團日 (該日強制 16:00 接)</label>
+              <div class="form-check form-check-inline"><input class="form-check-input s-chk-a" type="checkbox" id="s1"><label>一</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input s-chk-a" type="checkbox" id="s2"><label>二</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input s-chk-a" type="checkbox" id="s3"><label>三</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input s-chk-a" type="checkbox" id="s4"><label>四</label></div>
+              <div class="form-check form-check-inline"><input class="form-check-input s-chk-a" type="checkbox" id="s5"><label>五</label></div>
+            </div>
+            <div class="mb-3"><label class="form-label d-block">身分</label><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="id" id="id1" value="安親" checked><label for="id1">安親</label></div><div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="id" id="id2" value="外生"><label for="id2">外生</label></div></div>
+            <button type="submit" class="btn btn-success w-100" id="submitBtn">儲存資料</button>
+            <div id="statusMessage" class="mt-2 text-center text-success fw-bold"></div>
+          </form>
+        </div>
+      </div>
+      <h5 class="mb-2 fw-bold text-secondary">📋 學生清單管理</h5>
+      <input type="text" id="searchBox" class="form-control mb-3" placeholder="🔍 搜尋姓名或學校..." onkeyup="filterManagerList()">
+      <div id="managerListContainer" style="max-height: 60vh; overflow-y: auto;"><div class="text-center text-muted mt-3">載入中...</div></div>
+    </div>
+
+    <div class="tab-pane fade" id="attendance" role="tabpanel">
+      <div class="d-flex justify-content-between align-items-center mb-2"><input type="date" id="datePicker" class="form-control w-50 fw-bold text-primary" onchange="loadStudentsByDate()"><button class="btn btn-outline-primary btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#tempAddModal" onclick="loadStudentOptions()">➕ 臨接</button></div>
+      <div class="d-flex gap-2 mb-3 bg-light p-2 rounded"><select id="schoolFilter" class="form-select form-select-sm" onchange="applySchoolFilter()"><option value="ALL">全部學校</option></select><button class="btn btn-success btn-sm text-nowrap" onclick="selectAllVisible()">全接到</button></div>
+      <div id="attendanceList"></div>
+    </div>
+
+    <div class="tab-pane fade text-center mt-4" id="report" role="tabpanel">
+      <h5>📊 每月接送紀錄總表</h5>
+      <button class="btn btn-warning btn-lg w-100 mt-3 fw-bold" id="genReportBtn" onclick="requestReport()">產出 / 更新 本月總表</button>
+      <div id="reportStatus" class="mt-4"></div>
+    </div>
   </div>
 </div>
 
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">修改學生設定</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editRowNum">
+      <div class="mb-2"><label class="form-label text-muted small">姓名</label><input type="text" class="form-control form-control-sm" id="editName" readonly></div>
+      <div class="row mb-2"><div class="col"><label class="form-label text-muted small">年級</label><select class="form-select form-select-sm" id="editGrade"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div><div class="col"><label class="form-label text-muted small">班級</label><input type="text" class="form-control form-control-sm" id="editClass"></div></div>
+      
+      <div class="row mb-2">
+        <div class="col-4"><label class="form-label text-muted small">媽</label><input type="tel" class="form-control form-control-sm" id="editPhoneMom"></div>
+        <div class="col-4"><label class="form-label text-muted small">爸</label><input type="tel" class="form-control form-control-sm" id="editPhoneDad"></div>
+        <div class="col-4"><label class="form-label text-muted small">其他</label><input type="tel" class="form-control form-control-sm" id="editPhoneOther"></div>
+      </div>
+
+      <div class="mb-2"><label class="form-label text-primary fw-bold small">常規接送日</label><br><div class="form-check form-check-inline"><input class="form-check-input ed-chk" type="checkbox" id="ed1"><label>一</label></div><div class="form-check form-check-inline"><input class="form-check-input ed-chk" type="checkbox" id="ed2"><label>二</label></div><div class="form-check form-check-inline"><input class="form-check-input ed-chk" type="checkbox" id="ed3"><label>三</label></div><div class="form-check form-check-inline"><input class="form-check-input ed-chk" type="checkbox" id="ed4"><label>四</label></div><div class="form-check form-check-inline"><input class="form-check-input ed-chk" type="checkbox" id="ed5"><label>五</label></div></div>
+      <div class="mb-2 p-2 bg-light border rounded"><label class="form-label text-warning fw-bold small">社團日 (16:00 接)</label><br><div class="form-check form-check-inline"><input class="form-check-input es-chk" type="checkbox" id="es1"><label>一</label></div><div class="form-check form-check-inline"><input class="form-check-input es-chk" type="checkbox" id="es2"><label>二</label></div><div class="form-check form-check-inline"><input class="form-check-input es-chk" type="checkbox" id="es3"><label>三</label></div><div class="form-check form-check-inline"><input class="form-check-input es-chk" type="checkbox" id="es4"><label>四</label></div><div class="form-check form-check-inline"><input class="form-check-input es-chk" type="checkbox" id="es5"><label>五</label></div></div>
+    </div>
+    <div class="modal-footer justify-content-between"><button class="btn btn-outline-danger" onclick="submitDelete()">🗑️ 刪除</button><button class="btn btn-primary" onclick="submitEdit()">儲存修改</button></div>
+  </div></div>
+</div>
+
+<div class="modal fade" id="tempAddModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">臨時加接</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><select id="tempStudentSelect" class="form-select mb-3"></select><select id="tempTimeSelect" class="form-select"><option value="12:00">12:00 中午</option><option value="16:00">16:00 下午</option></select></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="submitTempAdd()">確認</button></div></div></div></div>
+
 <script>
-  // 連動邏輯：如果是安親生，自動勾選一到五
-  function toggleDays() {
-    const isAnqin = document.getElementById('id1').checked;
-    const checkboxes = document.querySelectorAll('.day-chk');
-    if(isAnqin) {
-      checkboxes.forEach(chk => chk.checked = true);
-    }
+  let allStudentsData = [];
+  window.onload = function() {
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('schoolList').innerHTML = res.schools.map(s => `<option value="${s}">`).join('');
+      document.getElementById('classList').innerHTML = res.classes.map(c => `<option value="${c}">`).join('');
+    }).getDropdownData();
+    loadManagerList();
+  };
+
+  // 產生電話按鈕的輔助函數
+  function genPhoneHtml(m, d, o) {
+    let h = '';
+    if(m) h += `<a href="tel:${m}" class="phone-btn bg-danger text-white">👩 媽</a>`;
+    if(d) h += `<a href="tel:${d}" class="phone-btn bg-primary text-white">👨 爸</a>`;
+    if(o) h += `<a href="tel:${o}" class="phone-btn bg-secondary text-white">🏠 他</a>`;
+    return h ? `<div>${h}</div>` : '';
   }
 
-  // 處理表單送出
+  function loadManagerList() {
+    document.getElementById('managerListContainer').innerHTML = '<div class="text-center mt-3"><div class="spinner-border text-primary"></div></div>';
+    google.script.run.withSuccessHandler(res => { allStudentsData = res; renderManagerList(res); }).getStudentManagerList();
+  }
+
+  function renderManagerList(data) {
+    let html = '';
+    data.forEach(s => {
+      const d = [s.d1,s.d2,s.d3,s.d4,s.d5].map((v,i) => `<span class="badge badge-day ${v?'active':''}">`+['一','二','三','四','五'][i]+`</span>`).join('');
+      const sc = [s.s1,s.s2,s.s3,s.s4,s.s5].map((v,i) => v ? `<span class="badge badge-soc active">`+['一','二','三','四','五'][i]+`</span>` : '').join('');
+      const phones = genPhoneHtml(s.phoneMom, s.phoneDad, s.phoneOther);
+      
+      html += `<div class="card p-2 mb-2 shadow-sm border-start border-4 ${s.identity==='安親'?'border-primary':'border-info'}">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-bold">${s.name} <span class="text-muted small">${s.school} ${s.grade}-${s.className}</span></div>
+              ${phones}
+              <div class="mt-1">${d}</div>${sc?`<div class="mt-1 small text-muted">社團日: ${sc}</div>`:''}
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" onclick='openEditModal(${JSON.stringify(s)})'>⚙️</button>
+          </div></div>`;
+    });
+    document.getElementById('managerListContainer').innerHTML = html || '<div class="text-center mt-3">目前無資料</div>';
+  }
+
+  function filterManagerList() {
+    const kw = document.getElementById('searchBox').value.toLowerCase();
+    renderManagerList(allStudentsData.filter(s => s.name.toLowerCase().includes(kw) || s.school.toLowerCase().includes(kw)));
+  }
+
   document.getElementById('studentForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // 避免網頁重新整理
-    
+    e.preventDefault();
     document.getElementById('submitBtn').disabled = true;
-    document.getElementById('submitBtn').innerText = "儲存中...";
-
-    // 收集資料
     const data = {
-      name: document.getElementById('name').value,
-      school: document.getElementById('school').value,
-      grade: document.getElementById('grade').value,
-      className: document.getElementById('className').value,
-      phone: document.getElementById('phone').value,
-      identity: document.querySelector('input[name="identity"]:checked').value,
-      day1: document.getElementById('day1').checked,
-      day2: document.getElementById('day2').checked,
-      day3: document.getElementById('day3').checked,
-      day4: document.getElementById('day4').checked,
-      day5: document.getElementById('day5').checked,
-      note: document.getElementById('note').value
+      name: document.getElementById('name').value, school: document.getElementById('school').value, grade: document.getElementById('grade').value, className: document.getElementById('className').value, 
+      phoneMom: document.getElementById('phoneMom').value, phoneDad: document.getElementById('phoneDad').value, phoneOther: document.getElementById('phoneOther').value,
+      identity: document.querySelector('input[name="id"]:checked').value,
+      day1: document.getElementById('d1').checked, day2: document.getElementById('d2').checked, day3: document.getElementById('d3').checked, day4: document.getElementById('d4').checked, day5: document.getElementById('d5').checked,
+      s1: document.getElementById('s1').checked, s2: document.getElementById('s2').checked, s3: document.getElementById('s3').checked, s4: document.getElementById('s4').checked, s5: document.getElementById('s5').checked
     };
-
-    // 呼叫後端 GAS 函數
-    google.script.run
-      .withSuccessHandler(function(response) {
-        document.getElementById('statusMessage').innerText = response;
-        document.getElementById('submitBtn').disabled = false;
-        document.getElementById('submitBtn').innerText = "儲存資料";
-        
-        // 清空部分欄位方便連續輸入 (保留學校，因為通常同一批輸入都是同一個學校)
-        document.getElementById('name').value = '';
-        document.getElementById('className').value = '';
-        document.getElementById('phone').value = '';
-        document.getElementById('note').value = '';
-        document.getElementById('name').focus(); // 游標跳回姓名
-      })
-      .addStudent(data);
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('statusMessage').innerText = res; document.getElementById('submitBtn').disabled = false;
+      document.getElementById('name').value = ''; document.getElementById('className').value = '';
+      loadManagerList();
+    }).addStudent(data);
   });
-</script>
 
+  function openEditModal(s) {
+    document.getElementById('editRowNum').value = s.rowNum;
+    document.getElementById('editName').value = s.name;
+    document.getElementById('editGrade').value = s.grade;
+    document.getElementById('editClass').value = s.className;
+    document.getElementById('editPhoneMom').value = s.phoneMom || '';
+    document.getElementById('editPhoneDad').value = s.phoneDad || '';
+    document.getElementById('editPhoneOther').value = s.phoneOther || '';
+    [1,2,3,4,5].forEach(i => { document.getElementById('ed'+i).checked = !!s['d'+i]; document.getElementById('es'+i).checked = !!s['s'+i]; });
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+  }
+
+  function submitEdit() {
+    const data = {
+      name: document.getElementById('editName').value, school: allStudentsData.find(x=>x.rowNum==document.getElementById('editRowNum').value).school, grade: document.getElementById('editGrade').value, className: document.getElementById('editClass').value, 
+      phoneMom: document.getElementById('editPhoneMom').value, phoneDad: document.getElementById('editPhoneDad').value, phoneOther: document.getElementById('editPhoneOther').value,
+      identity: allStudentsData.find(x=>x.rowNum==document.getElementById('editRowNum').value).identity,
+      day1: document.getElementById('ed1').checked, day2: document.getElementById('ed2').checked, day3: document.getElementById('ed3').checked, day4: document.getElementById('ed4').checked, day5: document.getElementById('ed5').checked,
+      s1: document.getElementById('es1').checked, s2: document.getElementById('es2').checked, s3: document.getElementById('es3').checked, s4: document.getElementById('es4').checked, s5: document.getElementById('es5').checked
+    };
+    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+    google.script.run.withSuccessHandler(loadManagerList).updateStudentData(document.getElementById('editRowNum').value, data);
+  }
+
+  function submitDelete() { if(!confirm("確定要刪除？")) return; bootstrap.Modal.getInstance(document.getElementById('editModal')).hide(); google.script.run.withSuccessHandler(loadManagerList).deleteStudent(document.getElementById('editRowNum').value); }
+
+  let currentStudentsData = [];
+  function initAttendance() { if(!document.getElementById('datePicker').value) document.getElementById('datePicker').value = new Date().toLocaleDateString('en-CA'); loadStudentsByDate(); }
+  
+  function loadStudentsByDate() {
+    document.getElementById('attendanceList').innerHTML = '<div class="text-center my-4"><div class="spinner-border text-primary"></div></div>';
+    google.script.run.withSuccessHandler(res => {
+      if(res.error) { document.getElementById('attendanceList').innerHTML = `<div class="alert alert-warning">${res.error}</div>`; return; }
+      document.getElementById('schoolFilter').innerHTML = '<option value="ALL">全部學校</option>' + res.schools.map(s => `<option value="${s}">${s}</option>`).join('');
+      currentStudentsData = res.students; applySchoolFilter();
+    }).getStudentsByDate(document.getElementById('datePicker').value);
+  }
+
+  function applySchoolFilter() {
+    const filter = document.getElementById('schoolFilter').value;
+    let html = '', currentTime = "";
+    currentStudentsData.forEach((s, idx) => {
+      if(filter !== 'ALL' && s.school !== filter) return;
+      if (s.time !== currentTime) { currentTime = s.time; html += `<div class="mt-4 mb-2 fw-bold text-secondary border-bottom border-2 fs-5">🕒 ${currentTime} 放學區</div>`; }
+      
+      const phones = genPhoneHtml(s.phoneMom, s.phoneDad, s.phoneOther);
+      
+      html += `<div class="student-card p-3 shadow-sm student-item" id="card-${idx}" style="background-color: ${s.color}; border-left: 5px solid ${s.time==='12:00'?'#ffc107':'#6c757d'};">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fs-5 fw-bold">${s.idIcon} ${s.name}</div>
+              <div class="text-muted small">${s.school} | ${s.gradeClass}</div>
+              ${phones}
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-outline-success btn-v" id="btnV-${idx}" onclick="markAttendance(${idx}, '${s.name}', 'V', '${s.time}')">✔</button>
+              <button class="btn btn-outline-danger btn-x" id="btnX-${idx}" onclick="markAttendance(${idx}, '${s.name}', 'X', '${s.time}')">✖</button>
+            </div></div></div>`;
+    });
+    document.getElementById('attendanceList').innerHTML = html || '<div class="alert alert-info">無名單。</div>';
+  }
+
+  function markAttendance(idx, name, status, time) {
+    const btnV = document.getElementById(`btnV-${idx}`), btnX = document.getElementById(`btnX-${idx}`);
+    if (status === 'V') { btnV.classList.add('btn-state-v'); btnV.classList.remove('btn-outline-success'); btnX.classList.remove('btn-state-x'); btnX.classList.add('btn-outline-danger'); } 
+    else { btnX.classList.add('btn-state-x'); btnX.classList.remove('btn-outline-danger'); btnV.classList.remove('btn-state-v'); btnV.classList.add('btn-outline-success'); }
+    google.script.run.saveAttendance(document.getElementById('datePicker').value, name, status, time);
+  }
+
+  function selectAllVisible() { document.querySelectorAll('.student-item').forEach(card => { const btnV = card.querySelector('.btn-v'); if(btnV && !btnV.classList.contains('btn-state-v')) btnV.click(); }); }
+  function loadStudentOptions() { google.script.run.withSuccessHandler(res => document.getElementById('tempStudentSelect').innerHTML = res.map(s => `<option value="${s.name}">${s.classInfo} - ${s.name}</option>`).join('')).getAllStudentNames(); }
+  function submitTempAdd() { bootstrap.Modal.getInstance(document.getElementById('tempAddModal')).hide(); google.script.run.withSuccessHandler(loadStudentsByDate).addTempPickup(document.getElementById('datePicker').value, document.getElementById('tempStudentSelect').value, document.getElementById('tempTimeSelect').value); }
+  function requestReport() { const btn = document.getElementById('genReportBtn'); btn.disabled = true; btn.innerText = "生成中..."; google.script.run.withSuccessHandler(res => { btn.disabled = false; btn.innerText = "產出 / 更新 本月總表"; if(res.error) document.getElementById('reportStatus').innerHTML = `<div class="alert alert-danger">${res.error}</div>`; else document.getElementById('reportStatus').innerHTML = `<div class="alert alert-success">✅ <b>${res.sheetName}</b> 成功！<br><a href="${res.url}" target="_blank" class="btn btn-primary mt-3 w-100">查看總表</a></div>`; }).generateMonthlySummaryFromWeb(); }
+</script>
 </body>
 </html>
