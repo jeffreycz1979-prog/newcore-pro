@@ -479,9 +479,12 @@ function callGAS(params) {
   });
 }
 
+// GAS 不支援跨域 POST，改以 JSONP GET 傳送所有寫入（payload 為 JSON 字串）
 async function postGAS(payload) {
-  const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
-  return res.json();
+  return callGAS({
+    action:  payload.action,
+    payload: JSON.stringify(payload)
+  });
 }
 
 // ── 時間規則 ──────────────────────────────────────────────
