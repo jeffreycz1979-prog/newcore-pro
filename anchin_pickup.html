@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>安親接車管理系統</title>
 <style>
 /* ── 設計變數 ── */
@@ -10,27 +10,33 @@
   --primary:#2563EB; --primary-d:#1D4ED8; --primary-light:#DBEAFE;
   --success:#16A34A; --danger:#DC2626; --warning:#D97706;
   --gray:#6B7280; --gray-2:#9CA3AF; --gray-light:#F3F4F6; --border:#E5E7EB;
+  /* 總表接送顏色：改為白/黃/灰黑 */
   --am-bg:#FFFFFF;    /* 上午接駁：白色 */
-  --pm-bg:#CBD5E1;    /* 下午接駁：灰藍 */
-  --no-bg:#94A3B8;    /* 不接：深灰 */
+  --pm-bg:#FEF08A;    /* 下午接駁：黃色 */
+  --no-bg:#374151;    /* 不接：灰黑色 */
   --low-c:#059669; --mid-c:#D97706; --high-c:#DC2626;
+  /* 週次交替色 */
+  --week-a:#EFF6FF; --week-b:#F0FDF4;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
-     background:#F8FAFC;color:#1F2937;min-height:100vh;overflow-x:hidden}
+     background:#F8FAFC;color:#1F2937;min-height:100vh;overflow-x:hidden;
+     -webkit-font-smoothing:antialiased}
 
 /* ── 底部導覽 ── */
 .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;
      border-top:1px solid var(--border);display:flex;z-index:100;
      padding-bottom:env(safe-area-inset-bottom,0px)}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
-         padding:8px 4px 6px;cursor:pointer;color:var(--gray);font-size:10px;
-         border:none;background:none;gap:3px;transition:color .15s}
-.nav-btn .ico{font-size:22px;line-height:1}
+         padding:10px 4px 8px;cursor:pointer;color:var(--gray);font-size:10px;
+         border:none;background:none;gap:3px;transition:color .15s;
+         min-height:56px}
+.nav-btn .ico{font-size:24px;line-height:1}
 .nav-btn.active{color:var(--primary)}
 
 /* ── 內容容器 ── */
-.content{padding-bottom:72px}
+.content{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 .page{display:none}.page.active{display:block}
 
 /* ── 頁首 ── */
@@ -45,64 +51,100 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 
 /* ── 按鈕 ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
-     padding:9px 18px;border-radius:9px;border:none;font-size:14px;
-     font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+     padding:10px 18px;border-radius:9px;border:none;font-size:14px;
+     font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap;
+     min-height:44px}
 .btn:active{opacity:.72}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-success{background:var(--success);color:#fff}
 .btn-danger{background:var(--danger);color:#fff}
 .btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
 .btn-gray{background:var(--gray-light);color:var(--gray)}
-.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
-.btn-icon{width:34px;height:34px;padding:0;border-radius:8px;border:1px solid var(--border);
-          background:#fff;cursor:pointer;font-size:15px;display:inline-flex;
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px;min-height:38px}
+.btn-icon{width:44px;height:44px;padding:0;border-radius:10px;border:1px solid var(--border);
+          background:#fff;cursor:pointer;font-size:18px;display:inline-flex;
           align-items:center;justify-content:center}
+
+/* ── 篩選器 ── */
+.filter-bar{padding:10px 12px 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.filter-select{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;
+               font-size:13px;background:#fff;color:#1F2937;outline:none;
+               min-height:42px;cursor:pointer}
+.filter-select:focus{border-color:var(--primary)}
+
+/* ── 日期切換列 ── */
+.date-nav{display:flex;align-items:center;gap:8px;padding:8px 12px;
+          background:#fff;border-bottom:1px solid var(--border)}
+.date-nav-btn{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--border);
+              background:#fff;cursor:pointer;font-size:18px;display:flex;
+              align-items:center;justify-content:center;flex-shrink:0}
+.date-nav-btn:active{background:var(--gray-light)}
+.date-nav-center{flex:1;text-align:center}
+.date-nav-label{font-size:15px;font-weight:700;color:#1F2937}
+.date-nav-sub{font-size:11px;color:var(--gray);margin-top:1px}
+.today-tag{display:inline-block;padding:2px 8px;background:var(--primary);
+           color:#fff;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
 
 /* ── 今日點名 ── */
 .time-banner{background:#EFF6FF;border-left:3px solid var(--primary);
-             margin:8px 12px;border-radius:0 8px 8px 0;padding:8px 12px;
-             font-size:12px;color:#1D4ED8;line-height:1.6}
-.quick-bar{display:flex;gap:8px;padding:6px 12px 2px;flex-wrap:wrap}
+             margin:8px 12px;border-radius:0 8px 8px 0;padding:10px 12px;
+             font-size:12px;color:#1D4ED8;line-height:1.7}
+.quick-bar{display:flex;gap:8px;padding:6px 12px 4px;flex-wrap:wrap}
 
-.grade-header{padding:5px 14px;font-size:11px;font-weight:700;
-              letter-spacing:.5px;color:#fff;margin-top:4px}
+.grade-header{padding:7px 14px;font-size:11px;font-weight:700;
+              letter-spacing:.5px;color:#fff;margin-top:6px}
 .grade-header.low{background:var(--low-c)}
 .grade-header.mid{background:var(--mid-c)}
 .grade-header.high{background:var(--high-c)}
 
-.s-card{background:#fff;border-radius:10px;margin:5px 12px;
-        box-shadow:0 1px 3px rgba(0,0,0,.08);
+.s-card{background:#fff;border-radius:12px;margin:6px 12px;
+        box-shadow:0 1px 4px rgba(0,0,0,.08);
         border-left:4px solid var(--border);overflow:hidden;
         transition:border-color .2s}
 .s-card.chk{border-left-color:var(--success)}
 .s-card.abs{border-left-color:var(--danger)}
+.s-card.tmp{border-left-color:var(--warning);background:#FFFBEB}
 
-.s-body{display:flex;align-items:center;padding:10px 12px;gap:10px}
-.s-seq{width:26px;height:26px;border-radius:50%;background:var(--gray-light);
+.s-body{display:flex;align-items:center;padding:12px 12px;gap:10px}
+.s-seq{width:28px;height:28px;border-radius:50%;background:var(--gray-light);
        display:flex;align-items:center;justify-content:center;
        font-size:11px;font-weight:700;color:var(--gray);flex-shrink:0}
+.s-seq.tmp-seq{background:#FEF3C7;color:#B45309}
 .s-info{flex:1;min-width:0}
-.s-name{font-size:15px;font-weight:700;line-height:1.2}
-.s-meta{font-size:11px;color:var(--gray);margin-top:2px;
+.s-name{font-size:16px;font-weight:700;line-height:1.2}
+.s-meta{font-size:11px;color:var(--gray);margin-top:3px;
         display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.badge{display:inline-block;padding:1px 7px;border-radius:10px;
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;
        font-size:10px;font-weight:700}
-.badge-aq{background:#DBEAFE;color:#1D4ED8}   /* 安親 */
-.badge-ws{background:#FEF3C7;color:#B45309}   /* 外生 */
+.badge-aq{background:#DBEAFE;color:#1D4ED8}
+.badge-ws{background:#FEF3C7;color:#B45309}
+.badge-tmp{background:#FEF3C7;color:#92400E}
 .badge-low{background:#D1FAE5;color:#065F46}
 .badge-mid{background:#FEF9C3;color:#854D0E}
 .badge-high{background:#FEE2E2;color:#991B1B}
 
-.s-actions{display:flex;gap:5px;flex-shrink:0}
-.act-btn{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--border);
-         background:#fff;font-size:15px;cursor:pointer;
+/* 點名操作按鈕：手機友善，更大 */
+.s-actions{display:flex;gap:6px;flex-shrink:0}
+.act-btn{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);
+         background:#fff;font-size:18px;cursor:pointer;
          display:flex;align-items:center;justify-content:center;
-         transition:all .15s;font-weight:700}
-.act-btn.on-chk{background:var(--success);border-color:var(--success);color:#fff;font-size:18px}
-.act-btn.on-abs{background:var(--danger);border-color:var(--danger);color:#fff;font-size:18px}
+         transition:all .15s;font-weight:700;user-select:none}
+.act-btn:active{transform:scale(.92)}
+.act-btn.on-chk{background:var(--success);border-color:var(--success);color:#fff}
+.act-btn.on-abs{background:var(--danger);border-color:var(--danger);color:#fff}
+.act-btn.phone-btn{font-size:20px}
 
-.s-note-bar{font-size:12px;color:var(--warning);padding:0 12px 8px 52px;
+.s-note-bar{font-size:12px;color:var(--warning);padding:0 12px 10px 54px;
             font-style:italic}
+
+/* 臨時加接 */
+.tmp-add-section{margin:8px 12px 4px;padding:10px 12px;background:#FFFBEB;
+                 border:1.5px dashed #F59E0B;border-radius:10px}
+.tmp-add-title{font-size:12px;font-weight:700;color:#B45309;margin-bottom:8px}
+.tmp-add-row{display:flex;gap:8px;align-items:center}
+.tmp-input{flex:1;padding:9px 12px;border:1.5px solid #FCD34D;border-radius:9px;
+           font-size:14px;outline:none;background:#fff}
+.tmp-input:focus{border-color:#F59E0B}
 
 /* ── 接車總表 ── */
 .table-ctrl{padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -110,12 +152,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
             margin:0 8px 12px;border-radius:8px;
             box-shadow:0 1px 4px rgba(0,0,0,.1)}
 table.pt{border-collapse:collapse;font-size:11px;white-space:nowrap;background:#fff}
-table.pt th,table.pt td{border:1px solid #CBD5E1;text-align:center;padding:3px 5px}
+table.pt th,table.pt td{border:1px solid #CBD5E1;text-align:center;padding:4px 5px}
 table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
+/* 週次奇偶交替 */
+.wk-a{border-left:2px solid #93C5FD!important}
+.wk-b{border-left:2px solid #6EE7B7!important}
+.wk-hd-a{background:#1E40AF!important}
+.wk-hd-b{background:#065F46!important}
+/* 接送顏色 */
 .cell-am{background:var(--am-bg)}
 .cell-pm{background:var(--pm-bg)}
-.cell-no{background:var(--no-bg);color:#fff;font-size:9px}
+.cell-no{background:var(--no-bg);color:#9CA3AF;font-size:9px}
 .cell-holiday{background:#FCA5A5;color:#7F1D1D;font-size:9px;font-weight:700}
 .th-holiday{background:#DC2626!important;color:#fff!important}
 .th-holiday-day{background:#B91C1C!important;font-size:9px!important}
@@ -131,45 +179,42 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
 .pt .cls-col{min-width:32px;color:var(--gray)}
 
 /* legend */
-.legend{display:flex;gap:12px;flex-wrap:wrap;padding:0 12px 8px;font-size:12px;align-items:center}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 12px 8px;font-size:12px;align-items:center}
 .leg{display:flex;align-items:center;gap:4px}
 .leg-box{width:16px;height:16px;border-radius:4px;border:1px solid var(--border)}
 
 /* ── 學生管理 ── */
 .search-bar{margin:10px 12px 6px;display:flex;gap:8px}
-.search-input{flex:1;padding:9px 14px;border:1.5px solid var(--border);
-              border-radius:9px;font-size:14px;outline:none}
+.search-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);
+              border-radius:9px;font-size:14px;outline:none;min-height:44px}
 .search-input:focus{border-color:var(--primary)}
 .student-list{background:#fff;border-radius:12px;margin:0 12px 12px;
               box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
-.sl-item{display:flex;align-items:center;padding:11px 14px;
+.sl-item{display:flex;align-items:center;padding:13px 14px;
          border-bottom:1px solid var(--gray-light);gap:10px}
 .sl-item:last-child{border-bottom:none}
 .sl-info{flex:1;min-width:0}
-.sl-name{font-size:14px;font-weight:700}
+.sl-name{font-size:15px;font-weight:700}
 .sl-meta{font-size:11px;color:var(--gray);margin-top:2px}
 .sl-actions{display:flex;gap:6px;flex-shrink:0}
-.grade-sep{padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;
-           color:#fff}
+.grade-sep{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:#fff}
 .grade-sep.low{background:var(--low-c)}
 .grade-sep.mid{background:var(--mid-c)}
 .grade-sep.high{background:var(--high-c)}
 
-.fab{position:fixed;bottom:80px;right:16px;width:54px;height:54px;
-     border-radius:50%;background:var(--primary);color:#fff;border:none;
-     font-size:26px;cursor:pointer;z-index:60;
-     box-shadow:0 4px 14px rgba(37,99,235,.45);
+.fab{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:16px;
+     width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;border:none;
+     font-size:28px;cursor:pointer;z-index:60;
+     box-shadow:0 4px 16px rgba(37,99,235,.45);
      display:flex;align-items:center;justify-content:center}
 
 /* ── Modal ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
          display:flex;align-items:flex-end;justify-content:center}
-.overlay.hidden,.overlay.center-hidden{display:none}
-.overlay.center{align-items:center}
+.overlay.hidden{display:none}
 .modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;
        max-height:92vh;overflow-y:auto;padding:20px;
-       padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
-.modal.center-modal{border-radius:16px;max-height:85vh;align-self:center}
+       padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
 .modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;
               margin:0 auto 16px}
 .modal-title{font-size:17px;font-weight:800;margin-bottom:14px}
@@ -178,46 +223,56 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
 /* ── 表單 ── */
 .fg{margin-bottom:13px}
 .fl{display:block;font-size:12px;font-weight:700;color:var(--gray);margin-bottom:5px}
-.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;
-    font-size:15px;outline:none;transition:border-color .2s;font-family:inherit}
+.fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;
+    font-size:15px;outline:none;transition:border-color .2s;font-family:inherit;min-height:44px}
 .fi:focus{border-color:var(--primary)}
 .fi-row{display:flex;gap:8px}
 .fi-row .fi{min-width:0}
-.day-row{display:flex;gap:6px}
+.day-row{display:flex;gap:6px;flex-wrap:wrap}
 .day-chk input{display:none}
-.day-chk label{display:block;padding:7px 10px;border:1.5px solid var(--border);
+.day-chk label{display:block;padding:9px 12px;border:1.5px solid var(--border);
                border-radius:8px;font-size:13px;cursor:pointer;text-align:center;
-               transition:all .15s;min-width:44px}
+               transition:all .15s;min-width:48px;min-height:44px;
+               display:flex;align-items:center;justify-content:center}
 .day-chk input:checked+label{background:var(--primary);border-color:var(--primary);
                                color:#fff;font-weight:700}
 
+/* 自訂接送時間（每日選擇）*/
+.custom-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.custom-time-item{background:var(--gray-light);border-radius:8px;padding:8px 10px}
+.custom-time-label{font-size:11px;font-weight:700;color:var(--gray);margin-bottom:5px}
+.time-select-row{display:flex;gap:4px}
+.time-select-row select{flex:1;padding:6px;border:1.5px solid var(--border);
+                         border-radius:7px;font-size:12px;min-height:36px}
+
 /* ── 電話浮窗 ── */
-.phone-item{display:flex;align-items:center;gap:10px;padding:11px 0;
+.phone-item{display:flex;align-items:center;gap:10px;padding:12px 0;
             border-bottom:1px solid var(--gray-light)}
 .phone-item:last-child{border-bottom:none}
 .phone-lbl{font-size:12px;color:var(--gray);min-width:36px}
-.phone-num{font-size:17px;font-weight:700;color:var(--primary);flex:1}
-.btn-call{background:var(--success);color:#fff;border:none;border-radius:8px;
-          padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.phone-num{font-size:18px;font-weight:700;color:var(--primary);flex:1}
+.btn-call{background:var(--success);color:#fff;border:none;border-radius:9px;
+          padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;
+          min-height:44px;display:inline-flex;align-items:center;gap:6px}
 
 /* ── 備註 ── */
-.notes-ta{width:100%;height:76px;padding:9px;border:1.5px solid var(--border);
+.notes-ta{width:100%;height:80px;padding:10px;border:1.5px solid var(--border);
           border-radius:9px;font-size:14px;resize:none;font-family:inherit;outline:none}
 .notes-ta:focus{border-color:var(--primary)}
 
 /* ── Toast ── */
-.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);
-       background:#1F2937;color:#fff;padding:9px 20px;border-radius:20px;
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);
+       background:#1F2937;color:#fff;padding:10px 22px;border-radius:20px;
        font-size:13px;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;
-       white-space:nowrap}
+       white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .toast.on{opacity:1}
 
 /* ── Loading ── */
-.loading{text-align:center;padding:40px 20px;color:var(--gray);font-size:14px}
+.loading{text-align:center;padding:48px 20px;color:var(--gray);font-size:14px}
 
 /* ── Empty ── */
-.empty{text-align:center;padding:32px 20px;color:var(--gray-2)}
-.empty .e-ico{font-size:40px;margin-bottom:8px}
+.empty{text-align:center;padding:40px 20px;color:var(--gray-2)}
+.empty .e-ico{font-size:44px;margin-bottom:10px}
 .empty p{font-size:14px}
 
 /* ── 假日管理面板 ── */
@@ -227,20 +282,21 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
                       display:flex;align-items:center;justify-content:space-between}
 .holiday-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .h-chip{display:inline-flex;align-items:center;gap:4px;
-        padding:3px 8px 3px 10px;border-radius:20px;
+        padding:4px 10px 4px 12px;border-radius:20px;
         background:#FEE2E2;color:#991B1B;font-size:12px;font-weight:600}
 .h-chip button{border:none;background:none;cursor:pointer;color:#DC2626;
-               font-size:14px;line-height:1;padding:0 2px}
-.holiday-add-row{display:flex;gap:6px;align-items:center}
-.holiday-add-row input[type=date]{padding:6px 8px;border:1.5px solid #FECACA;
-                                   border-radius:8px;font-size:13px;outline:none}
+               font-size:16px;line-height:1;padding:0 2px;min-width:24px;min-height:24px}
+.holiday-add-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.holiday-add-row input[type=date]{padding:8px 10px;border:1.5px solid #FECACA;
+                                   border-radius:8px;font-size:13px;outline:none;min-height:42px}
 .holiday-add-row input[type=date]:focus{border-color:#DC2626}
-.holiday-add-row input[type=text]{flex:1;padding:6px 10px;border:1.5px solid #FECACA;
-                                   border-radius:8px;font-size:13px;outline:none}
+.holiday-add-row input[type=text]{flex:1;padding:8px 12px;border:1.5px solid #FECACA;
+                                   border-radius:8px;font-size:13px;outline:none;min-height:42px}
 
 /* ── 列印 ── */
 @media print{
-  .nav,.pg-header,.table-ctrl,.legend,.quick-bar,.fab{display:none!important}
+  .nav,.pg-header,.table-ctrl,.legend,.quick-bar,.fab,
+  .filter-bar,.date-nav,.holiday-panel{display:none!important}
   body{background:#fff}
   .content{padding-bottom:0}
   .page{display:none!important}.page.active{display:block!important}
@@ -250,25 +306,75 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
                      text-align:center;padding:8px 0}
 }
 .page-title-print{display:none}
+
+/* ── 手機專用優化 ── */
+@media (max-width:480px){
+  .s-actions{gap:5px}
+  .act-btn{width:42px;height:42px;font-size:17px}
+  .fi-row{flex-direction:column;gap:4px}
+  .custom-time-grid{grid-template-columns:1fr}
+  .quick-bar{gap:6px}
+  .quick-bar .btn{font-size:12px;padding:8px 12px}
+  .table-ctrl{gap:6px}
+  .table-ctrl .btn{font-size:12px;padding:8px 10px}
+}
 </style>
 </head>
 <body>
 
 <!-- ═══════════════ PAGES ═══════════════ -->
 
-<!-- ① 今日點名 -->
 <div class="content">
+
+<!-- ① 今日點名 -->
 <div id="page-roll" class="page active">
   <div class="pg-header">
-    <h1>📋 今日接車點名</h1>
+    <h1>📋 接車點名</h1>
     <p id="roll-date-label"></p>
   </div>
+
+  <!-- 日期切換列 -->
+  <div class="date-nav">
+    <button class="date-nav-btn" onclick="changeRollDate(-1)" title="前一天">‹</button>
+    <div class="date-nav-center">
+      <div class="date-nav-label" id="date-nav-label">
+        載入中…
+        <span class="today-tag" id="today-tag" style="display:none">今日</span>
+      </div>
+      <div class="date-nav-sub" id="date-nav-sub"></div>
+    </div>
+    <button class="date-nav-btn" onclick="changeRollDate(1)" title="後一天">›</button>
+    <button class="btn btn-outline btn-sm" onclick="jumpToToday()" id="jump-today-btn" style="display:none;margin-left:4px">今日</button>
+  </div>
+
+  <!-- 學校篩選 -->
+  <div class="filter-bar">
+    <select class="filter-select" id="roll-school-filter" onchange="renderRollList()">
+      <option value="">🏫 所有學校</option>
+    </select>
+    <select class="filter-select" id="roll-time-filter" onchange="renderRollList()">
+      <option value="">⏰ 所有時間</option>
+      <option value="am">12:00 午間接</option>
+      <option value="pm">16:00 下午接</option>
+    </select>
+  </div>
+
   <div class="time-banner" id="time-banner"></div>
   <div class="quick-bar">
     <button class="btn btn-success btn-sm" onclick="quickAllCheck()">✅ 快速全到</button>
     <button class="btn btn-gray btn-sm" onclick="clearAllRecords()">↩ 清除全部</button>
     <button class="btn btn-outline btn-sm" onclick="refreshRollCall()">🔄 重新載入</button>
   </div>
+
+  <!-- 臨時加接 -->
+  <div class="tmp-add-section">
+    <div class="tmp-add-title">⚡ 臨時加接</div>
+    <div class="tmp-add-row">
+      <input class="tmp-input" id="tmp-name" placeholder="姓名（不在名單中的學生）" maxlength="20">
+      <button class="btn btn-warning btn-sm" style="background:#F59E0B;color:#fff;min-width:72px" onclick="addTmpStudent()">加接</button>
+    </div>
+  </div>
+
   <div id="roll-list"><div class="loading">載入中…</div></div>
 </div>
 
@@ -276,19 +382,29 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
 <div id="page-table" class="page">
   <div class="pg-header">
     <h1>📅 接車總表</h1>
-    <p>點選月份產生完整接送表</p>
+    <p>月份接送彙總表</p>
   </div>
   <div class="table-ctrl">
-    <input type="month" id="month-picker" class="fi" style="width:auto;padding:7px 10px">
+    <input type="month" id="month-picker" class="fi" style="width:auto;padding:8px 10px;min-height:42px">
     <button class="btn btn-primary btn-sm" onclick="generateTable()">產生月份表</button>
-    <button class="btn btn-outline btn-sm" style="color:#DC2626;border-color:#DC2626" onclick="toggleHolidayPanel()">🗓 假日</button>
+    <button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA" onclick="toggleHolidayPanel()">🗓 假日</button>
     <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 列印</button>
   </div>
+
+  <!-- 學校篩選（總表） -->
+  <div class="filter-bar">
+    <select class="filter-select" id="table-school-filter" onchange="regenerateTable()">
+      <option value="">🏫 所有學校</option>
+    </select>
+  </div>
+
   <div class="legend">
-    <span class="leg"><span class="leg-box" style="background:var(--am-bg)"></span>12:00 午間接</span>
+    <span class="leg"><span class="leg-box" style="background:var(--am-bg);border:1px solid #CBD5E1"></span>12:00 午間接</span>
     <span class="leg"><span class="leg-box" style="background:var(--pm-bg)"></span>16:00 下午接</span>
     <span class="leg"><span class="leg-box" style="background:var(--no-bg)"></span>不接</span>
     <span class="leg"><span class="leg-box" style="background:#FCA5A5"></span>假日</span>
+    <span class="leg"><span class="leg-box" style="background:#EFF6FF;border-left:3px solid #93C5FD"></span>第奇週</span>
+    <span class="leg"><span class="leg-box" style="background:#F0FDF4;border-left:3px solid #6EE7B7"></span>第偶週</span>
     <span class="leg" style="color:var(--success);font-weight:700">✓ 接到</span>
     <span class="leg" style="color:var(--danger);font-weight:700">✕ 請假</span>
   </div>
@@ -320,9 +436,16 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
   <div class="search-bar">
     <input id="search-input" type="search" class="search-input" placeholder="搜尋姓名 / 班級…" oninput="filterStudents()">
   </div>
+  <!-- 學校篩選（管理） -->
+  <div class="filter-bar" style="padding-top:0">
+    <select class="filter-select" id="mgmt-school-filter" onchange="renderStudentList()">
+      <option value="">🏫 所有學校</option>
+    </select>
+  </div>
   <div id="student-list-area"><div class="loading">載入中…</div></div>
   <button class="fab" onclick="openStudentForm(null)">＋</button>
 </div>
+
 </div><!-- end content -->
 
 <!-- ═══════════════ BOTTOM NAV ═══════════════ -->
@@ -404,20 +527,32 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
 
     <div class="fg">
       <label class="fl">學生類型 *</label>
-      <select class="fi" id="f-type" onchange="togglePickupDays()">
-        <option value="安親">安親（每天接送）</option>
+      <select class="fi" id="f-type" onchange="onTypeChange()">
+        <option value="安親">安親（週一至週五全接）</option>
         <option value="外生">外生（自訂接送天）</option>
       </select>
     </div>
 
+    <!-- 接送天（外生 & 自訂皆適用）-->
     <div class="fg" id="pickup-days-group" style="display:none">
-      <label class="fl">接送天（外生適用）</label>
+      <label class="fl">接送天</label>
       <div class="day-row">
-        <label class="day-chk"><input type="checkbox" name="pd" value="1"><label for="">一</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="2"><label for="">二</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="3"><label for="">三</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="4"><label for="">四</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="5"><label for="">五</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="1"><label>一</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="2"><label>二</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="3"><label>三</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="4"><label>四</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="5"><label>五</label></label>
+      </div>
+    </div>
+
+    <!-- 每日自訂接送時間（全部類型皆可設定）-->
+    <div class="fg">
+      <label class="fl">
+        自訂接送時間
+        <span style="font-weight:400;color:var(--gray-2);margin-left:4px">（覆蓋預設時間；留空則用系統預設）</span>
+      </label>
+      <div class="custom-time-grid" id="custom-time-grid">
+        <!-- 動態產生週一~週五 -->
       </div>
     </div>
 
@@ -451,18 +586,58 @@ table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
 <!-- ═══════════════ SCRIPT ═══════════════ -->
 <script>
 // ──────────────────────────────────────────────────────────
-// ★ 設定：填入你的 GAS 部署網址
+// ★ 設定：GAS 部署網址
 // ──────────────────────────────────────────────────────────
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsdHanASq5Gjfhf0xMtwpfF_t4J9dECzAsK69CnWJDv0WlICW2KONuPisr_nedDp9s/exec';
 
 // ── 全域狀態 ──────────────────────────────────────────────
 let allStudents   = [];
-let todayRecords  = {};   // { studentId: {status, notes} }
+let rollRecords   = {};   // { studentId: {status, notes} } for current roll date
 let monthRecords  = {};   // { 'YYYY-MM-DD': {studentId: {status,notes}} }
 let monthHolidays = {};   // { 'YYYY-MM-DD': '假日名稱' }
-let notesTarget   = null; // 目前編輯備註的 studentId
-let currentTableMonth = '';  // 目前產生的月份 'YYYY-MM'
+let notesTarget   = null;
+let currentTableMonth = '';
+let tmpStudents   = [];   // 臨時加接
+
+// ── 日期管理 ──────────────────────────────────────────────
 const TODAY = formatDate(new Date());
+let currentRollDate = TODAY;
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function dateFromStr(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function changeRollDate(delta) {
+  const d = dateFromStr(currentRollDate);
+  d.setDate(d.getDate() + delta);
+  currentRollDate = formatDate(d);
+  loadRollForDate(currentRollDate);
+}
+
+function jumpToToday() {
+  currentRollDate = TODAY;
+  loadRollForDate(currentRollDate);
+}
+
+function updateDateNav() {
+  const d = dateFromStr(currentRollDate);
+  const dayNames = ['日','一','二','三','四','五','六'];
+  const tw = d.toLocaleDateString('zh-TW',{month:'long',day:'numeric'});
+  const isToday = currentRollDate === TODAY;
+
+  document.getElementById('date-nav-label').innerHTML =
+    `${tw}（${dayNames[d.getDay()]}）` +
+    (isToday ? '<span class="today-tag">今日</span>' : '');
+  document.getElementById('date-nav-sub').textContent =
+    isToday ? '今日接車' : currentRollDate;
+  document.getElementById('jump-today-btn').style.display = isToday ? 'none' : 'flex';
+}
 
 // ── GAS 通訊 ─────────────────────────────────────────────
 function callGAS(params) {
@@ -479,47 +654,55 @@ function callGAS(params) {
   });
 }
 
-// GAS 不支援跨域 POST，改以 JSONP GET 傳送所有寫入（payload 為 JSON 字串）
 async function postGAS(payload) {
-  return callGAS({
-    action:  payload.action,
-    payload: JSON.stringify(payload)
-  });
+  return callGAS({ action: payload.action, payload: JSON.stringify(payload) });
 }
 
 // ── 時間規則 ──────────────────────────────────────────────
-// dayOfWeek: 1=週一 … 5=週五
-function getPickupTime(grade, dow) {
-  if (grade <= 2) return dow === 2 ? 'pm' : 'am';          // 低：週二下午
-  if (grade <= 4) return (dow===3||dow===5) ? 'am' : 'pm'; // 中：週三五午間
-  return dow === 3 ? 'am' : 'pm';                           // 高：週三午間
+function getPickupTime(student, dow) {
+  // 優先使用自訂時間
+  const customTimes = student.customTimes || {};
+  if (customTimes[dow]) return customTimes[dow]; // 'am' | 'pm' | 'none'
+  // 預設規則
+  if (student.grade <= 2) return dow === 2 ? 'pm' : 'am';
+  if (student.grade <= 4) return (dow===3||dow===5) ? 'am' : 'pm';
+  return dow === 3 ? 'am' : 'pm';
 }
-function pickupTimeLabel(grade, dow) {
-  return getPickupTime(grade, dow) === 'am' ? '12:00' : '16:00';
+function pickupTimeLabel(timeCode) {
+  return timeCode === 'am' ? '12:00' : '16:00';
+}
+function pickupTimeLabelForStudent(student, dow) {
+  const t = getPickupTime(student, dow);
+  return t === 'am' ? '12:00' : (t === 'pm' ? '16:00' : '不接');
 }
 
 function shouldPickup(student, dow) {
+  if (dow === 0) return false;
+  const customTimes = student.customTimes || {};
+  if (customTimes[dow] === 'none') return false;
   if (student.type === '安親') return true;
   return (student.pickupDays || []).includes(dow);
 }
 
-// ── 月份工具 ──────────────────────────────────────────────
-function formatDate(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+// ── 週次計算 ──────────────────────────────────────────────
+function getWeekNumber(dateStr) {
+  const d = dateFromStr(dateStr);
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  return Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
 }
-function pad(n){ return String(n).padStart(2,'0'); }
 
 function getMonthWeekdays(year, month) {
   const days = [], d = new Date(year, month-1, 1);
   const names = ['','一','二','三','四','五'];
   while (d.getMonth() === month-1) {
-    const dow = d.getDay(); // 0=Sun
+    const dow = d.getDay();
     if (dow >= 1 && dow <= 5) {
       days.push({
         date: formatDate(new Date(d)),
         dow,
         label: `${month}/${d.getDate()}`,
-        dayName: names[dow]
+        dayName: names[dow],
+        weekNum: getWeekNumber(formatDate(new Date(d)))
       });
     }
     d.setDate(d.getDate()+1);
@@ -531,62 +714,84 @@ function gradeGroup(g){ return g<=2?'low':g<=4?'mid':'high'; }
 function gradeGroupName(g){ return g<=2?'低年級（1-2年級）':g<=4?'中年級（3-4年級）':'高年級（5-6年級）'; }
 function gradeGroupLabel(g){ return g<=2?'低':g<=4?'中':'高'; }
 
+// ── 學校清單建立 ──────────────────────────────────────────
+function buildSchoolOptions() {
+  const schools = [...new Set(allStudents.map(s=>s.school).filter(Boolean))].sort();
+  const ids = ['roll-school-filter','table-school-filter','mgmt-school-filter'];
+  ids.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">🏫 所有學校</option>' +
+      schools.map(s=>`<option value="${escapeHtml(s)}"${s===cur?'selected':''}>${escapeHtml(s)}</option>`).join('');
+  });
+}
+
 // ── Tab 切換 ──────────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
-  if (name==='roll') refreshRollCall();
+  if (name==='roll') { updateDateNav(); renderRollList(); }
   if (name==='mgmt') renderStudentList();
 }
 
 // ═══════════════ 今日點名 ═══════════════════════════════
 
-async function refreshRollCall() {
-  setRollHeader();
+async function loadRollForDate(date) {
+  updateDateNav();
+  setRollHeader(date);
   const el = document.getElementById('roll-list');
   el.innerHTML = '<div class="loading">載入中…</div>';
   try {
-    const yearMonth = TODAY.slice(0, 7);
-    const [sr, rr, hr] = await Promise.all([
-      callGAS({ action:'getStudents' }),
-      callGAS({ action:'getDayRecords', date: TODAY }),
+    const yearMonth = date.slice(0,7);
+    const [rr, hr] = await Promise.all([
+      callGAS({ action:'getDayRecords', date }),
       callGAS({ action:'getHolidays', yearMonth })
     ]);
-    allStudents  = sr.students || [];
-    todayRecords = rr.records  || {};
-    // 建立今日假日查詢
-    const todayHolidays = {};
-    (hr.holidays || []).forEach(h => { todayHolidays[h.date] = h.note || '假日'; });
-    // 附加到 window 供 renderRollList 使用
-    window._todayHolidayName = todayHolidays[TODAY] || null;
+    rollRecords = rr.records || {};
+    const todayHols = {};
+    (hr.holidays||[]).forEach(h => { todayHols[h.date] = h.note||'假日'; });
+    window._rollHolidayName = todayHols[date] || null;
     renderRollList();
   } catch(e) {
     el.innerHTML = `<div class="card" style="color:var(--danger)">⚠️ 載入失敗：${e.message}</div>`;
   }
 }
 
-function setRollHeader() {
-  const d = new Date();
+async function refreshRollCall() {
+  if (!allStudents.length) {
+    document.getElementById('roll-list').innerHTML = '<div class="loading">載入中…</div>';
+    try {
+      const sr = await callGAS({ action:'getStudents' });
+      allStudents = sr.students || [];
+      buildSchoolOptions();
+    } catch(e) {}
+  }
+  await loadRollForDate(currentRollDate);
+}
+
+function setRollHeader(date) {
+  const d = dateFromStr(date);
   const dayNames = ['日','一','二','三','四','五','六'];
   const tw = d.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'});
   document.getElementById('roll-date-label').textContent = `${tw}（${dayNames[d.getDay()]}）`;
 
-  const today_dow = new Date().getDay(); // 0-6
-  const dow = today_dow === 0 ? 7 : today_dow; // map Sun→7 (不接), Mon=1…Fri=5
+  const dow = d.getDay(); // 0=Sun
+  const mapDow = dow === 0 || dow === 6 ? 0 : dow;
   let bannerParts = [];
-  if (dow >= 1 && dow <= 5) {
-    bannerParts = [
-      `低年級：${pickupTimeLabel(1, dow)}接`,
-      `中年級：${pickupTimeLabel(3, dow)}接`,
-      `高年級：${pickupTimeLabel(5, dow)}接`
-    ];
+  if (mapDow >= 1 && mapDow <= 5) {
+    // 找各年級代表時間
+    const low  = pickupTimeLabelForStudent({grade:1, customTimes:{}}, mapDow);
+    const mid  = pickupTimeLabelForStudent({grade:3, customTimes:{}}, mapDow);
+    const high = pickupTimeLabelForStudent({grade:5, customTimes:{}}, mapDow);
+    bannerParts = [`低年級：${low}接`, `中年級：${mid}接`, `高年級：${high}接`];
   } else {
-    bannerParts = ['今日為假日，無需接送'];
+    bannerParts = ['今日為週末，無需接送'];
   }
   document.getElementById('time-banner').innerHTML =
-    `<b>今日接車時間</b><br>${bannerParts.join('　')}`;
+    `<b>接車時間</b>　${bannerParts.join('　')}`;
 }
 
 function renderRollList() {
@@ -596,100 +801,138 @@ function renderRollList() {
     return;
   }
 
-  const today_dow = new Date().getDay();
-  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
+  const d = dateFromStr(currentRollDate);
+  const dow = d.getDay();
+  const mapDow = (dow === 0 || dow === 6) ? 0 : dow;
 
-  // 國定假日提示
-  if (window._todayHolidayName) {
-    document.getElementById('roll-list').innerHTML =
-      `<div class="card" style="text-align:center;padding:32px 16px">
-        <div style="font-size:48px;margin-bottom:12px">🎌</div>
-        <div style="font-size:18px;font-weight:700;margin-bottom:8px">今日為國定假日</div>
-        <div style="color:var(--gray);font-size:15px">${escapeHtml(window._todayHolidayName)}</div>
-        <div style="margin-top:12px;font-size:13px;color:var(--gray-2)">今日無需接送學生</div>
-      </div>`;
+  if (window._rollHolidayName) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px 16px">
+      <div style="font-size:52px;margin-bottom:12px">🎌</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">今日為國定假日</div>
+      <div style="color:var(--gray);font-size:15px">${escapeHtml(window._rollHolidayName)}</div>
+      <div style="margin-top:12px;font-size:13px;color:var(--gray-2)">今日無需接送學生</div>
+    </div>`;
     return;
   }
 
-  // 篩選今日有接送的學生
-  const todayStudents = allStudents.filter(s => dow > 0 && shouldPickup(s, dow));
+  const schoolFilter = document.getElementById('roll-school-filter')?.value || '';
+  const timeFilter   = document.getElementById('roll-time-filter')?.value || '';
+
+  // 過濾今日有接送的學生
+  let todayStudents = allStudents.filter(s => mapDow > 0 && shouldPickup(s, mapDow));
+  if (schoolFilter) todayStudents = todayStudents.filter(s => s.school === schoolFilter);
+  if (timeFilter)   todayStudents = todayStudents.filter(s => getPickupTime(s, mapDow) === timeFilter);
+
+  // 加上臨時加接（只在今日顯示）
+  const tmpAll = currentRollDate === TODAY ? tmpStudents : [];
 
   let html = '';
   let lastGroup = '';
-  todayStudents.forEach((s, idx) => {
+  let idx = 0;
+
+  todayStudents.forEach(s => {
     const gg = gradeGroup(s.grade);
     if (gg !== lastGroup) {
       lastGroup = gg;
+      const pt = getPickupTime(s, mapDow);
       html += `<div class="grade-header ${gg}">${gradeGroupName(s.grade)}
-               ・${pickupTimeLabel(s.grade, dow)} 接</div>`;
+               ・${pickupTimeLabel(pt)} 接</div>`;
     }
-    const rec = todayRecords[s.id] || {};
-    const status = rec.status || '';
-    const notes  = rec.notes  || '';
-    const cardCls = status==='✓'?'chk':status==='✗'?'abs':'';
-    const chkCls  = status==='✓'?'on-chk':'';
-    const absCls  = status==='✗'?'on-abs':'';
-    const typeBadge = s.type==='安親'?'badge-aq':'badge-ws';
-
-    html += `
-    <div class="s-card ${cardCls}" id="card-${s.id}">
-      <div class="s-body">
-        <div class="s-seq">${idx+1}</div>
-        <div class="s-info">
-          <div class="s-name">${s.name}${s.engName?` <span style="font-size:12px;font-weight:400;color:var(--gray)">${s.engName}</span>`:''}</div>
-          <div class="s-meta">
-            <span>${s.class}班</span>
-            <span class="badge ${typeBadge}">${s.type}</span>
-            <span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}年</span>
-          </div>
-        </div>
-        <div class="s-actions">
-          <button class="act-btn ${chkCls}" title="接到" onclick="toggleStatus('${s.id}','✓')">✓</button>
-          <button class="act-btn ${absCls}" title="請假" onclick="toggleStatus('${s.id}','✗')">✕</button>
-          <button class="act-btn" title="備註" onclick="openNotesModal('${s.id}','${escapeHtml(s.name)}')">💬</button>
-          <button class="act-btn" title="電話" onclick="openPhoneModal(${JSON.stringify(JSON.stringify(s))})">📞</button>
-        </div>
-      </div>
-      ${notes ? `<div class="s-note-bar">📝 ${escapeHtml(notes)}</div>` : ''}
-    </div>`;
+    idx++;
+    html += renderStudentCard(s, idx, mapDow, false);
   });
 
-  if (!todayStudents.length) {
-    html = '<div class="empty"><div class="e-ico">🎉</div><p>今日無接送學生</p></div>';
+  if (tmpAll.length) {
+    html += `<div class="grade-header" style="background:#B45309">⚡ 臨時加接</div>`;
+    tmpAll.forEach((s,i) => {
+      html += renderStudentCard(s, idx+i+1, mapDow, true);
+    });
   }
+
+  if (!todayStudents.length && !tmpAll.length) {
+    html = '<div class="empty"><div class="e-ico">🎉</div><p>今日' +
+      (mapDow===0?'為週末，':'') + '無接送學生</p></div>';
+  }
+
   el.innerHTML = html;
 }
 
+function renderStudentCard(s, idx, mapDow, isTmp) {
+  const rec = rollRecords[s.id] || {};
+  const status = rec.status || '';
+  const notes  = rec.notes  || '';
+  const cardCls = (isTmp ? 'tmp ' : '') + (status==='✓'?'chk':status==='✗'?'abs':'');
+  const chkCls  = status==='✓'?'on-chk':'';
+  const absCls  = status==='✗'?'on-abs':'';
+  const typeBadge = isTmp ? 'badge-tmp' : (s.type==='安親'?'badge-aq':'badge-ws');
+  const typeLabel = isTmp ? '臨時' : s.type;
+  const gg = gradeGroup(s.grade||1);
+  const seqCls = isTmp ? 'tmp-seq' : '';
+
+  // 確認電話資料用於data屬性
+  const sData = JSON.stringify({id:s.id,name:s.name,class:s.class||'',phoneM:s.phoneM||'',phoneD:s.phoneD||''});
+
+  return `<div class="s-card ${cardCls}" id="card-${s.id}">
+    <div class="s-body">
+      <div class="s-seq ${seqCls}">${idx}</div>
+      <div class="s-info">
+        <div class="s-name">${escapeHtml(s.name)}${s.engName?` <span style="font-size:12px;font-weight:400;color:var(--gray)">${escapeHtml(s.engName)}</span>`:''}</div>
+        <div class="s-meta">
+          <span>${s.class||''}班</span>
+          <span class="badge ${typeBadge}">${typeLabel}</span>
+          ${!isTmp?`<span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}年</span>`:''}
+        </div>
+      </div>
+      <div class="s-actions">
+        <button class="act-btn ${chkCls}" title="接到" onclick="toggleStatus('${escapeHtml(s.id)}','✓')">✓</button>
+        <button class="act-btn ${absCls}" title="請假" onclick="toggleStatus('${escapeHtml(s.id)}','✗')">✗</button>
+        <button class="act-btn" title="備註" onclick="openNotesModal('${escapeHtml(s.id)}','${escapeHtml(s.name)}')">💬</button>
+        <button class="act-btn phone-btn" title="電話" onclick="openPhoneModalData(${escapeHtml2(sData)})">📞</button>
+      </div>
+    </div>
+    ${notes?`<div class="s-note-bar">📝 ${escapeHtml(notes)}</div>`:''}
+  </div>`;
+}
+
+function escapeHtml2(str) {
+  // for onclick attribute
+  return "'" + String(str||'').replace(/'/g,"\\'") + "'";
+}
+
 async function toggleStatus(sid, newStatus) {
-  const rec = todayRecords[sid] || {};
+  const rec = rollRecords[sid] || {};
   const curStatus = rec.status || '';
-  // 再次點擊同狀態 → 清除
   const status = curStatus === newStatus ? '' : newStatus;
-  todayRecords[sid] = { ...rec, status };
+  rollRecords[sid] = { ...rec, status };
   updateCardUI(sid, status);
-  await postGAS({ action:'saveRecord', record:{ date:TODAY, studentId:sid, status, notes: rec.notes||'' } });
+  await postGAS({ action:'saveRecord', record:{ date:currentRollDate, studentId:sid, status, notes: rec.notes||'' } });
 }
 
 function updateCardUI(sid, status) {
   const card = document.getElementById('card-'+sid);
   if (!card) return;
-  card.className = 's-card' + (status==='✓'?' chk':status==='✗'?' abs':'');
+  const isTmp = card.classList.contains('tmp');
+  card.className = 's-card' + (isTmp?' tmp':'') + (status==='✓'?' chk':status==='✗'?' abs':'');
   const btns = card.querySelectorAll('.act-btn');
   btns[0].className = 'act-btn'+(status==='✓'?' on-chk':'');
   btns[1].className = 'act-btn'+(status==='✗'?' on-abs':'');
 }
 
 async function quickAllCheck() {
-  const today_dow = new Date().getDay();
-  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
-  const toUpdate = allStudents.filter(s => dow>0 && shouldPickup(s,dow) && (todayRecords[s.id]?.status||'')==='');
+  const d = dateFromStr(currentRollDate);
+  const dow = d.getDay();
+  const mapDow = (dow===0||dow===6)?0:dow;
+  const schoolFilter = document.getElementById('roll-school-filter')?.value||'';
+  let students = allStudents.filter(s => mapDow>0 && shouldPickup(s,mapDow) && (rollRecords[s.id]?.status||'')==='');
+  if (schoolFilter) students = students.filter(s=>s.school===schoolFilter);
+  const toUpdate = [...students, ...tmpStudents.filter(s=>(rollRecords[s.id]?.status||'')==='')];
   for (const s of toUpdate) {
-    todayRecords[s.id] = { ...(todayRecords[s.id]||{}), status:'✓' };
+    rollRecords[s.id] = { ...(rollRecords[s.id]||{}), status:'✓' };
     updateCardUI(s.id, '✓');
   }
-  const records = toUpdate.map(s => ({ studentId:s.id, status:'✓', notes:todayRecords[s.id]?.notes||'' }));
+  const records = toUpdate.map(s=>({ studentId:s.id, status:'✓', notes:rollRecords[s.id]?.notes||'' }));
   if (records.length) {
-    await postGAS({ action:'saveDayRecords', date:TODAY, records });
+    await postGAS({ action:'saveDayRecords', date:currentRollDate, records });
     showToast(`✅ 已標記 ${records.length} 位接到`);
   } else {
     showToast('已全部標記過了');
@@ -698,31 +941,48 @@ async function quickAllCheck() {
 
 async function clearAllRecords() {
   if (!confirm('確定清除今日所有點名記錄？')) return;
-  const today_dow = new Date().getDay();
-  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
-  const students = allStudents.filter(s => dow>0 && shouldPickup(s,dow));
-  students.forEach(s => { todayRecords[s.id] = { status:'', notes:'' }; updateCardUI(s.id,''); });
-  const records = students.map(s => ({ studentId:s.id, status:'', notes:'' }));
-  if (records.length) await postGAS({ action:'saveDayRecords', date:TODAY, records });
-  showToast('已清除今日記錄');
+  const d = dateFromStr(currentRollDate);
+  const dow = d.getDay();
+  const mapDow = (dow===0||dow===6)?0:dow;
+  const students = [...allStudents.filter(s=>mapDow>0&&shouldPickup(s,mapDow)), ...tmpStudents];
+  students.forEach(s => { rollRecords[s.id] = { status:'', notes:'' }; updateCardUI(s.id,''); });
+  const records = students.map(s=>({ studentId:s.id, status:'', notes:'' }));
+  if (records.length) await postGAS({ action:'saveDayRecords', date:currentRollDate, records });
+  showToast('已清除記錄');
+}
+
+// ── 臨時加接 ──────────────────────────────────────────────
+function addTmpStudent() {
+  const nameEl = document.getElementById('tmp-name');
+  const name = nameEl.value.trim();
+  if (!name) { showToast('請輸入姓名'); return; }
+  const tmpId = 'TMP_' + Date.now();
+  tmpStudents.push({ id: tmpId, name, engName:'', class:'臨時', grade:1, type:'臨時',
+                     phoneM:'', phoneD:'', customTimes:{}, pickupDays:[1,2,3,4,5] });
+  rollRecords[tmpId] = { status:'', notes:'' };
+  nameEl.value = '';
+  renderRollList();
+  showToast(`⚡ 已加入：${name}`);
 }
 
 // ── 電話彈窗 ──────────────────────────────────────────────
-function openPhoneModal(sJson) {
-  const s = JSON.parse(sJson);
-  document.getElementById('phone-modal-name').textContent = `${s.name}（${s.class}班）`;
+function openPhoneModalData(sStr) {
+  let s;
+  try { s = JSON.parse(sStr); } catch(e) { showToast('電話資料錯誤'); return; }
+  document.getElementById('phone-modal-name').textContent =
+    `${s.name}${s.class && s.class!=='臨時'?'（'+s.class+'班）':''}`;
   let html = '';
   if (s.phoneM) html += phoneRow('媽 M', s.phoneM);
   if (s.phoneD) html += phoneRow('爸 D', s.phoneD);
-  if (!s.phoneM && !s.phoneD) html = '<p style="color:var(--gray);padding:12px 0">無電話資料</p>';
+  if (!s.phoneM && !s.phoneD) html = '<p style="color:var(--gray);padding:16px 0">無電話資料</p>';
   document.getElementById('phone-modal-body').innerHTML = html;
   document.getElementById('phone-overlay').classList.remove('hidden');
 }
 function phoneRow(lbl, num) {
   return `<div class="phone-item">
     <span class="phone-lbl">${lbl}</span>
-    <span class="phone-num">${num}</span>
-    <a href="tel:${num}"><button class="btn-call">📞 撥打</button></a>
+    <span class="phone-num">${escapeHtml(num)}</span>
+    <a href="tel:${encodeURIComponent(num)}"><button class="btn-call">📞 撥打</button></a>
   </div>`;
 }
 function closePhoneModal() { document.getElementById('phone-overlay').classList.add('hidden'); }
@@ -731,18 +991,18 @@ function closePhoneModal() { document.getElementById('phone-overlay').classList.
 function openNotesModal(sid, name) {
   notesTarget = sid;
   document.getElementById('notes-modal-name').textContent = `備註：${name}`;
-  document.getElementById('notes-ta').value = todayRecords[sid]?.notes || '';
+  document.getElementById('notes-ta').value = rollRecords[sid]?.notes || '';
   document.getElementById('notes-overlay').classList.remove('hidden');
   setTimeout(()=>document.getElementById('notes-ta').focus(),100);
 }
 async function saveNotes() {
   const notes = document.getElementById('notes-ta').value.trim();
-  const rec = todayRecords[notesTarget] || {};
-  todayRecords[notesTarget] = { ...rec, notes };
-  await postGAS({ action:'saveRecord', record:{ date:TODAY, studentId:notesTarget,
+  const rec = rollRecords[notesTarget] || {};
+  rollRecords[notesTarget] = { ...rec, notes };
+  await postGAS({ action:'saveRecord', record:{ date:currentRollDate, studentId:notesTarget,
     status: rec.status||'', notes } });
   closeNotesModal();
-  renderRollList(); // re-render to show note bar
+  renderRollList();
   showToast('備註已儲存');
 }
 function closeNotesModal() { document.getElementById('notes-overlay').classList.add('hidden'); notesTarget=null; }
@@ -765,43 +1025,72 @@ async function generateTable() {
     ]);
     allStudents  = sr.students  || [];
     monthRecords = mr.records   || {};
-    // 建立假日查詢表 { 'YYYY-MM-DD': '名稱' }
     monthHolidays = {};
-    (hr.holidays || []).forEach(h => { monthHolidays[h.date] = h.note || '假日'; });
+    (hr.holidays||[]).forEach(h => { monthHolidays[h.date] = h.note||'假日'; });
+    buildSchoolOptions();
 
     document.getElementById('print-title').textContent =
-      `HESS 松山安親  ${year}年${month}月  接車點名表`;
-    el.innerHTML = buildTable(year, month);
+      `安親接車　${year}年${month}月　接車點名表`;
+    renderTable(year, month);
     renderHolidayChips(val);
   } catch(e) {
     el.innerHTML = `<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
   }
 }
 
+function regenerateTable() {
+  if (!currentTableMonth) return;
+  const [y, m] = currentTableMonth.split('-').map(Number);
+  renderTable(y, m);
+}
+
+function renderTable(year, month) {
+  document.getElementById('table-area').innerHTML = buildTable(year, month);
+}
+
 function buildTable(year, month) {
+  const schoolFilter = document.getElementById('table-school-filter')?.value||'';
   const days = getMonthWeekdays(year, month);
   if (!days.length) return '<div class="card">本月無工作日</div>';
+
+  // 計算每欄所屬週次奇偶（用於交替著色）
+  let weekParity = {}; // date => 'a' | 'b'
+  let lastWk = -1, parity = 'a';
+  days.forEach(d => {
+    if (d.weekNum !== lastWk) {
+      if (lastWk !== -1) parity = parity==='a'?'b':'a';
+      lastWk = d.weekNum;
+    }
+    weekParity[d.date] = parity;
+  });
 
   // ── 表頭 ──
   let head = `<thead><tr>
     <th class="no-col">No</th>
     <th class="name-col">姓名</th>
-    <th class="eng-col">英文名</th>
+    <th class="eng-col">英文</th>
     <th class="cls-col">班</th>
     <th class="tel-col">電話</th>`;
+
   days.forEach(d => {
     const isH = !!monthHolidays[d.date];
-    head += isH
-      ? `<th class="th-holiday" title="${escapeHtml(monthHolidays[d.date])}">${d.label}<br><span style="font-size:8px">假</span></th>`
-      : `<th class="th-date">${d.label}</th>`;
+    const wkCls = 'wk-hd-' + weekParity[d.date];
+    if (isH) {
+      head += `<th class="th-holiday" title="${escapeHtml(monthHolidays[d.date])}">${d.label}<br><span style="font-size:8px">假</span></th>`;
+    } else {
+      head += `<th class="${wkCls}">${d.label}</th>`;
+    }
   });
-  head += `</tr><tr>
-    <th></th><th></th><th></th><th></th><th></th>`;
+
+  head += `</tr><tr><th></th><th></th><th></th><th></th><th></th>`;
   days.forEach(d => {
     const isH = !!monthHolidays[d.date];
-    head += isH
-      ? `<th class="th-holiday-day">${escapeHtml(monthHolidays[d.date]).slice(0,4)}</th>`
-      : `<th class="hd2">${d.dayName}</th>`;
+    const wkCls = 'wk-hd-' + weekParity[d.date];
+    if (isH) {
+      head += `<th class="th-holiday-day">${escapeHtml(monthHolidays[d.date]).slice(0,4)}</th>`;
+    } else {
+      head += `<th class="${wkCls}" style="font-size:9px;font-weight:400">${d.dayName}</th>`;
+    }
   });
   head += `</tr></thead>`;
 
@@ -809,13 +1098,15 @@ function buildTable(year, month) {
   let body = '<tbody>';
   let lastGroup = '', seq = 0;
 
-  allStudents.forEach(s => {
+  let filteredStudents = allStudents;
+  if (schoolFilter) filteredStudents = filteredStudents.filter(s=>s.school===schoolFilter);
+
+  filteredStudents.forEach(s => {
     const gg = gradeGroup(s.grade);
     if (gg !== lastGroup) {
       lastGroup = gg;
       const colspan = 5 + days.length;
-      const grpName = gradeGroupName(s.grade);
-      body += `<tr class="grade-row"><td colspan="${colspan}">${grpName}</td></tr>`;
+      body += `<tr class="grade-row"><td colspan="${colspan}">${gradeGroupName(s.grade)}</td></tr>`;
     }
     seq++;
     const tel = [s.phoneM, s.phoneD].filter(Boolean).join(' / ');
@@ -824,30 +1115,31 @@ function buildTable(year, month) {
       <td class="name-col">${escapeHtml(s.name)}</td>
       <td class="eng-col">${escapeHtml(s.engName||'')}</td>
       <td class="cls-col">${s.class}</td>
-      <td class="tel-col" style="font-size:9px">${escapeHtml(tel)}</td>`;
+      <td class="tel-col">${escapeHtml(tel)}</td>`;
 
     days.forEach(d => {
-      // 假日：整欄鎖定，不接送
+      const wp = weekParity[d.date];
+      const wkBorderCls = 'wk-' + wp;
+
       if (monthHolidays[d.date]) {
-        body += `<td class="cell-holiday" title="${escapeHtml(monthHolidays[d.date])}">假</td>`;
+        body += `<td class="cell-holiday ${wkBorderCls}" title="${escapeHtml(monthHolidays[d.date])}">假</td>`;
         return;
       }
       const canPickup = shouldPickup(s, d.dow);
       if (!canPickup) {
-        body += `<td class="cell-no">－</td>`;
+        body += `<td class="cell-no ${wkBorderCls}">－</td>`;
         return;
       }
-      const pt = getPickupTime(s.grade, d.dow);
-      const cellCls = pt === 'am' ? 'cell-am' : 'cell-pm';
-      const rec = (monthRecords[d.date] || {})[s.id] || {};
+      const pt = getPickupTime(s, d.dow);
+      const cellCls = pt==='am' ? 'cell-am' : 'cell-pm';
+      const rec = (monthRecords[d.date]||{})[s.id] || {};
       const st = rec.status || '';
       let inner = '';
-      if (st === '✓') inner = `<span class="cell-chk">✓</span>`;
-      else if (st === '✗') inner = `<span class="cell-abs">✕</span>`;
-      body += `<td class="${cellCls}" onclick="toggleTableCell('${d.date}','${s.id}','${pt}')"
+      if (st==='✓') inner = `<span class="cell-chk">✓</span>`;
+      else if (st==='✗') inner = `<span class="cell-abs">✕</span>`;
+      body += `<td class="${cellCls} ${wkBorderCls}" onclick="toggleTableCell('${d.date}','${s.id}')"
                   style="cursor:pointer">${inner}</td>`;
     });
-
     body += `</tr>`;
   });
   body += '</tbody>';
@@ -855,18 +1147,14 @@ function buildTable(year, month) {
   return `<table class="pt">${head}${body}</table>`;
 }
 
-async function toggleTableCell(date, sid, pt) {
+async function toggleTableCell(date, sid) {
   if (!monthRecords[date]) monthRecords[date] = {};
   const rec = monthRecords[date][sid] || {};
   const cur = rec.status || '';
   const next = cur===''?'✓':cur==='✓'?'✗':'';
   monthRecords[date][sid] = { ...rec, status: next };
-
-  // 更新 UI
   const [y,m] = date.split('-').map(Number);
-  const val = `${y}-${pad(m)}`;
-  document.getElementById('table-area').innerHTML = buildTable(y, m);
-
+  renderTable(y, m);
   await postGAS({ action:'saveRecord', record:{ date, studentId:sid, status:next, notes: rec.notes||'' } });
 }
 
@@ -876,6 +1164,7 @@ async function loadStudents() {
   try {
     const r = await callGAS({ action:'getStudents' });
     allStudents = r.students || [];
+    buildSchoolOptions();
     renderStudentList();
   } catch(e) {
     document.getElementById('student-list-area').innerHTML =
@@ -885,17 +1174,19 @@ async function loadStudents() {
 
 function renderStudentList() {
   const query = (document.getElementById('search-input')?.value||'').trim().toLowerCase();
+  const schoolFilter = document.getElementById('mgmt-school-filter')?.value||'';
   document.getElementById('student-count-label').textContent = `共 ${allStudents.length} 位學生`;
 
-  const filtered = query
-    ? allStudents.filter(s => s.name.includes(query)||s.class.toLowerCase().includes(query)||
-                               s.engName.toLowerCase().includes(query))
-    : allStudents;
+  let filtered = allStudents;
+  if (schoolFilter) filtered = filtered.filter(s=>s.school===schoolFilter);
+  if (query) filtered = filtered.filter(s=>
+    s.name.includes(query)||s.class.toLowerCase().includes(query)||
+    (s.engName||'').toLowerCase().includes(query));
 
   if (!filtered.length) {
     document.getElementById('student-list-area').innerHTML =
-      query ? '<div class="empty"><p>無符合結果</p></div>'
-            : '<div class="empty"><div class="e-ico">🎒</div><p>尚無學生<br>點擊右下角 ＋ 新增</p></div>';
+      query||schoolFilter ? '<div class="empty"><p>無符合結果</p></div>'
+                          : '<div class="empty"><div class="e-ico">🎒</div><p>尚無學生<br>點擊右下角 ＋ 新增</p></div>';
     return;
   }
 
@@ -908,17 +1199,18 @@ function renderStudentList() {
       html += `<div class="grade-sep ${gg}">${gradeGroupName(s.grade)}</div>`;
     }
     const tel = [s.phoneM, s.phoneD].filter(Boolean).join('  ');
-    const pickLabel = s.type==='外生' ? `接送：週${(s.pickupDays||[]).map(d=>['','一','二','三','四','五'][d]).join('')}` : '';
     const typeBadge = s.type==='安親'?'badge-aq':'badge-ws';
+    const pickLabel = s.type==='外生' ? `週${(s.pickupDays||[]).map(d=>['','一','二','三','四','五'][d]).join('')}` : '';
     html += `<div class="sl-item">
       <div class="sl-info">
-        <div class="sl-name">${escapeHtml(s.name)} <span style="font-size:12px;font-weight:400;color:var(--gray)">${escapeHtml(s.engName||'')}</span>
+        <div class="sl-name">${escapeHtml(s.name)}
+          <span style="font-size:12px;font-weight:400;color:var(--gray)">${escapeHtml(s.engName||'')}</span>
           <span class="badge ${typeBadge}" style="margin-left:4px">${s.type}</span>
         </div>
         <div class="sl-meta">${s.grade}年${s.class}班　${escapeHtml(tel)}${pickLabel?'　'+pickLabel:''}</div>
       </div>
       <div class="sl-actions">
-        <button class="btn-icon" onclick='openStudentForm(${JSON.stringify(JSON.stringify(s))})'>✏️</button>
+        <button class="btn-icon" style="font-size:20px" onclick='openStudentForm(${escapeHtml2(JSON.stringify(s))})'>✏️</button>
       </div>
     </div>`;
   });
@@ -928,33 +1220,64 @@ function renderStudentList() {
 
 function filterStudents() { renderStudentList(); }
 
+// ── 自訂接送時間格（表單用）──────────────────────────────
+function buildCustomTimeGrid(customTimes) {
+  const days = ['一','二','三','四','五'];
+  const ct = customTimes || {};
+  return days.map((dn, i) => {
+    const dow = i + 1;
+    const val = ct[dow] || '';
+    return `<div class="custom-time-item">
+      <div class="custom-time-label">週${dn}</div>
+      <select id="ct-${dow}" style="width:100%;padding:6px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;min-height:38px">
+        <option value="" ${val===''?'selected':''}>系統預設</option>
+        <option value="am" ${val==='am'?'selected':''}>12:00 午間接</option>
+        <option value="pm" ${val==='pm'?'selected':''}>16:00 下午接</option>
+        <option value="none" ${val==='none'?'selected':''}>不接</option>
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function getCustomTimesFromForm() {
+  const ct = {};
+  for (let d=1; d<=5; d++) {
+    const val = document.getElementById('ct-'+d)?.value || '';
+    if (val) ct[d] = val;
+  }
+  return ct;
+}
+
 // ── 學生表單 ──────────────────────────────────────────────
 function openStudentForm(sJson) {
-  const s = sJson ? JSON.parse(sJson) : null;
+  const s = sJson ? (typeof sJson==='string'?JSON.parse(sJson):sJson) : null;
   document.getElementById('form-title').textContent = s ? '編輯學生' : '新增學生';
-  document.getElementById('f-id').value    = s?.id    || '';
-  document.getElementById('f-name').value  = s?.name  || '';
-  document.getElementById('f-eng').value   = s?.engName|| '';
-  document.getElementById('f-school').value= s?.school || '';
-  document.getElementById('f-grade').value = s?.grade  || '1';
-  document.getElementById('f-class').value = s?.class  || '';
-  document.getElementById('f-type').value  = s?.type   || '安親';
-  document.getElementById('f-phoneM').value= s?.phoneM || '';
-  document.getElementById('f-phoneD').value= s?.phoneD || '';
-  document.getElementById('f-notes').value = s?.notes  || '';
+  document.getElementById('f-id').value     = s?.id    || '';
+  document.getElementById('f-name').value   = s?.name  || '';
+  document.getElementById('f-eng').value    = s?.engName|| '';
+  document.getElementById('f-school').value = s?.school || '';
+  document.getElementById('f-grade').value  = s?.grade  || '1';
+  document.getElementById('f-class').value  = s?.class  || '';
+  document.getElementById('f-type').value   = s?.type   || '安親';
+  document.getElementById('f-phoneM').value = s?.phoneM || '';
+  document.getElementById('f-phoneD').value = s?.phoneD || '';
+  document.getElementById('f-notes').value  = s?.notes  || '';
 
-  // 接送天 checkboxes
+  // 接送天
   const days = s?.pickupDays || [1,2,3,4,5];
   document.querySelectorAll('input[name="pd"]').forEach(cb => {
     cb.checked = days.includes(Number(cb.value));
   });
 
+  // 自訂接送時間格
+  document.getElementById('custom-time-grid').innerHTML = buildCustomTimeGrid(s?.customTimes || {});
+
   document.getElementById('form-del-btn').style.display = s ? 'inline-flex' : 'none';
-  togglePickupDays();
+  onTypeChange();
   document.getElementById('student-overlay').classList.remove('hidden');
 }
 
-function togglePickupDays() {
+function onTypeChange() {
   const isWai = document.getElementById('f-type').value === '外生';
   document.getElementById('pickup-days-group').style.display = isWai ? 'block' : 'none';
 }
@@ -968,6 +1291,7 @@ async function submitStudentForm() {
 
   const pickupDays = [...document.querySelectorAll('input[name="pd"]:checked')].map(c=>Number(c.value));
   const type = document.getElementById('f-type').value;
+  const customTimes = getCustomTimesFromForm();
 
   const student = {
     id:          document.getElementById('f-id').value || null,
@@ -980,6 +1304,7 @@ async function submitStudentForm() {
     phoneM:      document.getElementById('f-phoneM').value.trim(),
     phoneD:      document.getElementById('f-phoneD').value.trim(),
     pickupDays:  type==='外生' ? pickupDays : [1,2,3,4,5],
+    customTimes,
     notes:       document.getElementById('f-notes').value.trim()
   };
 
@@ -1016,7 +1341,6 @@ function toggleHolidayPanel() {
   const isHidden = panel.style.display === 'none';
   panel.style.display = isHidden ? 'block' : 'none';
   if (isHidden && currentTableMonth) {
-    // 預設日期選擇器為當月第一天
     const [y, m] = currentTableMonth.split('-');
     document.getElementById('h-date').value = `${y}-${m}-01`;
     document.getElementById('h-date').min = `${y}-${m}-01`;
@@ -1027,15 +1351,15 @@ function toggleHolidayPanel() {
 function renderHolidayChips(yearMonth) {
   const chips = document.getElementById('holiday-chips');
   const entries = Object.entries(monthHolidays)
-    .filter(([d]) => d.startsWith(yearMonth))
-    .sort(([a],[b]) => a.localeCompare(b));
+    .filter(([d])=>d.startsWith(yearMonth))
+    .sort(([a],[b])=>a.localeCompare(b));
 
   if (!entries.length) {
     chips.innerHTML = '<span style="font-size:12px;color:var(--gray-2)">本月無假日設定</span>';
     return;
   }
   chips.innerHTML = entries.map(([date, note]) => {
-    const label = date.slice(5) + ' ' + note; // MM-DD 名稱
+    const label = date.slice(5) + ' ' + note;
     return `<span class="h-chip">${escapeHtml(label)}
       <button onclick="removeHoliday('${date}')" title="移除">×</button>
     </span>`;
@@ -1047,16 +1371,14 @@ async function addHoliday() {
   const note = document.getElementById('h-note').value.trim() || '假日';
   if (!date) { showToast('請選擇日期'); return; }
   if (!currentTableMonth) { showToast('請先產生月份表'); return; }
-
   try {
     const r = await postGAS({ action:'saveHoliday', date, note });
     if (r.error) throw new Error(r.error);
     monthHolidays[date] = note;
     document.getElementById('h-note').value = '';
     renderHolidayChips(currentTableMonth);
-    // 重繪表格
     const [y, m] = currentTableMonth.split('-').map(Number);
-    document.getElementById('table-area').innerHTML = buildTable(y, m);
+    renderTable(y, m);
     showToast(`✅ 已新增假日：${date} ${note}`);
   } catch(e) {
     showToast('⚠️ 新增失敗：'+e.message);
@@ -1071,7 +1393,7 @@ async function removeHoliday(date) {
     delete monthHolidays[date];
     renderHolidayChips(currentTableMonth);
     const [y, m] = currentTableMonth.split('-').map(Number);
-    document.getElementById('table-area').innerHTML = buildTable(y, m);
+    renderTable(y, m);
     showToast('已移除假日');
   } catch(e) {
     showToast('⚠️ 移除失敗：'+e.message);
@@ -1082,7 +1404,7 @@ async function removeHoliday(date) {
 function escapeHtml(str) {
   return String(str||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function showToast(msg, duration=2500) {
@@ -1094,14 +1416,30 @@ function showToast(msg, duration=2500) {
 
 // ── 初始化 ────────────────────────────────────────────────
 (async function init() {
-  // 設定月份選擇器預設為本月
   const now = new Date();
   document.getElementById('month-picker').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
 
-  // 點名頁初始化
-  setRollHeader();
-  refreshRollCall();
+  // 初始化日期導航
+  updateDateNav();
+  setRollHeader(currentRollDate);
+
+  // 先載入學生資料，再載入點名
+  try {
+    const sr = await callGAS({ action:'getStudents' });
+    allStudents = sr.students || [];
+    buildSchoolOptions();
+  } catch(e) {}
+
+  await loadRollForDate(currentRollDate);
 })();
 </script>
+
+<!-- ══ GAS 後端備忘 ══
+  若學生資料有 customTimes 欄位，需更新 GAS Code.gs：
+  - getStudents 的 map：加上 customTimes: row[11] ? JSON.parse(row[11]) : {}
+  - saveStudent 的 rowData：加上 JSON.stringify(student.customTimes || {})
+  - Sheet 欄 A~K 目前已有，第12欄（L欄）新增 customTimes（JSON字串）
+  詳見 SKILL.md 部署流程
+-->
 </body>
 </html>
