@@ -80,38 +80,45 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 .grade-header.mid{background:var(--mid-c)}
 .grade-header.high{background:var(--high-c)}
 
-.s-card{background:#fff;border-radius:12px;margin:6px 12px;
-        box-shadow:0 1px 4px rgba(0,0,0,.08);
+/* ── 點名卡片：精簡版，一行顯示所有資訊 ── */
+.s-card{background:#fff;border-radius:10px;margin:4px 10px;
+        box-shadow:0 1px 3px rgba(0,0,0,.07);
         border-left:4px solid var(--border);overflow:hidden}
-.s-card.chk{border-left-color:var(--success)}
-.s-card.abs{border-left-color:var(--danger)}
+.s-card.chk{border-left-color:var(--success);background:#F0FDF4}
+.s-card.abs{border-left-color:var(--danger);background:#FFF5F5}
 .s-card.tmp-card{border-left-color:var(--warning);background:#FFFBEB}
 
-.s-body{display:flex;align-items:center;padding:12px;gap:10px}
-.s-seq{width:28px;height:28px;border-radius:50%;background:var(--gray-light);
+/* 主體：一行，垂直居中 */
+.s-body{display:flex;align-items:center;padding:9px 10px;gap:8px;min-height:56px}
+.s-seq{width:24px;height:24px;border-radius:50%;background:var(--gray-light);
        display:flex;align-items:center;justify-content:center;
-       font-size:11px;font-weight:700;color:var(--gray);flex-shrink:0}
+       font-size:10px;font-weight:700;color:var(--gray);flex-shrink:0}
 .s-seq.tmp-seq{background:#FEF3C7;color:#B45309}
-.s-info{flex:1;min-width:0}
-.s-name{font-size:16px;font-weight:700;line-height:1.2}
-.s-meta{font-size:11px;color:var(--gray);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+
+/* 資訊區：名字＋meta 橫排，不換行 */
+.s-info{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.s-name{font-size:15px;font-weight:700;line-height:1;white-space:nowrap;flex-shrink:0}
+.s-eng{font-size:11px;color:var(--gray);white-space:nowrap;flex-shrink:0}
+.s-meta{font-size:10px;color:var(--gray);display:flex;align-items:center;gap:4px;flex-wrap:nowrap;flex-shrink:1;overflow:hidden}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap}
 .badge-aq{background:#DBEAFE;color:#1D4ED8}
 .badge-ws{background:#FEF3C7;color:#B45309}
 .badge-tmp{background:#FEF3C7;color:#92400E}
+.badge-tmpswitch{background:#FDE68A;color:#B45309}
 .badge-low{background:#D1FAE5;color:#065F46}
 .badge-mid{background:#FEF9C3;color:#854D0E}
 .badge-high{background:#FEE2E2;color:#991B1B}
 
-.s-actions{display:flex;gap:6px;flex-shrink:0}
-.act-btn{width:46px;height:46px;border-radius:10px;border:1.5px solid var(--border);
-         background:#fff;font-size:18px;cursor:pointer;
+/* 操作按鈕：縮小 */
+.s-actions{display:flex;gap:5px;flex-shrink:0}
+.act-btn{width:42px;height:42px;border-radius:9px;border:1.5px solid var(--border);
+         background:#fff;font-size:16px;cursor:pointer;
          display:flex;align-items:center;justify-content:center;user-select:none}
-.act-btn:active{transform:scale(.90)}
+.act-btn:active{transform:scale(.88)}
 .act-btn.on-chk{background:var(--success);border-color:var(--success);color:#fff}
 .act-btn.on-abs{background:var(--danger);border-color:var(--danger);color:#fff}
 
-.s-note-bar{font-size:12px;color:var(--warning);padding:0 12px 10px 54px;font-style:italic}
+.s-note-bar{font-size:11px;color:var(--warning);padding:0 10px 7px 42px;font-style:italic}
 
 .tmp-section{margin:8px 12px 4px;padding:10px 12px;background:#FFFBEB;
              border:1.5px dashed #F59E0B;border-radius:10px}
@@ -298,10 +305,16 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
   </div>
 
   <div class="tmp-section">
-    <div class="tmp-title">⚡ 臨時加接</div>
+    <div class="tmp-title">⚡ 臨時加接 <span style="font-weight:400;font-size:11px;color:#92400E">（換時間接送 或 名單外學生）</span></div>
+    <div class="tmp-row" style="margin-bottom:6px">
+      <select id="tmp-student-sel" class="tmp-input" style="padding:7px 8px;font-size:13px">
+        <option value="">從名單選（改時間接送）…</option>
+      </select>
+      <button class="btn btn-sm" style="background:#F59E0B;color:#fff;min-width:56px" onclick="addTmpFromList()">加入</button>
+    </div>
     <div class="tmp-row">
-      <input class="tmp-input" id="tmp-name" placeholder="輸入姓名（不在名單中）" maxlength="20">
-      <button class="btn btn-sm" style="background:#F59E0B;color:#fff;min-width:68px" onclick="addTmpStudent()">加接</button>
+      <input class="tmp-input" id="tmp-name" placeholder="或輸入名單外學生姓名" maxlength="20">
+      <button class="btn btn-sm" style="background:#D97706;color:#fff;min-width:56px" onclick="addTmpStudent()">加接</button>
     </div>
   </div>
 
@@ -462,8 +475,8 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
     </div>
 
     <div class="fi-row">
-      <div class="fg"><label class="fl">手機M（媽）</label><input class="fi" id="f-phoneM" type="tel" placeholder="0912-345-678"></div>
-      <div class="fg"><label class="fl">電話D（爸）</label><input class="fi" id="f-phoneD" type="tel" placeholder="0987-654-321"></div>
+      <div class="fg"><label class="fl">手機M（媽）</label><input class="fi" id="f-phoneM" type="text" inputmode="tel" placeholder="0912-345-678"></div>
+      <div class="fg"><label class="fl">電話D（爸）</label><input class="fi" id="f-phoneD" type="text" inputmode="tel" placeholder="0987-654-321"></div>
     </div>
     <div class="fg"><label class="fl">備註</label><input class="fi" id="f-notes" placeholder="例：早退、特殊接送安排…"></div>
 
@@ -617,6 +630,7 @@ function buildSchoolOptions() {
     sel.innerHTML = '<option value="">🏫 所有學校</option>' +
       schools.map(s=>`<option value="${escHtml(s)}"${s===cur?' selected':''}>${escHtml(s)}</option>`).join('');
   });
+  buildTmpStudentSel();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -627,7 +641,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
-  if(name==='roll'){ updateDateNav(); renderRollList(); }
+  if(name==='roll'){ updateDateNav(); renderRollList(); buildTmpStudentSel(); }
   if(name==='mgmt') renderStudentList();
 }
 
@@ -752,7 +766,7 @@ function renderRollList() {
   });
 
   if(tmpAll.length){
-    html+=`<div class="grade-header" style="background:#B45309">⚡ 臨時加接</div>`;
+    html+=`<div class="grade-header" style="background:#B45309">⚡ 臨時加接 <span style="font-size:9px;font-weight:400;opacity:.85">（可切換接到/請假）</span></div>`;
     tmpAll.forEach((s,i)=>{ html+=buildCard(s, idx+i+1, mapDow, true); });
   }
 
@@ -770,8 +784,9 @@ function buildCard(s, idx, mapDow, isTmp) {
   const cardCls=(isTmp?'tmp-card ':'')+(status==='✓'?'chk':status==='✗'?'abs':'');
   const chkCls=status==='✓'?'on-chk':'';
   const absCls=status==='✗'?'on-abs':'';
-  const typeBadge=isTmp?'badge-tmp':(s.type==='安親'?'badge-aq':'badge-ws');
-  const typeLabel=isTmp?'臨時':s.type;
+  const isSwitch = isTmp && s._fromList;
+  const typeBadge=isTmp?(isSwitch?'badge-tmpswitch':'badge-tmp'):(s.type==='安親'?'badge-aq':'badge-ws');
+  const typeLabel=isTmp?(isSwitch?'換時':'臨時'):s.type;
   const gg=gradeGroup(s.grade||1);
   const sid=escHtml(s.id);
 
@@ -779,11 +794,12 @@ function buildCard(s, idx, mapDow, isTmp) {
     <div class="s-body">
       <div class="s-seq${isTmp?' tmp-seq':''}">${idx}</div>
       <div class="s-info">
-        <div class="s-name">${escHtml(s.name)}${s.engName?` <span style="font-size:12px;font-weight:400;color:var(--gray)">${escHtml(s.engName)}</span>`:''}</div>
+        <div class="s-name">${escHtml(s.name)}</div>
+        ${s.engName?`<div class="s-eng">${escHtml(s.engName)}</div>`:''}
         <div class="s-meta">
           <span>${escHtml(s.class||'')}班</span>
           <span class="badge ${typeBadge}">${typeLabel}</span>
-          ${!isTmp?`<span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}年</span>`:''}
+          ${!isTmp?`<span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}</span>`:''}
         </div>
       </div>
       <div class="s-actions">
@@ -859,6 +875,42 @@ async function clearAllRecords() {
 }
 
 // ── 臨時加接 ──────────────────────────────────────────────
+
+// 更新「從名單選」的 select 選項
+function buildTmpStudentSel() {
+  const sel = document.getElementById('tmp-student-sel');
+  if(!sel) return;
+  const existing = new Set(tmpStudents.filter(t=>t._fromList).map(t=>t._origId));
+  sel.innerHTML = '<option value="">從名單選（改時間接送）…</option>' +
+    allStudents
+      .filter(s=>!existing.has(s.id))
+      .map(s=>`<option value="${escHtml(s.id)}">${escHtml(s.name)} ${escHtml(s.class)}班</option>`)
+      .join('');
+}
+
+// 從名單加入臨時接送（使用原學生資料，但標記為臨時）
+function addTmpFromList() {
+  const sel = document.getElementById('tmp-student-sel');
+  const origId = sel.value;
+  if(!origId){ showToast('請從名單選一位學生'); return; }
+  const orig = allStudents.find(s=>s.id===origId);
+  if(!orig){ showToast('找不到學生資料'); return; }
+  // 已在 tmpStudents 中
+  if(tmpStudents.some(t=>t._origId===origId)){
+    showToast(`${orig.name} 已在臨時加接清單`); return;
+  }
+  const tmpId = 'TMP_'+Date.now();
+  const s = {...orig, id:tmpId, _origId:origId, _fromList:true, type:'臨時換時'};
+  tmpStudents.push(s);
+  storeStudent(s);
+  rollRecords[tmpId] = {status:'', notes:''};
+  sel.value='';
+  buildTmpStudentSel();
+  renderRollList();
+  showToast(`⚡ 已加入：${orig.name}（臨時換時）`);
+}
+
+// 名單外學生直接加入
 function addTmpStudent() {
   const el=document.getElementById('tmp-name');
   const name=el.value.trim();
@@ -1038,6 +1090,38 @@ function buildTable(year, month) {
     });
     body+=`</tr>`;
   });
+  // ── 臨時加接列（若當月有日期且有臨時學生）──
+  if(tmpStudents.length && currentTableMonth) {
+    const colspan = 6 + days.length;
+    body+=`<tr><td colspan="${colspan}" style="background:#FEF3C7;color:#B45309;font-weight:700;font-size:10px;text-align:left;padding-left:8px">⚡ 臨時加接</td></tr>`;
+    tmpStudents.forEach((s,i)=>{
+      seq++;
+      const tel=[s.phoneM,s.phoneD].filter(Boolean).join(' / ');
+      body+=`<tr style="background:#FFFBEB">
+        <td class="no-col" style="color:#B45309">${seq}</td>
+        <td class="name-col" style="color:#B45309;font-style:italic">${escHtml(s.name)}</td>
+        <td class="eng-col">${escHtml(s.engName||'')}</td>
+        <td class="cls-col">${escHtml(s._fromList?s.class:'外')}</td>
+        <td class="type-col"><span class="type-badge" style="background:#FEF3C7;color:#B45309">臨時</span></td>
+        <td class="tel-col">${escHtml(tel)}</td>`;
+      days.forEach(d=>{
+        const wkCls='wk-'+wp[d.date];
+        if(monthHolidays[d.date]){
+          body+=`<td class="cell-holiday ${wkCls}">假</td>`; return;
+        }
+        const rec=(monthRecords[d.date]||{})[s.id]||{};
+        const st=rec.status||'';
+        let inner='';
+        if(st==='✓') inner=`<span class="cell-chk">✓</span>`;
+        else if(st==='✗') inner=`<span class="cell-abs">✕</span>`;
+        // 臨時學生只顯示今日或有記錄的格子
+        const isCurrentDate = d.date === currentRollDate;
+        body+=`<td class="cell-am ${wkCls}"${(isCurrentDate||st)?` data-date="${d.date}" data-sid="${s.id}" style="cursor:pointer"`:''}>${inner}</td>`;
+      });
+      body+=`</tr>`;
+    });
+  }
+
   body+='</tbody>';
   return `<table class="pt">${head}${body}</table>`;
 }
