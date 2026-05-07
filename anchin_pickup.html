@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>安親接車管理系統</title>
+<style>
+/* ── 設計變數 ── */
+:root {
+  --primary:#2563EB; --primary-d:#1D4ED8; --primary-light:#DBEAFE;
+  --success:#16A34A; --danger:#DC2626; --warning:#D97706;
+  --gray:#6B7280; --gray-2:#9CA3AF; --gray-light:#F3F4F6; --border:#E5E7EB;
+  --am-bg:#FFFFFF;    /* 上午接駁：白色 */
+  --pm-bg:#CBD5E1;    /* 下午接駁：灰藍 */
+  --no-bg:#94A3B8;    /* 不接：深灰 */
+  --low-c:#059669; --mid-c:#D97706; --high-c:#DC2626;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
+     background:#F8FAFC;color:#1F2937;min-height:100vh;overflow-x:hidden}
+
+/* ── 底部導覽 ── */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;
+     border-top:1px solid var(--border);display:flex;z-index:100;
+     padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
+         padding:8px 4px 6px;cursor:pointer;color:var(--gray);font-size:10px;
+         border:none;background:none;gap:3px;transition:color .15s}
+.nav-btn .ico{font-size:22px;line-height:1}
+.nav-btn.active{color:var(--primary)}
+
+/* ── 內容容器 ── */
+.content{padding-bottom:72px}
+.page{display:none}.page.active{display:block}
+
+/* ── 頁首 ── */
+.pg-header{background:var(--primary);color:#fff;padding:14px 16px;
+           position:sticky;top:0;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.pg-header h1{font-size:18px;font-weight:700}
+.pg-header p{font-size:12px;opacity:.85;margin-top:2px}
+
+/* ── 通用卡片 ── */
+.card{background:#fff;border-radius:12px;padding:16px;margin:12px;
+      box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+/* ── 按鈕 ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+     padding:9px 18px;border-radius:9px;border:none;font-size:14px;
+     font-weight:600;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.btn:active{opacity:.72}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-gray{background:var(--gray-light);color:var(--gray)}
+.btn-sm{padding:6px 12px;font-size:13px;border-radius:7px}
+.btn-icon{width:34px;height:34px;padding:0;border-radius:8px;border:1px solid var(--border);
+          background:#fff;cursor:pointer;font-size:15px;display:inline-flex;
+          align-items:center;justify-content:center}
+
+/* ── 今日點名 ── */
+.time-banner{background:#EFF6FF;border-left:3px solid var(--primary);
+             margin:8px 12px;border-radius:0 8px 8px 0;padding:8px 12px;
+             font-size:12px;color:#1D4ED8;line-height:1.6}
+.quick-bar{display:flex;gap:8px;padding:6px 12px 2px;flex-wrap:wrap}
+
+.grade-header{padding:5px 14px;font-size:11px;font-weight:700;
+              letter-spacing:.5px;color:#fff;margin-top:4px}
+.grade-header.low{background:var(--low-c)}
+.grade-header.mid{background:var(--mid-c)}
+.grade-header.high{background:var(--high-c)}
+
+.s-card{background:#fff;border-radius:10px;margin:5px 12px;
+        box-shadow:0 1px 3px rgba(0,0,0,.08);
+        border-left:4px solid var(--border);overflow:hidden;
+        transition:border-color .2s}
+.s-card.chk{border-left-color:var(--success)}
+.s-card.abs{border-left-color:var(--danger)}
+
+.s-body{display:flex;align-items:center;padding:10px 12px;gap:10px}
+.s-seq{width:26px;height:26px;border-radius:50%;background:var(--gray-light);
+       display:flex;align-items:center;justify-content:center;
+       font-size:11px;font-weight:700;color:var(--gray);flex-shrink:0}
+.s-info{flex:1;min-width:0}
+.s-name{font-size:15px;font-weight:700;line-height:1.2}
+.s-meta{font-size:11px;color:var(--gray);margin-top:2px;
+        display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.badge{display:inline-block;padding:1px 7px;border-radius:10px;
+       font-size:10px;font-weight:700}
+.badge-aq{background:#DBEAFE;color:#1D4ED8}   /* 安親 */
+.badge-ws{background:#FEF3C7;color:#B45309}   /* 外生 */
+.badge-low{background:#D1FAE5;color:#065F46}
+.badge-mid{background:#FEF9C3;color:#854D0E}
+.badge-high{background:#FEE2E2;color:#991B1B}
+
+.s-actions{display:flex;gap:5px;flex-shrink:0}
+.act-btn{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--border);
+         background:#fff;font-size:15px;cursor:pointer;
+         display:flex;align-items:center;justify-content:center;
+         transition:all .15s;font-weight:700}
+.act-btn.on-chk{background:var(--success);border-color:var(--success);color:#fff;font-size:18px}
+.act-btn.on-abs{background:var(--danger);border-color:var(--danger);color:#fff;font-size:18px}
+
+.s-note-bar{font-size:12px;color:var(--warning);padding:0 12px 8px 52px;
+            font-style:italic}
+
+/* ── 接車總表 ── */
+.table-ctrl{padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
+            margin:0 8px 12px;border-radius:8px;
+            box-shadow:0 1px 4px rgba(0,0,0,.1)}
+table.pt{border-collapse:collapse;font-size:11px;white-space:nowrap;background:#fff}
+table.pt th,table.pt td{border:1px solid #CBD5E1;text-align:center;padding:3px 5px}
+table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
+table.pt .hd2{background:#2563EB;font-size:9px;font-weight:400}
+.cell-am{background:var(--am-bg)}
+.cell-pm{background:var(--pm-bg)}
+.cell-no{background:var(--no-bg);color:#fff;font-size:9px}
+.cell-holiday{background:#FCA5A5;color:#7F1D1D;font-size:9px;font-weight:700}
+.th-holiday{background:#DC2626!important;color:#fff!important}
+.th-holiday-day{background:#B91C1C!important;font-size:9px!important}
+.cell-chk{color:var(--success);font-weight:900;font-size:14px}
+.cell-abs{color:var(--danger);font-weight:900;font-size:14px}
+.cell-empty{color:#CBD5E1}
+.pt .grade-row td{background:#1E3A8A;color:#fff;font-weight:700;
+                  font-size:10px;text-align:left;padding-left:8px}
+.pt .name-col{text-align:left!important;padding-left:6px;min-width:52px;font-weight:600}
+.pt .eng-col{text-align:left!important;min-width:44px;color:var(--gray)}
+.pt .tel-col{text-align:left!important;min-width:80px;font-size:9px;color:var(--gray)}
+.pt .no-col{min-width:24px;color:var(--gray-2);font-size:10px}
+.pt .cls-col{min-width:32px;color:var(--gray)}
+
+/* legend */
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:0 12px 8px;font-size:12px;align-items:center}
+.leg{display:flex;align-items:center;gap:4px}
+.leg-box{width:16px;height:16px;border-radius:4px;border:1px solid var(--border)}
+
+/* ── 學生管理 ── */
+.search-bar{margin:10px 12px 6px;display:flex;gap:8px}
+.search-input{flex:1;padding:9px 14px;border:1.5px solid var(--border);
+              border-radius:9px;font-size:14px;outline:none}
+.search-input:focus{border-color:var(--primary)}
+.student-list{background:#fff;border-radius:12px;margin:0 12px 12px;
+              box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+.sl-item{display:flex;align-items:center;padding:11px 14px;
+         border-bottom:1px solid var(--gray-light);gap:10px}
+.sl-item:last-child{border-bottom:none}
+.sl-info{flex:1;min-width:0}
+.sl-name{font-size:14px;font-weight:700}
+.sl-meta{font-size:11px;color:var(--gray);margin-top:2px}
+.sl-actions{display:flex;gap:6px;flex-shrink:0}
+.grade-sep{padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;
+           color:#fff}
+.grade-sep.low{background:var(--low-c)}
+.grade-sep.mid{background:var(--mid-c)}
+.grade-sep.high{background:var(--high-c)}
+
+.fab{position:fixed;bottom:80px;right:16px;width:54px;height:54px;
+     border-radius:50%;background:var(--primary);color:#fff;border:none;
+     font-size:26px;cursor:pointer;z-index:60;
+     box-shadow:0 4px 14px rgba(37,99,235,.45);
+     display:flex;align-items:center;justify-content:center}
+
+/* ── Modal ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+         display:flex;align-items:flex-end;justify-content:center}
+.overlay.hidden,.overlay.center-hidden{display:none}
+.overlay.center{align-items:center}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;
+       max-height:92vh;overflow-y:auto;padding:20px;
+       padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.modal.center-modal{border-radius:16px;max-height:85vh;align-self:center}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;
+              margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:14px}
+.modal-footer{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+
+/* ── 表單 ── */
+.fg{margin-bottom:13px}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--gray);margin-bottom:5px}
+.fi{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;
+    font-size:15px;outline:none;transition:border-color .2s;font-family:inherit}
+.fi:focus{border-color:var(--primary)}
+.fi-row{display:flex;gap:8px}
+.fi-row .fi{min-width:0}
+.day-row{display:flex;gap:6px}
+.day-chk input{display:none}
+.day-chk label{display:block;padding:7px 10px;border:1.5px solid var(--border);
+               border-radius:8px;font-size:13px;cursor:pointer;text-align:center;
+               transition:all .15s;min-width:44px}
+.day-chk input:checked+label{background:var(--primary);border-color:var(--primary);
+                               color:#fff;font-weight:700}
+
+/* ── 電話浮窗 ── */
+.phone-item{display:flex;align-items:center;gap:10px;padding:11px 0;
+            border-bottom:1px solid var(--gray-light)}
+.phone-item:last-child{border-bottom:none}
+.phone-lbl{font-size:12px;color:var(--gray);min-width:36px}
+.phone-num{font-size:17px;font-weight:700;color:var(--primary);flex:1}
+.btn-call{background:var(--success);color:#fff;border:none;border-radius:8px;
+          padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer}
+
+/* ── 備註 ── */
+.notes-ta{width:100%;height:76px;padding:9px;border:1.5px solid var(--border);
+          border-radius:9px;font-size:14px;resize:none;font-family:inherit;outline:none}
+.notes-ta:focus{border-color:var(--primary)}
+
+/* ── Toast ── */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);
+       background:#1F2937;color:#fff;padding:9px 20px;border-radius:20px;
+       font-size:13px;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none;
+       white-space:nowrap}
+.toast.on{opacity:1}
+
+/* ── Loading ── */
+.loading{text-align:center;padding:40px 20px;color:var(--gray);font-size:14px}
+
+/* ── Empty ── */
+.empty{text-align:center;padding:32px 20px;color:var(--gray-2)}
+.empty .e-ico{font-size:40px;margin-bottom:8px}
+.empty p{font-size:14px}
+
+/* ── 假日管理面板 ── */
+.holiday-panel{background:#FFF7F7;border:1px solid #FECACA;border-radius:10px;
+               margin:0 12px 8px;padding:12px}
+.holiday-panel-title{font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;
+                      display:flex;align-items:center;justify-content:space-between}
+.holiday-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.h-chip{display:inline-flex;align-items:center;gap:4px;
+        padding:3px 8px 3px 10px;border-radius:20px;
+        background:#FEE2E2;color:#991B1B;font-size:12px;font-weight:600}
+.h-chip button{border:none;background:none;cursor:pointer;color:#DC2626;
+               font-size:14px;line-height:1;padding:0 2px}
+.holiday-add-row{display:flex;gap:6px;align-items:center}
+.holiday-add-row input[type=date]{padding:6px 8px;border:1.5px solid #FECACA;
+                                   border-radius:8px;font-size:13px;outline:none}
+.holiday-add-row input[type=date]:focus{border-color:#DC2626}
+.holiday-add-row input[type=text]{flex:1;padding:6px 10px;border:1.5px solid #FECACA;
+                                   border-radius:8px;font-size:13px;outline:none}
+
+/* ── 列印 ── */
+@media print{
+  .nav,.pg-header,.table-ctrl,.legend,.quick-bar,.fab{display:none!important}
+  body{background:#fff}
+  .content{padding-bottom:0}
+  .page{display:none!important}.page.active{display:block!important}
+  .table-wrap{box-shadow:none;margin:0;overflow:visible}
+  table.pt{font-size:9px}
+  .page-title-print{display:block;font-size:13px;font-weight:700;
+                     text-align:center;padding:8px 0}
+}
+.page-title-print{display:none}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PAGES ═══════════════ -->
+
+<!-- ① 今日點名 -->
+<div class="content">
+<div id="page-roll" class="page active">
+  <div class="pg-header">
+    <h1>📋 今日接車點名</h1>
+    <p id="roll-date-label"></p>
+  </div>
+  <div class="time-banner" id="time-banner"></div>
+  <div class="quick-bar">
+    <button class="btn btn-success btn-sm" onclick="quickAllCheck()">✅ 快速全到</button>
+    <button class="btn btn-gray btn-sm" onclick="clearAllRecords()">↩ 清除全部</button>
+    <button class="btn btn-outline btn-sm" onclick="refreshRollCall()">🔄 重新載入</button>
+  </div>
+  <div id="roll-list"><div class="loading">載入中…</div></div>
+</div>
+
+<!-- ② 接車總表 -->
+<div id="page-table" class="page">
+  <div class="pg-header">
+    <h1>📅 接車總表</h1>
+    <p>點選月份產生完整接送表</p>
+  </div>
+  <div class="table-ctrl">
+    <input type="month" id="month-picker" class="fi" style="width:auto;padding:7px 10px">
+    <button class="btn btn-primary btn-sm" onclick="generateTable()">產生月份表</button>
+    <button class="btn btn-outline btn-sm" style="color:#DC2626;border-color:#DC2626" onclick="toggleHolidayPanel()">🗓 假日</button>
+    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 列印</button>
+  </div>
+  <div class="legend">
+    <span class="leg"><span class="leg-box" style="background:var(--am-bg)"></span>12:00 午間接</span>
+    <span class="leg"><span class="leg-box" style="background:var(--pm-bg)"></span>16:00 下午接</span>
+    <span class="leg"><span class="leg-box" style="background:var(--no-bg)"></span>不接</span>
+    <span class="leg"><span class="leg-box" style="background:#FCA5A5"></span>假日</span>
+    <span class="leg" style="color:var(--success);font-weight:700">✓ 接到</span>
+    <span class="leg" style="color:var(--danger);font-weight:700">✕ 請假</span>
+  </div>
+
+  <!-- 假日管理面板 -->
+  <div class="holiday-panel" id="holiday-panel" style="display:none">
+    <div class="holiday-panel-title">
+      <span>🗓 假日設定（本月）</span>
+      <button class="btn btn-gray btn-sm" onclick="toggleHolidayPanel()">收起</button>
+    </div>
+    <div class="holiday-chips" id="holiday-chips"></div>
+    <div class="holiday-add-row">
+      <input type="date" id="h-date" title="選擇假日日期">
+      <input type="text" id="h-note" placeholder="假日名稱（例：補課日）" maxlength="20">
+      <button class="btn btn-danger btn-sm" onclick="addHoliday()">新增</button>
+    </div>
+  </div>
+
+  <div class="page-title-print" id="print-title"></div>
+  <div class="table-wrap" id="table-area"><div class="loading">請選擇月份後點擊「產生月份表」</div></div>
+</div>
+
+<!-- ③ 學生管理 -->
+<div id="page-mgmt" class="page">
+  <div class="pg-header">
+    <h1>👥 學生管理</h1>
+    <p id="student-count-label">共 0 位學生</p>
+  </div>
+  <div class="search-bar">
+    <input id="search-input" type="search" class="search-input" placeholder="搜尋姓名 / 班級…" oninput="filterStudents()">
+  </div>
+  <div id="student-list-area"><div class="loading">載入中…</div></div>
+  <button class="fab" onclick="openStudentForm(null)">＋</button>
+</div>
+</div><!-- end content -->
+
+<!-- ═══════════════ BOTTOM NAV ═══════════════ -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchTab('roll',this)">
+    <span class="ico">📋</span>今日點名
+  </button>
+  <button class="nav-btn" onclick="switchTab('table',this)">
+    <span class="ico">📅</span>接車總表
+  </button>
+  <button class="nav-btn" onclick="switchTab('mgmt',this)">
+    <span class="ico">👥</span>學生管理
+  </button>
+</nav>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- 電話彈窗 -->
+<div class="overlay hidden" id="phone-overlay" onclick="closePhoneModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="phone-modal-name"></div>
+    <div id="phone-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closePhoneModal()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- 備註彈窗 -->
+<div class="overlay hidden" id="notes-overlay" onclick="closeNotesModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="notes-modal-name">備註</div>
+    <textarea class="notes-ta" id="notes-ta" placeholder="輸入今日備註…"></textarea>
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeNotesModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveNotes()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 學生新增/編輯表單 -->
+<div class="overlay hidden" id="student-overlay" onclick="closeStudentForm()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="form-title">新增學生</div>
+    <input type="hidden" id="f-id">
+
+    <div class="fi-row">
+      <div class="fg" style="flex:1">
+        <label class="fl">中文姓名 *</label>
+        <input class="fi" id="f-name" placeholder="王小明">
+      </div>
+      <div class="fg" style="flex:1">
+        <label class="fl">英文名</label>
+        <input class="fi" id="f-eng" placeholder="Peter">
+      </div>
+    </div>
+
+    <div class="fi-row">
+      <div class="fg" style="flex:2">
+        <label class="fl">學校</label>
+        <input class="fi" id="f-school" placeholder="雙永國小">
+      </div>
+      <div class="fg" style="flex:1">
+        <label class="fl">年級 *</label>
+        <select class="fi" id="f-grade">
+          <option value="1">1年級</option><option value="2">2年級</option>
+          <option value="3">3年級</option><option value="4">4年級</option>
+          <option value="5">5年級</option><option value="6">6年級</option>
+        </select>
+      </div>
+      <div class="fg" style="flex:1">
+        <label class="fl">班級 *</label>
+        <input class="fi" id="f-class" placeholder="101">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">學生類型 *</label>
+      <select class="fi" id="f-type" onchange="togglePickupDays()">
+        <option value="安親">安親（每天接送）</option>
+        <option value="外生">外生（自訂接送天）</option>
+      </select>
+    </div>
+
+    <div class="fg" id="pickup-days-group" style="display:none">
+      <label class="fl">接送天（外生適用）</label>
+      <div class="day-row">
+        <label class="day-chk"><input type="checkbox" name="pd" value="1"><label for="">一</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="2"><label for="">二</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="3"><label for="">三</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="4"><label for="">四</label></label>
+        <label class="day-chk"><input type="checkbox" name="pd" value="5"><label for="">五</label></label>
+      </div>
+    </div>
+
+    <div class="fi-row">
+      <div class="fg" style="flex:1">
+        <label class="fl">手機M（媽）</label>
+        <input class="fi" id="f-phoneM" type="tel" placeholder="0912345678">
+      </div>
+      <div class="fg" style="flex:1">
+        <label class="fl">電話D（爸）</label>
+        <input class="fi" id="f-phoneD" type="tel" placeholder="0987654321">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">備註</label>
+      <input class="fi" id="f-notes" placeholder="例：早退、特殊接送安排…">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-gray" onclick="closeStudentForm()">取消</button>
+      <button class="btn btn-danger btn-sm" id="form-del-btn" onclick="confirmDelete()" style="display:none">刪除</button>
+      <button class="btn btn-primary" onclick="submitStudentForm()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+// ──────────────────────────────────────────────────────────
+// ★ 設定：填入你的 GAS 部署網址
+// ──────────────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+
+// ── 全域狀態 ──────────────────────────────────────────────
+let allStudents   = [];
+let todayRecords  = {};   // { studentId: {status, notes} }
+let monthRecords  = {};   // { 'YYYY-MM-DD': {studentId: {status,notes}} }
+let monthHolidays = {};   // { 'YYYY-MM-DD': '假日名稱' }
+let notesTarget   = null; // 目前編輯備註的 studentId
+let currentTableMonth = '';  // 目前產生的月份 'YYYY-MM'
+const TODAY = formatDate(new Date());
+
+// ── GAS 通訊 ─────────────────────────────────────────────
+function callGAS(params) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    const script = document.createElement('script');
+    window[cb] = d => { resolve(d); delete window[cb]; script.remove(); };
+    const qs = Object.entries({ ...params, callback: cb })
+                     .map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    script.src = `${GAS_URL}?${qs}`;
+    script.onerror = () => { reject(new Error('JSONP 失敗')); script.remove(); };
+    document.body.appendChild(script);
+    setTimeout(() => { if(window[cb]){ reject(new Error('Timeout')); script.remove(); } }, 15000);
+  });
+}
+
+async function postGAS(payload) {
+  const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) });
+  return res.json();
+}
+
+// ── 時間規則 ──────────────────────────────────────────────
+// dayOfWeek: 1=週一 … 5=週五
+function getPickupTime(grade, dow) {
+  if (grade <= 2) return dow === 2 ? 'pm' : 'am';          // 低：週二下午
+  if (grade <= 4) return (dow===3||dow===5) ? 'am' : 'pm'; // 中：週三五午間
+  return dow === 3 ? 'am' : 'pm';                           // 高：週三午間
+}
+function pickupTimeLabel(grade, dow) {
+  return getPickupTime(grade, dow) === 'am' ? '12:00' : '16:00';
+}
+
+function shouldPickup(student, dow) {
+  if (student.type === '安親') return true;
+  return (student.pickupDays || []).includes(dow);
+}
+
+// ── 月份工具 ──────────────────────────────────────────────
+function formatDate(d) {
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function getMonthWeekdays(year, month) {
+  const days = [], d = new Date(year, month-1, 1);
+  const names = ['','一','二','三','四','五'];
+  while (d.getMonth() === month-1) {
+    const dow = d.getDay(); // 0=Sun
+    if (dow >= 1 && dow <= 5) {
+      days.push({
+        date: formatDate(new Date(d)),
+        dow,
+        label: `${month}/${d.getDate()}`,
+        dayName: names[dow]
+      });
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return days;
+}
+
+function gradeGroup(g){ return g<=2?'low':g<=4?'mid':'high'; }
+function gradeGroupName(g){ return g<=2?'低年級（1-2年級）':g<=4?'中年級（3-4年級）':'高年級（5-6年級）'; }
+function gradeGroupLabel(g){ return g<=2?'低':g<=4?'中':'高'; }
+
+// ── Tab 切換 ──────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name==='roll') refreshRollCall();
+  if (name==='mgmt') renderStudentList();
+}
+
+// ═══════════════ 今日點名 ═══════════════════════════════
+
+async function refreshRollCall() {
+  setRollHeader();
+  const el = document.getElementById('roll-list');
+  el.innerHTML = '<div class="loading">載入中…</div>';
+  try {
+    const yearMonth = TODAY.slice(0, 7);
+    const [sr, rr, hr] = await Promise.all([
+      callGAS({ action:'getStudents' }),
+      callGAS({ action:'getDayRecords', date: TODAY }),
+      callGAS({ action:'getHolidays', yearMonth })
+    ]);
+    allStudents  = sr.students || [];
+    todayRecords = rr.records  || {};
+    // 建立今日假日查詢
+    const todayHolidays = {};
+    (hr.holidays || []).forEach(h => { todayHolidays[h.date] = h.note || '假日'; });
+    // 附加到 window 供 renderRollList 使用
+    window._todayHolidayName = todayHolidays[TODAY] || null;
+    renderRollList();
+  } catch(e) {
+    el.innerHTML = `<div class="card" style="color:var(--danger)">⚠️ 載入失敗：${e.message}</div>`;
+  }
+}
+
+function setRollHeader() {
+  const d = new Date();
+  const dayNames = ['日','一','二','三','四','五','六'];
+  const tw = d.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('roll-date-label').textContent = `${tw}（${dayNames[d.getDay()]}）`;
+
+  const today_dow = new Date().getDay(); // 0-6
+  const dow = today_dow === 0 ? 7 : today_dow; // map Sun→7 (不接), Mon=1…Fri=5
+  let bannerParts = [];
+  if (dow >= 1 && dow <= 5) {
+    bannerParts = [
+      `低年級：${pickupTimeLabel(1, dow)}接`,
+      `中年級：${pickupTimeLabel(3, dow)}接`,
+      `高年級：${pickupTimeLabel(5, dow)}接`
+    ];
+  } else {
+    bannerParts = ['今日為假日，無需接送'];
+  }
+  document.getElementById('time-banner').innerHTML =
+    `<b>今日接車時間</b><br>${bannerParts.join('　')}`;
+}
+
+function renderRollList() {
+  const el = document.getElementById('roll-list');
+  if (!allStudents.length) {
+    el.innerHTML = '<div class="empty"><div class="e-ico">🎒</div><p>尚無學生資料<br>請至「學生管理」新增</p></div>';
+    return;
+  }
+
+  const today_dow = new Date().getDay();
+  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
+
+  // 國定假日提示
+  if (window._todayHolidayName) {
+    document.getElementById('roll-list').innerHTML =
+      `<div class="card" style="text-align:center;padding:32px 16px">
+        <div style="font-size:48px;margin-bottom:12px">🎌</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px">今日為國定假日</div>
+        <div style="color:var(--gray);font-size:15px">${escapeHtml(window._todayHolidayName)}</div>
+        <div style="margin-top:12px;font-size:13px;color:var(--gray-2)">今日無需接送學生</div>
+      </div>`;
+    return;
+  }
+
+  // 篩選今日有接送的學生
+  const todayStudents = allStudents.filter(s => dow > 0 && shouldPickup(s, dow));
+
+  let html = '';
+  let lastGroup = '';
+  todayStudents.forEach((s, idx) => {
+    const gg = gradeGroup(s.grade);
+    if (gg !== lastGroup) {
+      lastGroup = gg;
+      html += `<div class="grade-header ${gg}">${gradeGroupName(s.grade)}
+               ・${pickupTimeLabel(s.grade, dow)} 接</div>`;
+    }
+    const rec = todayRecords[s.id] || {};
+    const status = rec.status || '';
+    const notes  = rec.notes  || '';
+    const cardCls = status==='✓'?'chk':status==='✗'?'abs':'';
+    const chkCls  = status==='✓'?'on-chk':'';
+    const absCls  = status==='✗'?'on-abs':'';
+    const typeBadge = s.type==='安親'?'badge-aq':'badge-ws';
+
+    html += `
+    <div class="s-card ${cardCls}" id="card-${s.id}">
+      <div class="s-body">
+        <div class="s-seq">${idx+1}</div>
+        <div class="s-info">
+          <div class="s-name">${s.name}${s.engName?` <span style="font-size:12px;font-weight:400;color:var(--gray)">${s.engName}</span>`:''}</div>
+          <div class="s-meta">
+            <span>${s.class}班</span>
+            <span class="badge ${typeBadge}">${s.type}</span>
+            <span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}年</span>
+          </div>
+        </div>
+        <div class="s-actions">
+          <button class="act-btn ${chkCls}" title="接到" onclick="toggleStatus('${s.id}','✓')">✓</button>
+          <button class="act-btn ${absCls}" title="請假" onclick="toggleStatus('${s.id}','✗')">✕</button>
+          <button class="act-btn" title="備註" onclick="openNotesModal('${s.id}','${escapeHtml(s.name)}')">💬</button>
+          <button class="act-btn" title="電話" onclick="openPhoneModal(${JSON.stringify(JSON.stringify(s))})">📞</button>
+        </div>
+      </div>
+      ${notes ? `<div class="s-note-bar">📝 ${escapeHtml(notes)}</div>` : ''}
+    </div>`;
+  });
+
+  if (!todayStudents.length) {
+    html = '<div class="empty"><div class="e-ico">🎉</div><p>今日無接送學生</p></div>';
+  }
+  el.innerHTML = html;
+}
+
+async function toggleStatus(sid, newStatus) {
+  const rec = todayRecords[sid] || {};
+  const curStatus = rec.status || '';
+  // 再次點擊同狀態 → 清除
+  const status = curStatus === newStatus ? '' : newStatus;
+  todayRecords[sid] = { ...rec, status };
+  updateCardUI(sid, status);
+  await postGAS({ action:'saveRecord', record:{ date:TODAY, studentId:sid, status, notes: rec.notes||'' } });
+}
+
+function updateCardUI(sid, status) {
+  const card = document.getElementById('card-'+sid);
+  if (!card) return;
+  card.className = 's-card' + (status==='✓'?' chk':status==='✗'?' abs':'');
+  const btns = card.querySelectorAll('.act-btn');
+  btns[0].className = 'act-btn'+(status==='✓'?' on-chk':'');
+  btns[1].className = 'act-btn'+(status==='✗'?' on-abs':'');
+}
+
+async function quickAllCheck() {
+  const today_dow = new Date().getDay();
+  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
+  const toUpdate = allStudents.filter(s => dow>0 && shouldPickup(s,dow) && (todayRecords[s.id]?.status||'')==='');
+  for (const s of toUpdate) {
+    todayRecords[s.id] = { ...(todayRecords[s.id]||{}), status:'✓' };
+    updateCardUI(s.id, '✓');
+  }
+  const records = toUpdate.map(s => ({ studentId:s.id, status:'✓', notes:todayRecords[s.id]?.notes||'' }));
+  if (records.length) {
+    await postGAS({ action:'saveDayRecords', date:TODAY, records });
+    showToast(`✅ 已標記 ${records.length} 位接到`);
+  } else {
+    showToast('已全部標記過了');
+  }
+}
+
+async function clearAllRecords() {
+  if (!confirm('確定清除今日所有點名記錄？')) return;
+  const today_dow = new Date().getDay();
+  const dow = today_dow === 0 || today_dow === 6 ? 0 : today_dow;
+  const students = allStudents.filter(s => dow>0 && shouldPickup(s,dow));
+  students.forEach(s => { todayRecords[s.id] = { status:'', notes:'' }; updateCardUI(s.id,''); });
+  const records = students.map(s => ({ studentId:s.id, status:'', notes:'' }));
+  if (records.length) await postGAS({ action:'saveDayRecords', date:TODAY, records });
+  showToast('已清除今日記錄');
+}
+
+// ── 電話彈窗 ──────────────────────────────────────────────
+function openPhoneModal(sJson) {
+  const s = JSON.parse(sJson);
+  document.getElementById('phone-modal-name').textContent = `${s.name}（${s.class}班）`;
+  let html = '';
+  if (s.phoneM) html += phoneRow('媽 M', s.phoneM);
+  if (s.phoneD) html += phoneRow('爸 D', s.phoneD);
+  if (!s.phoneM && !s.phoneD) html = '<p style="color:var(--gray);padding:12px 0">無電話資料</p>';
+  document.getElementById('phone-modal-body').innerHTML = html;
+  document.getElementById('phone-overlay').classList.remove('hidden');
+}
+function phoneRow(lbl, num) {
+  return `<div class="phone-item">
+    <span class="phone-lbl">${lbl}</span>
+    <span class="phone-num">${num}</span>
+    <a href="tel:${num}"><button class="btn-call">📞 撥打</button></a>
+  </div>`;
+}
+function closePhoneModal() { document.getElementById('phone-overlay').classList.add('hidden'); }
+
+// ── 備註彈窗 ──────────────────────────────────────────────
+function openNotesModal(sid, name) {
+  notesTarget = sid;
+  document.getElementById('notes-modal-name').textContent = `備註：${name}`;
+  document.getElementById('notes-ta').value = todayRecords[sid]?.notes || '';
+  document.getElementById('notes-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('notes-ta').focus(),100);
+}
+async function saveNotes() {
+  const notes = document.getElementById('notes-ta').value.trim();
+  const rec = todayRecords[notesTarget] || {};
+  todayRecords[notesTarget] = { ...rec, notes };
+  await postGAS({ action:'saveRecord', record:{ date:TODAY, studentId:notesTarget,
+    status: rec.status||'', notes } });
+  closeNotesModal();
+  renderRollList(); // re-render to show note bar
+  showToast('備註已儲存');
+}
+function closeNotesModal() { document.getElementById('notes-overlay').classList.add('hidden'); notesTarget=null; }
+
+// ═══════════════ 接車總表 ════════════════════════════════
+
+async function generateTable() {
+  const val = document.getElementById('month-picker').value;
+  if (!val) { showToast('請選擇月份'); return; }
+  const [year, month] = val.split('-').map(Number);
+  currentTableMonth = val;
+  const el = document.getElementById('table-area');
+  el.innerHTML = '<div class="loading">產生中…</div>';
+
+  try {
+    const [sr, mr, hr] = await Promise.all([
+      allStudents.length ? Promise.resolve({students:allStudents}) : callGAS({action:'getStudents'}),
+      callGAS({ action:'getMonthRecords', yearMonth: val }),
+      callGAS({ action:'getHolidays', yearMonth: val })
+    ]);
+    allStudents  = sr.students  || [];
+    monthRecords = mr.records   || {};
+    // 建立假日查詢表 { 'YYYY-MM-DD': '名稱' }
+    monthHolidays = {};
+    (hr.holidays || []).forEach(h => { monthHolidays[h.date] = h.note || '假日'; });
+
+    document.getElementById('print-title').textContent =
+      `HESS 松山安親  ${year}年${month}月  接車點名表`;
+    el.innerHTML = buildTable(year, month);
+    renderHolidayChips(val);
+  } catch(e) {
+    el.innerHTML = `<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
+  }
+}
+
+function buildTable(year, month) {
+  const days = getMonthWeekdays(year, month);
+  if (!days.length) return '<div class="card">本月無工作日</div>';
+
+  // ── 表頭 ──
+  let head = `<thead><tr>
+    <th class="no-col">No</th>
+    <th class="name-col">姓名</th>
+    <th class="eng-col">英文名</th>
+    <th class="cls-col">班</th>
+    <th class="tel-col">電話</th>`;
+  days.forEach(d => {
+    const isH = !!monthHolidays[d.date];
+    head += isH
+      ? `<th class="th-holiday" title="${escapeHtml(monthHolidays[d.date])}">${d.label}<br><span style="font-size:8px">假</span></th>`
+      : `<th class="th-date">${d.label}</th>`;
+  });
+  head += `</tr><tr>
+    <th></th><th></th><th></th><th></th><th></th>`;
+  days.forEach(d => {
+    const isH = !!monthHolidays[d.date];
+    head += isH
+      ? `<th class="th-holiday-day">${escapeHtml(monthHolidays[d.date]).slice(0,4)}</th>`
+      : `<th class="hd2">${d.dayName}</th>`;
+  });
+  head += `</tr></thead>`;
+
+  // ── 表身 ──
+  let body = '<tbody>';
+  let lastGroup = '', seq = 0;
+
+  allStudents.forEach(s => {
+    const gg = gradeGroup(s.grade);
+    if (gg !== lastGroup) {
+      lastGroup = gg;
+      const colspan = 5 + days.length;
+      const grpName = gradeGroupName(s.grade);
+      body += `<tr class="grade-row"><td colspan="${colspan}">${grpName}</td></tr>`;
+    }
+    seq++;
+    const tel = [s.phoneM, s.phoneD].filter(Boolean).join(' / ');
+    body += `<tr>
+      <td class="no-col">${seq}</td>
+      <td class="name-col">${escapeHtml(s.name)}</td>
+      <td class="eng-col">${escapeHtml(s.engName||'')}</td>
+      <td class="cls-col">${s.class}</td>
+      <td class="tel-col" style="font-size:9px">${escapeHtml(tel)}</td>`;
+
+    days.forEach(d => {
+      // 假日：整欄鎖定，不接送
+      if (monthHolidays[d.date]) {
+        body += `<td class="cell-holiday" title="${escapeHtml(monthHolidays[d.date])}">假</td>`;
+        return;
+      }
+      const canPickup = shouldPickup(s, d.dow);
+      if (!canPickup) {
+        body += `<td class="cell-no">－</td>`;
+        return;
+      }
+      const pt = getPickupTime(s.grade, d.dow);
+      const cellCls = pt === 'am' ? 'cell-am' : 'cell-pm';
+      const rec = (monthRecords[d.date] || {})[s.id] || {};
+      const st = rec.status || '';
+      let inner = '';
+      if (st === '✓') inner = `<span class="cell-chk">✓</span>`;
+      else if (st === '✗') inner = `<span class="cell-abs">✕</span>`;
+      body += `<td class="${cellCls}" onclick="toggleTableCell('${d.date}','${s.id}','${pt}')"
+                  style="cursor:pointer">${inner}</td>`;
+    });
+
+    body += `</tr>`;
+  });
+  body += '</tbody>';
+
+  return `<table class="pt">${head}${body}</table>`;
+}
+
+async function toggleTableCell(date, sid, pt) {
+  if (!monthRecords[date]) monthRecords[date] = {};
+  const rec = monthRecords[date][sid] || {};
+  const cur = rec.status || '';
+  const next = cur===''?'✓':cur==='✓'?'✗':'';
+  monthRecords[date][sid] = { ...rec, status: next };
+
+  // 更新 UI
+  const [y,m] = date.split('-').map(Number);
+  const val = `${y}-${pad(m)}`;
+  document.getElementById('table-area').innerHTML = buildTable(y, m);
+
+  await postGAS({ action:'saveRecord', record:{ date, studentId:sid, status:next, notes: rec.notes||'' } });
+}
+
+// ═══════════════ 學生管理 ════════════════════════════════
+
+async function loadStudents() {
+  try {
+    const r = await callGAS({ action:'getStudents' });
+    allStudents = r.students || [];
+    renderStudentList();
+  } catch(e) {
+    document.getElementById('student-list-area').innerHTML =
+      `<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
+  }
+}
+
+function renderStudentList() {
+  const query = (document.getElementById('search-input')?.value||'').trim().toLowerCase();
+  document.getElementById('student-count-label').textContent = `共 ${allStudents.length} 位學生`;
+
+  const filtered = query
+    ? allStudents.filter(s => s.name.includes(query)||s.class.toLowerCase().includes(query)||
+                               s.engName.toLowerCase().includes(query))
+    : allStudents;
+
+  if (!filtered.length) {
+    document.getElementById('student-list-area').innerHTML =
+      query ? '<div class="empty"><p>無符合結果</p></div>'
+            : '<div class="empty"><div class="e-ico">🎒</div><p>尚無學生<br>點擊右下角 ＋ 新增</p></div>';
+    return;
+  }
+
+  let html = '<div class="student-list">';
+  let lastGroup = '';
+  filtered.forEach(s => {
+    const gg = gradeGroup(s.grade);
+    if (gg !== lastGroup) {
+      lastGroup = gg;
+      html += `<div class="grade-sep ${gg}">${gradeGroupName(s.grade)}</div>`;
+    }
+    const tel = [s.phoneM, s.phoneD].filter(Boolean).join('  ');
+    const pickLabel = s.type==='外生' ? `接送：週${(s.pickupDays||[]).map(d=>['','一','二','三','四','五'][d]).join('')}` : '';
+    const typeBadge = s.type==='安親'?'badge-aq':'badge-ws';
+    html += `<div class="sl-item">
+      <div class="sl-info">
+        <div class="sl-name">${escapeHtml(s.name)} <span style="font-size:12px;font-weight:400;color:var(--gray)">${escapeHtml(s.engName||'')}</span>
+          <span class="badge ${typeBadge}" style="margin-left:4px">${s.type}</span>
+        </div>
+        <div class="sl-meta">${s.grade}年${s.class}班　${escapeHtml(tel)}${pickLabel?'　'+pickLabel:''}</div>
+      </div>
+      <div class="sl-actions">
+        <button class="btn-icon" onclick='openStudentForm(${JSON.stringify(JSON.stringify(s))})'>✏️</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('student-list-area').innerHTML = html;
+}
+
+function filterStudents() { renderStudentList(); }
+
+// ── 學生表單 ──────────────────────────────────────────────
+function openStudentForm(sJson) {
+  const s = sJson ? JSON.parse(sJson) : null;
+  document.getElementById('form-title').textContent = s ? '編輯學生' : '新增學生';
+  document.getElementById('f-id').value    = s?.id    || '';
+  document.getElementById('f-name').value  = s?.name  || '';
+  document.getElementById('f-eng').value   = s?.engName|| '';
+  document.getElementById('f-school').value= s?.school || '';
+  document.getElementById('f-grade').value = s?.grade  || '1';
+  document.getElementById('f-class').value = s?.class  || '';
+  document.getElementById('f-type').value  = s?.type   || '安親';
+  document.getElementById('f-phoneM').value= s?.phoneM || '';
+  document.getElementById('f-phoneD').value= s?.phoneD || '';
+  document.getElementById('f-notes').value = s?.notes  || '';
+
+  // 接送天 checkboxes
+  const days = s?.pickupDays || [1,2,3,4,5];
+  document.querySelectorAll('input[name="pd"]').forEach(cb => {
+    cb.checked = days.includes(Number(cb.value));
+  });
+
+  document.getElementById('form-del-btn').style.display = s ? 'inline-flex' : 'none';
+  togglePickupDays();
+  document.getElementById('student-overlay').classList.remove('hidden');
+}
+
+function togglePickupDays() {
+  const isWai = document.getElementById('f-type').value === '外生';
+  document.getElementById('pickup-days-group').style.display = isWai ? 'block' : 'none';
+}
+
+function closeStudentForm() { document.getElementById('student-overlay').classList.add('hidden'); }
+
+async function submitStudentForm() {
+  const name = document.getElementById('f-name').value.trim();
+  const cls  = document.getElementById('f-class').value.trim();
+  if (!name || !cls) { showToast('請填寫姓名和班級'); return; }
+
+  const pickupDays = [...document.querySelectorAll('input[name="pd"]:checked')].map(c=>Number(c.value));
+  const type = document.getElementById('f-type').value;
+
+  const student = {
+    id:          document.getElementById('f-id').value || null,
+    name,
+    engName:     document.getElementById('f-eng').value.trim(),
+    school:      document.getElementById('f-school').value.trim(),
+    grade:       Number(document.getElementById('f-grade').value),
+    class:       cls,
+    type,
+    phoneM:      document.getElementById('f-phoneM').value.trim(),
+    phoneD:      document.getElementById('f-phoneD').value.trim(),
+    pickupDays:  type==='外生' ? pickupDays : [1,2,3,4,5],
+    notes:       document.getElementById('f-notes').value.trim()
+  };
+
+  try {
+    const r = await postGAS({ action:'saveStudent', student });
+    if (r.error) throw new Error(r.error);
+    closeStudentForm();
+    await loadStudents();
+    showToast('✅ 儲存成功');
+  } catch(e) {
+    showToast('⚠️ 儲存失敗：'+e.message);
+  }
+}
+
+async function confirmDelete() {
+  const id = document.getElementById('f-id').value;
+  const name = document.getElementById('f-name').value;
+  if (!confirm(`確定刪除「${name}」的學生資料？此動作無法還原。`)) return;
+  try {
+    const r = await postGAS({ action:'deleteStudent', id });
+    if (r.error) throw new Error(r.error);
+    closeStudentForm();
+    await loadStudents();
+    showToast('已刪除');
+  } catch(e) {
+    showToast('⚠️ 刪除失敗：'+e.message);
+  }
+}
+
+// ═══════════════ 假日管理 ════════════════════════════════
+
+function toggleHolidayPanel() {
+  const panel = document.getElementById('holiday-panel');
+  const isHidden = panel.style.display === 'none';
+  panel.style.display = isHidden ? 'block' : 'none';
+  if (isHidden && currentTableMonth) {
+    // 預設日期選擇器為當月第一天
+    const [y, m] = currentTableMonth.split('-');
+    document.getElementById('h-date').value = `${y}-${m}-01`;
+    document.getElementById('h-date').min = `${y}-${m}-01`;
+    document.getElementById('h-date').max = `${y}-${m}-31`;
+  }
+}
+
+function renderHolidayChips(yearMonth) {
+  const chips = document.getElementById('holiday-chips');
+  const entries = Object.entries(monthHolidays)
+    .filter(([d]) => d.startsWith(yearMonth))
+    .sort(([a],[b]) => a.localeCompare(b));
+
+  if (!entries.length) {
+    chips.innerHTML = '<span style="font-size:12px;color:var(--gray-2)">本月無假日設定</span>';
+    return;
+  }
+  chips.innerHTML = entries.map(([date, note]) => {
+    const label = date.slice(5) + ' ' + note; // MM-DD 名稱
+    return `<span class="h-chip">${escapeHtml(label)}
+      <button onclick="removeHoliday('${date}')" title="移除">×</button>
+    </span>`;
+  }).join('');
+}
+
+async function addHoliday() {
+  const date = document.getElementById('h-date').value;
+  const note = document.getElementById('h-note').value.trim() || '假日';
+  if (!date) { showToast('請選擇日期'); return; }
+  if (!currentTableMonth) { showToast('請先產生月份表'); return; }
+
+  try {
+    const r = await postGAS({ action:'saveHoliday', date, note });
+    if (r.error) throw new Error(r.error);
+    monthHolidays[date] = note;
+    document.getElementById('h-note').value = '';
+    renderHolidayChips(currentTableMonth);
+    // 重繪表格
+    const [y, m] = currentTableMonth.split('-').map(Number);
+    document.getElementById('table-area').innerHTML = buildTable(y, m);
+    showToast(`✅ 已新增假日：${date} ${note}`);
+  } catch(e) {
+    showToast('⚠️ 新增失敗：'+e.message);
+  }
+}
+
+async function removeHoliday(date) {
+  if (!confirm(`確定移除 ${date} 的假日設定？`)) return;
+  try {
+    const r = await postGAS({ action:'deleteHoliday', date });
+    if (r.error) throw new Error(r.error);
+    delete monthHolidays[date];
+    renderHolidayChips(currentTableMonth);
+    const [y, m] = currentTableMonth.split('-').map(Number);
+    document.getElementById('table-area').innerHTML = buildTable(y, m);
+    showToast('已移除假日');
+  } catch(e) {
+    showToast('⚠️ 移除失敗：'+e.message);
+  }
+}
+
+// ── 工具函式 ──────────────────────────────────────────────
+function escapeHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, duration=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), duration);
+}
+
+// ── 初始化 ────────────────────────────────────────────────
+(async function init() {
+  // 設定月份選擇器預設為本月
+  const now = new Date();
+  document.getElementById('month-picker').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+
+  // 點名頁初始化
+  setRollHeader();
+  refreshRollCall();
+})();
+</script>
+</body>
+</html>
