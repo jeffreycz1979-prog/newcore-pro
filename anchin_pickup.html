@@ -985,22 +985,28 @@ async function generateTable() {
   if(!val){ showToast('請選擇月份'); return; }
   const [year,month]=val.split('-').map(Number);
   currentTableMonth=val;
-  document.getElementById('table-area').innerHTML='<div class="loading">產生中…</div>';
+  document.getElementById('table-area').innerHTML='<div class="loading">載入中…</div>';
   try {
+    // ★ 修正：每次產生都強制重新抓取假日與點名記錄，不使用快取
+    // 假日只快取 students，避免舊假日設定殘留
     const [sr,mr,hr]=await Promise.all([
       allStudents.length?Promise.resolve({students:allStudents}):callGAS({action:'getStudents'}),
       callGAS({action:'getMonthRecords', yearMonth:val}),
-      callGAS({action:'getHolidays', yearMonth:val})
+      callGAS({action:'getHolidays', yearMonth:val})  // ← 永遠重新抓
     ]);
     allStudents=sr.students||[];
     allStudents.forEach(storeStudent);
     monthRecords=mr.records||{};
+    // ★ 修正：每次重新生成都完整重建 monthHolidays，清除舊快取
     monthHolidays={};
-    (hr.holidays||[]).forEach(h=>{monthHolidays[h.date]=h.note||'假日';});
+    (hr.holidays||[]).forEach(h=>{
+      if(h.date) monthHolidays[h.date]=h.note||'假日';
+    });
     buildSchoolOptions();
     document.getElementById('print-title').textContent=`安親接車　${year}年${month}月　接車點名表`;
     renderTable(year,month);
     renderHolidayChips(val);
+    showToast(`✅ ${year}年${month}月 已載入`);
   } catch(e){
     document.getElementById('table-area').innerHTML=`<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
   }
@@ -1126,18 +1132,34 @@ function buildTable(year, month) {
   return `<table class="pt">${head}${body}</table>`;
 }
 
-// 表格點擊事件委派
+// 表格點擊事件委派（含防重複點擊 + 存檔確認 toast）
+let _tableSaving = false;
 document.getElementById('table-area').addEventListener('click', async e=>{
   const td=e.target.closest('td[data-date]');
-  if(!td) return;
+  if(!td || _tableSaving) return;
   const {date, sid}=td.dataset;
+  if(!date || !sid) return;
   if(!monthRecords[date]) monthRecords[date]={};
   const rec=monthRecords[date][sid]||{};
   const next=rec.status===''||!rec.status?'✓':rec.status==='✓'?'✗':'';
+  // ★ 先更新本地狀態並重繪，讓使用者立刻看到變化
   monthRecords[date][sid]={...rec, status:next};
   const [y,m]=date.split('-').map(Number);
   renderTable(y,m);
-  await postGAS({action:'saveRecord', record:{date, studentId:sid, status:next, notes:rec.notes||''}});
+  // ★ 非同步存到 GAS，存完後用 toast 確認（不重繪，避免覆蓋本地變更）
+  _tableSaving = true;
+  try {
+    const r = await postGAS({action:'saveRecord', record:{date, studentId:sid, status:next, notes:rec.notes||''}});
+    if(r && r.error) showToast('⚠️ 儲存失敗：'+r.error);
+    // else showToast('💾 已儲存', 1200);  // 太頻繁可關掉
+  } catch(err){
+    showToast('⚠️ 網路錯誤，請重試');
+    // rollback
+    monthRecords[date][sid]={...rec};
+    renderTable(y,m);
+  } finally {
+    _tableSaving = false;
+  }
 });
 
 // ══════════════════════════════════════════════════════════
