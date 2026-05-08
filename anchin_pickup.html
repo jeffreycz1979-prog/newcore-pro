@@ -1,1412 +1,468 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>安親接車管理系統</title>
-<style>
-:root {
-  --primary:#2563EB; --primary-d:#1D4ED8; --primary-light:#DBEAFE;
-  --success:#16A34A; --danger:#DC2626; --warning:#D97706;
-  --gray:#6B7280; --gray-2:#9CA3AF; --gray-light:#F3F4F6; --border:#E5E7EB;
-  --am-bg:#FFFFFF;
-  --pm-bg:#FEF08A;
-  --no-bg:#374151;
-  --low-c:#059669; --mid-c:#D97706; --high-c:#DC2626;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html{touch-action:manipulation}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
-     background:#F8FAFC;color:#1F2937;min-height:100vh;overflow-x:hidden;
-     -webkit-font-smoothing:antialiased}
+// ============================================================
+// 安親接車管理系統 - GAS 後端 v1.2
+// 更新：
+//   - 點名記錄改為按月份分頁（RECORD_2026-05 等）
+//   - customTimes 欄位（L欄）
+//   - 完整 2026 台灣假日（已含所有連假）
+// ============================================================
 
-.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;
-     border-top:1px solid var(--border);display:flex;z-index:100;
-     padding-bottom:env(safe-area-inset-bottom,0px)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
-         padding:10px 4px 8px;cursor:pointer;color:var(--gray);font-size:10px;
-         border:none;background:none;gap:3px;min-height:56px}
-.nav-btn .ico{font-size:24px;line-height:1}
-.nav-btn.active{color:var(--primary)}
+const SPREADSHEET_ID = '162Kjm_ZxdpUgWWtTLyJSxcrENLnScoHF-gmD8itXihA';
+const STUDENT_SHEET  = '學生名單';
+const HOLIDAY_SHEET  = '假日設定';
+// 注意：點名記錄不再用 RECORD_SHEET，改為 getRecordSheet(yearMonth)
 
-.content{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
-.page{display:none}.page.active{display:block}
+// ─── 基礎輔助函式 ────────────────────────────────────────────
 
-.pg-header{background:var(--primary);color:#fff;padding:14px 16px;
-           position:sticky;top:0;z-index:50;box-shadow:0 2px 6px rgba(0,0,0,.15)}
-.pg-header h1{font-size:18px;font-weight:700}
-.pg-header p{font-size:12px;opacity:.85;margin-top:2px}
-
-.card{background:#fff;border-radius:12px;padding:16px;margin:12px;
-      box-shadow:0 1px 4px rgba(0,0,0,.08)}
-
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
-     padding:10px 18px;border-radius:9px;border:none;font-size:14px;
-     font-weight:600;cursor:pointer;white-space:nowrap;min-height:44px}
-.btn:active{opacity:.75}
-.btn-primary{background:var(--primary);color:#fff}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
-.btn-gray{background:var(--gray-light);color:var(--gray)}
-.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px;min-height:38px}
-.btn-icon{width:44px;height:44px;padding:0;border-radius:10px;border:1px solid var(--border);
-          background:#fff;cursor:pointer;font-size:18px;display:inline-flex;
-          align-items:center;justify-content:center}
-
-.filter-bar{padding:10px 12px 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.filter-select{padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;
-               font-size:13px;background:#fff;outline:none;min-height:42px;cursor:pointer}
-.filter-select:focus{border-color:var(--primary)}
-
-.date-nav{display:flex;align-items:center;gap:8px;padding:8px 12px;
-          background:#fff;border-bottom:1px solid var(--border)}
-.date-nav-btn{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);
-              background:#fff;cursor:pointer;font-size:20px;display:flex;
-              align-items:center;justify-content:center;flex-shrink:0}
-.date-nav-btn:active{background:var(--gray-light)}
-.date-nav-center{flex:1;text-align:center}
-.date-nav-label{font-size:15px;font-weight:700}
-.date-nav-sub{font-size:11px;color:var(--gray);margin-top:1px}
-.today-tag{display:inline-block;padding:2px 8px;background:var(--primary);
-           color:#fff;border-radius:10px;font-size:10px;font-weight:700;margin-left:6px}
-
-.time-banner{background:#EFF6FF;border-left:3px solid var(--primary);
-             margin:8px 12px;border-radius:0 8px 8px 0;padding:10px 12px;
-             font-size:12px;color:#1D4ED8;line-height:1.7}
-.quick-bar{display:flex;gap:8px;padding:6px 12px 4px;flex-wrap:wrap}
-
-.grade-header{padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:#fff;margin-top:6px}
-.grade-header.low{background:var(--low-c)}
-.grade-header.mid{background:var(--mid-c)}
-.grade-header.high{background:var(--high-c)}
-
-/* ── 點名卡片：精簡版，一行顯示所有資訊 ── */
-.s-card{background:#fff;border-radius:10px;margin:4px 10px;
-        box-shadow:0 1px 3px rgba(0,0,0,.07);
-        border-left:4px solid var(--border);overflow:hidden}
-.s-card.chk{border-left-color:var(--success);background:#F0FDF4}
-.s-card.abs{border-left-color:var(--danger);background:#FFF5F5}
-.s-card.tmp-card{border-left-color:var(--warning);background:#FFFBEB}
-
-/* 主體：一行，垂直居中 */
-.s-body{display:flex;align-items:center;padding:9px 10px;gap:8px;min-height:56px}
-.s-seq{width:24px;height:24px;border-radius:50%;background:var(--gray-light);
-       display:flex;align-items:center;justify-content:center;
-       font-size:10px;font-weight:700;color:var(--gray);flex-shrink:0}
-.s-seq.tmp-seq{background:#FEF3C7;color:#B45309}
-
-/* 資訊區：名字＋meta 橫排，不換行 */
-.s-info{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden}
-.s-name{font-size:15px;font-weight:700;line-height:1;white-space:nowrap;flex-shrink:0}
-.s-eng{font-size:11px;color:var(--gray);white-space:nowrap;flex-shrink:0}
-.s-meta{font-size:10px;color:var(--gray);display:flex;align-items:center;gap:4px;flex-wrap:nowrap;flex-shrink:1;overflow:hidden}
-.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:700;white-space:nowrap}
-.badge-aq{background:#DBEAFE;color:#1D4ED8}
-.badge-ws{background:#FEF3C7;color:#B45309}
-.badge-tmp{background:#FEF3C7;color:#92400E}
-.badge-tmpswitch{background:#FDE68A;color:#B45309}
-.badge-low{background:#D1FAE5;color:#065F46}
-.badge-mid{background:#FEF9C3;color:#854D0E}
-.badge-high{background:#FEE2E2;color:#991B1B}
-
-/* 操作按鈕：縮小 */
-.s-actions{display:flex;gap:5px;flex-shrink:0}
-.act-btn{width:42px;height:42px;border-radius:9px;border:1.5px solid var(--border);
-         background:#fff;font-size:16px;cursor:pointer;
-         display:flex;align-items:center;justify-content:center;user-select:none}
-.act-btn:active{transform:scale(.88)}
-.act-btn.on-chk{background:var(--success);border-color:var(--success);color:#fff}
-.act-btn.on-abs{background:var(--danger);border-color:var(--danger);color:#fff}
-
-.s-note-bar{font-size:11px;color:var(--warning);padding:0 10px 7px 42px;font-style:italic}
-
-.tmp-section{margin:8px 12px 4px;padding:10px 12px;background:#FFFBEB;
-             border:1.5px dashed #F59E0B;border-radius:10px}
-.tmp-title{font-size:12px;font-weight:700;color:#B45309;margin-bottom:8px}
-.tmp-row{display:flex;gap:8px}
-.tmp-input{flex:1;padding:9px 12px;border:1.5px solid #FCD34D;border-radius:9px;font-size:14px;outline:none}
-.tmp-input:focus{border-color:#F59E0B}
-
-/* ── 接車總表 ── */
-.table-ctrl{padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
-            margin:0 8px 12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-table.pt{border-collapse:collapse;font-size:11px;white-space:nowrap;background:#fff}
-table.pt th,table.pt td{border:1px solid #CBD5E1;text-align:center;padding:4px 5px}
-table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
-/* 週次交替 */
-.wk-hd-a{background:#1E40AF!important}
-.wk-hd-b{background:#065F46!important}
-.wk-a{border-left:2px solid #93C5FD!important}
-.wk-b{border-left:2px solid #6EE7B7!important}
-/* 接送色 */
-.cell-am{background:#FFFFFF}
-.cell-pm{background:#FEF08A}
-.cell-no{background:#374151;color:#9CA3AF;font-size:9px}
-.cell-holiday{background:#FCA5A5;color:#7F1D1D;font-size:9px;font-weight:700}
-.th-holiday{background:#DC2626!important;color:#fff!important}
-.th-holiday-day{background:#B91C1C!important;font-size:9px!important}
-.cell-chk{color:var(--success);font-weight:900;font-size:14px}
-.cell-abs{color:var(--danger);font-weight:900;font-size:14px}
-.pt .grade-row td{background:#1E3A8A;color:#fff;font-weight:700;font-size:10px;text-align:left;padding-left:8px}
-.pt .name-col{text-align:left!important;padding-left:6px;min-width:52px;font-weight:600}
-.pt .eng-col{text-align:left!important;min-width:40px;color:var(--gray)}
-.pt .cls-col{min-width:28px;color:var(--gray)}
-.pt .type-col{min-width:28px}
-.pt .tel-col{text-align:left!important;min-width:80px;font-size:9px;color:var(--gray)}
-.pt .no-col{min-width:22px;color:var(--gray-2);font-size:10px}
-/* 外生列着色 */
-.pt .ws-row .name-col{color:#B45309}
-.pt .ws-row .type-badge{background:#FEF3C7;color:#B45309;padding:1px 4px;border-radius:4px;font-size:8px;font-weight:700}
-.pt .aq-row .type-badge{background:#DBEAFE;color:#1D4ED8;padding:1px 4px;border-radius:4px;font-size:8px;font-weight:700}
-
-.legend{display:flex;gap:10px;flex-wrap:wrap;padding:0 12px 8px;font-size:12px;align-items:center}
-.leg{display:flex;align-items:center;gap:4px}
-.leg-box{width:16px;height:16px;border-radius:4px;border:1px solid var(--border)}
-
-/* ── 假日面板 ── */
-.holiday-panel{background:#FFF7F7;border:1px solid #FECACA;border-radius:10px;
-               margin:0 12px 8px;padding:12px}
-.holiday-panel-title{font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;
-                      display:flex;align-items:center;justify-content:space-between}
-.holiday-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.h-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px 4px 12px;
-        border-radius:20px;background:#FEE2E2;color:#991B1B;font-size:12px;font-weight:600}
-.h-chip button{border:none;background:none;cursor:pointer;color:#DC2626;font-size:16px;line-height:1;padding:0 2px;min-width:24px;min-height:24px}
-.holiday-add-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.h-inp-d{padding:8px 10px;border:1.5px solid #FECACA;border-radius:8px;font-size:13px;outline:none;min-height:42px}
-.h-inp-d:focus{border-color:#DC2626}
-.h-inp-n{flex:1;padding:8px 12px;border:1.5px solid #FECACA;border-radius:8px;font-size:13px;outline:none;min-height:42px}
-
-/* ── 學生管理 ── */
-.search-bar{margin:10px 12px 6px;display:flex;gap:8px}
-.search-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;min-height:44px}
-.search-input:focus{border-color:var(--primary)}
-.student-list{background:#fff;border-radius:12px;margin:0 12px 12px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
-.sl-item{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid var(--gray-light);gap:10px}
-.sl-item:last-child{border-bottom:none}
-.sl-info{flex:1;min-width:0}
-.sl-name{font-size:15px;font-weight:700}
-.sl-meta{font-size:11px;color:var(--gray);margin-top:2px}
-.grade-sep{padding:6px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:#fff}
-.grade-sep.low{background:var(--low-c)}
-.grade-sep.mid{background:var(--mid-c)}
-.grade-sep.high{background:var(--high-c)}
-.fab{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:16px;
-     width:58px;height:58px;border-radius:50%;background:var(--primary);color:#fff;border:none;
-     font-size:28px;cursor:pointer;z-index:60;
-     box-shadow:0 4px 16px rgba(37,99,235,.45);display:flex;align-items:center;justify-content:center}
-
-/* ── Modal ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
-         display:flex;align-items:flex-end;justify-content:center}
-.overlay.hidden{display:none}
-.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:560px;
-       max-height:90vh;overflow-y:auto;padding:20px;
-       padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
-.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
-.modal-title{font-size:17px;font-weight:800;margin-bottom:14px}
-.modal-footer{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
-
-.fg{margin-bottom:13px}
-.fl{display:block;font-size:12px;font-weight:700;color:var(--gray);margin-bottom:5px}
-.fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:15px;outline:none;font-family:inherit;min-height:44px}
-.fi:focus{border-color:var(--primary)}
-.fi-row{display:flex;gap:8px}
-.fi-row>div{flex:1;min-width:0}
-.day-row{display:flex;gap:6px;flex-wrap:wrap}
-.day-chk input{display:none}
-.day-chk label{display:flex;align-items:center;justify-content:center;
-               padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;
-               font-size:13px;cursor:pointer;min-width:48px;min-height:44px}
-.day-chk input:checked+label{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
-
-.ct-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:6px}
-.ct-item{background:var(--gray-light);border-radius:8px;padding:6px 8px;text-align:center}
-.ct-item label{font-size:10px;font-weight:700;color:var(--gray);display:block;margin-bottom:4px}
-.ct-item select{width:100%;padding:4px;border:1px solid var(--border);border-radius:6px;font-size:11px;min-height:32px}
-@media(max-width:440px){.ct-grid{grid-template-columns:repeat(3,1fr)}}
-
-.phone-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--gray-light)}
-.phone-item:last-child{border-bottom:none}
-.phone-lbl{font-size:12px;color:var(--gray);min-width:36px}
-.phone-num{font-size:18px;font-weight:700;color:var(--primary);flex:1;letter-spacing:1px}
-.btn-call{background:var(--success);color:#fff;border:none;border-radius:9px;
-          padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;
-          min-height:44px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-.phone-copy{font-size:11px;color:var(--gray);margin-top:4px}
-
-.notes-ta{width:100%;height:80px;padding:10px;border:1.5px solid var(--border);
-          border-radius:9px;font-size:14px;resize:none;font-family:inherit;outline:none}
-.notes-ta:focus{border-color:var(--primary)}
-
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);
-       background:#1F2937;color:#fff;padding:10px 22px;border-radius:20px;
-       font-size:13px;z-index:400;opacity:0;pointer-events:none;white-space:nowrap;
-       box-shadow:0 4px 12px rgba(0,0,0,.3);transition:opacity .25s}
-.toast.on{opacity:1}
-
-.loading{text-align:center;padding:48px 20px;color:var(--gray);font-size:14px}
-.empty{text-align:center;padding:40px 20px;color:var(--gray-2)}
-.empty .e-ico{font-size:44px;margin-bottom:10px}
-.empty p{font-size:14px}
-
-@media print{
-  .nav,.pg-header,.table-ctrl,.legend,.quick-bar,.fab,
-  .filter-bar,.date-nav,.holiday-panel,.tmp-section{display:none!important}
-  body{background:#fff}
-  .content{padding-bottom:0}
-  .page{display:none!important}.page.active{display:block!important}
-  .table-wrap{box-shadow:none;margin:0;overflow:visible}
-  table.pt{font-size:8px}
-  .page-title-print{display:block!important;font-size:13px;font-weight:700;text-align:center;padding:8px 0}
-}
-.page-title-print{display:none}
-</style>
-</head>
-<body>
-
-<div class="content">
-
-<!-- ① 今日點名 -->
-<div id="page-roll" class="page active">
-  <div class="pg-header">
-    <h1>📋 接車點名</h1>
-    <p id="roll-date-label"></p>
-  </div>
-
-  <div class="date-nav">
-    <button class="date-nav-btn" onclick="changeRollDate(-1)">‹</button>
-    <div class="date-nav-center">
-      <div class="date-nav-label" id="date-nav-label">載入中…</div>
-      <div class="date-nav-sub" id="date-nav-sub"></div>
-    </div>
-    <button class="date-nav-btn" onclick="changeRollDate(1)">›</button>
-    <button class="btn btn-outline btn-sm" id="jump-today-btn" style="display:none;margin-left:4px;padding:8px 12px" onclick="jumpToToday()">今日</button>
-  </div>
-
-  <div class="filter-bar">
-    <select class="filter-select" id="roll-school-filter" onchange="renderRollList()">
-      <option value="">🏫 所有學校</option>
-    </select>
-    <select class="filter-select" id="roll-time-filter" onchange="renderRollList()">
-      <option value="">⏰ 所有時間</option>
-      <option value="am">12:00 午間接</option>
-      <option value="pm">16:00 下午接</option>
-    </select>
-  </div>
-
-  <div class="time-banner" id="time-banner"></div>
-
-  <div class="quick-bar">
-    <button class="btn btn-sm" style="background:var(--success);color:#fff" onclick="quickAllCheck()">✅ 快速全到</button>
-    <button class="btn btn-gray btn-sm" onclick="clearAllRecords()">↩ 清除全部</button>
-    <button class="btn btn-outline btn-sm" onclick="refreshRollCall()">🔄 重新載入</button>
-  </div>
-
-  <div class="tmp-section">
-    <div class="tmp-title">⚡ 臨時加接 <span style="font-weight:400;font-size:11px;color:#92400E">（換時間接送 或 名單外學生）</span></div>
-    <div class="tmp-row" style="margin-bottom:6px">
-      <select id="tmp-student-sel" class="tmp-input" style="padding:7px 8px;font-size:13px">
-        <option value="">從名單選（改時間接送）…</option>
-      </select>
-      <button class="btn btn-sm" style="background:#F59E0B;color:#fff;min-width:56px" onclick="addTmpFromList()">加入</button>
-    </div>
-    <div class="tmp-row">
-      <input class="tmp-input" id="tmp-name" placeholder="或輸入名單外學生姓名" maxlength="20">
-      <button class="btn btn-sm" style="background:#D97706;color:#fff;min-width:56px" onclick="addTmpStudent()">加接</button>
-    </div>
-  </div>
-
-  <div id="roll-list"><div class="loading">載入中…</div></div>
-</div>
-
-<!-- ② 接車總表 -->
-<div id="page-table" class="page">
-  <div class="pg-header">
-    <h1>📅 接車總表</h1>
-    <p>月份接送彙總表</p>
-  </div>
-  <div class="table-ctrl">
-    <input type="month" id="month-picker" class="fi" style="width:auto;padding:8px 10px;min-height:42px">
-    <button class="btn btn-primary btn-sm" onclick="generateTable()">產生月份表</button>
-    <button class="btn btn-sm" style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA" onclick="toggleHolidayPanel()">🗓 假日</button>
-    <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 列印</button>
-  </div>
-
-  <div class="filter-bar">
-    <select class="filter-select" id="table-school-filter" onchange="regenerateTable()">
-      <option value="">🏫 所有學校</option>
-    </select>
-  </div>
-
-  <div class="legend">
-    <span class="leg"><span class="leg-box" style="background:#fff;border:1px solid #CBD5E1"></span>12:00 午間</span>
-    <span class="leg"><span class="leg-box" style="background:#FEF08A"></span>16:00 下午</span>
-    <span class="leg"><span class="leg-box" style="background:#374151"></span>不接</span>
-    <span class="leg"><span class="leg-box" style="background:#FCA5A5"></span>假日</span>
-    <span class="leg"><span class="leg-box" style="background:#EFF6FF;border-left:3px solid #93C5FD"></span>奇週</span>
-    <span class="leg"><span class="leg-box" style="background:#F0FDF4;border-left:3px solid #6EE7B7"></span>偶週</span>
-    <span class="leg" style="color:var(--success);font-weight:700">✓ 接到</span>
-    <span class="leg" style="color:var(--danger);font-weight:700">✕ 請假</span>
-    <span class="leg"><span class="badge-aq badge" style="font-size:9px">安親</span></span>
-    <span class="leg"><span class="badge-ws badge" style="font-size:9px">外生</span></span>
-  </div>
-
-  <div class="holiday-panel" id="holiday-panel" style="display:none">
-    <div class="holiday-panel-title">
-      <span>🗓 假日設定（本月）</span>
-      <button class="btn btn-gray btn-sm" onclick="toggleHolidayPanel()">收起</button>
-    </div>
-    <div class="holiday-chips" id="holiday-chips"></div>
-    <div class="holiday-add-row">
-      <input type="date" id="h-date" class="h-inp-d">
-      <input type="text" id="h-note" class="h-inp-n" placeholder="假日名稱（例：補課日）" maxlength="20">
-      <button class="btn btn-danger btn-sm" onclick="addHoliday()">新增</button>
-    </div>
-  </div>
-
-  <div class="page-title-print" id="print-title"></div>
-  <div class="table-wrap" id="table-area"><div class="loading">請選擇月份後點擊「產生月份表」</div></div>
-</div>
-
-<!-- ③ 學生管理 -->
-<div id="page-mgmt" class="page">
-  <div class="pg-header">
-    <h1>👥 學生管理</h1>
-    <p id="student-count-label">共 0 位學生</p>
-  </div>
-  <div class="search-bar">
-    <input id="search-input" type="search" class="search-input" placeholder="搜尋姓名 / 班級…" oninput="renderStudentList()">
-  </div>
-  <div class="filter-bar" style="padding-top:0">
-    <select class="filter-select" id="mgmt-school-filter" onchange="renderStudentList()">
-      <option value="">🏫 所有學校</option>
-    </select>
-  </div>
-  <div id="student-list-area"><div class="loading">載入中…</div></div>
-  <button class="fab" onclick="openStudentForm(null)">＋</button>
-</div>
-
-</div><!-- end content -->
-
-<nav class="nav">
-  <button class="nav-btn active" onclick="switchTab('roll',this)">
-    <span class="ico">📋</span>今日點名
-  </button>
-  <button class="nav-btn" onclick="switchTab('table',this)">
-    <span class="ico">📅</span>接車總表
-  </button>
-  <button class="nav-btn" onclick="switchTab('mgmt',this)">
-    <span class="ico">👥</span>學生管理
-  </button>
-</nav>
-
-<!-- 電話 Modal -->
-<div class="overlay hidden" id="phone-overlay">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="phone-modal-name"></div>
-    <div id="phone-modal-body"></div>
-    <div class="modal-footer">
-      <button class="btn btn-gray" onclick="closePhoneModal()">關閉</button>
-    </div>
-  </div>
-</div>
-
-<!-- 備註 Modal -->
-<div class="overlay hidden" id="notes-overlay">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="notes-modal-name">備註</div>
-    <textarea class="notes-ta" id="notes-ta" placeholder="輸入今日備註…"></textarea>
-    <div class="modal-footer">
-      <button class="btn btn-gray" onclick="closeNotesModal()">取消</button>
-      <button class="btn btn-primary" onclick="saveNotes()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<!-- 學生表單 Modal -->
-<div class="overlay hidden" id="student-overlay">
-  <div class="modal" onclick="event.stopPropagation()">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="form-title">新增學生</div>
-    <input type="hidden" id="f-id">
-
-    <div class="fi-row">
-      <div class="fg"><label class="fl">中文姓名 *</label><input class="fi" id="f-name" placeholder="王小明"></div>
-      <div class="fg"><label class="fl">英文名</label><input class="fi" id="f-eng" placeholder="Peter"></div>
-    </div>
-    <div class="fi-row">
-      <div class="fg" style="flex:2"><label class="fl">學校</label><input class="fi" id="f-school" placeholder="雙永國小"></div>
-      <div class="fg"><label class="fl">年級 *</label>
-        <select class="fi" id="f-grade">
-          <option value="1">1年級</option><option value="2">2年級</option>
-          <option value="3">3年級</option><option value="4">4年級</option>
-          <option value="5">5年級</option><option value="6">6年級</option>
-        </select>
-      </div>
-      <div class="fg"><label class="fl">班級 *</label><input class="fi" id="f-class" placeholder="101"></div>
-    </div>
-
-    <div class="fg">
-      <label class="fl">學生類型 *</label>
-      <select class="fi" id="f-type" onchange="onTypeChange()">
-        <option value="安親">安親（週一至週五全接）</option>
-        <option value="外生">外生（自訂接送天）</option>
-      </select>
-    </div>
-
-    <div class="fg" id="pickup-days-group" style="display:none">
-      <label class="fl">接送天（外生）</label>
-      <div class="day-row">
-        <label class="day-chk"><input type="checkbox" name="pd" value="1"><label>一</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="2"><label>二</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="3"><label>三</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="4"><label>四</label></label>
-        <label class="day-chk"><input type="checkbox" name="pd" value="5"><label>五</label></label>
-      </div>
-    </div>
-
-    <div class="fg">
-      <label class="fl">自訂接送時間 <span style="font-weight:400;color:var(--gray-2);font-size:11px">（可覆蓋系統預設；社團/特殊日適用）</span></label>
-      <div class="ct-grid" id="ct-grid"></div>
-    </div>
-
-    <div class="fi-row">
-      <div class="fg"><label class="fl">手機M（媽）</label><input class="fi" id="f-phoneM" type="text" inputmode="tel" placeholder="0912-345-678"></div>
-      <div class="fg"><label class="fl">電話D（爸）</label><input class="fi" id="f-phoneD" type="text" inputmode="tel" placeholder="0987-654-321"></div>
-    </div>
-    <div class="fg"><label class="fl">備註</label><input class="fi" id="f-notes" placeholder="例：早退、特殊接送安排…"></div>
-
-    <div class="modal-footer">
-      <button class="btn btn-gray" onclick="closeStudentForm()">取消</button>
-      <button class="btn btn-danger btn-sm" id="form-del-btn" style="display:none" onclick="confirmDelete()">刪除</button>
-      <button class="btn btn-primary" onclick="submitStudentForm()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-// ══════════════════════════════════════════════════════════
-// GAS 設定
-// ══════════════════════════════════════════════════════════
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsdHanASq5Gjfhf0xMtwpfF_t4J9dECzAsK69CnWJDv0WlICW2KONuPisr_nedDp9s/exec';
-
-// ══════════════════════════════════════════════════════════
-// 全域資料 store — 解決 onclick JSON 引號問題的核心
-// 所有按鈕動作透過 data-sid / data-idx 查此表，不傳 JSON
-// ══════════════════════════════════════════════════════════
-const STORE = {};   // { sid: studentObj }
-function storeStudent(s) { STORE[s.id] = s; }
-function getStored(sid) { return STORE[sid] || null; }
-
-// ══════════════════════════════════════════════════════════
-// 狀態
-// ══════════════════════════════════════════════════════════
-let allStudents   = [];
-let rollRecords   = {};
-let monthRecords  = {};
-let monthHolidays = {};
-let notesTarget   = null;
-let currentTableMonth = '';
-let tmpStudents   = [];
-
-const TODAY = formatDate(new Date());
-let currentRollDate = TODAY;
-
-// ══════════════════════════════════════════════════════════
-// 工具
-// ══════════════════════════════════════════════════════════
-function formatDate(d) {
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-function pad(n){ return String(n).padStart(2,'0'); }
-
-function dateFromStr(s) {
-  const [y,m,d] = s.split('-').map(Number);
-  return new Date(y, m-1, d);
+function getSpreadsheet() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
 }
 
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function jsonpResponse(e, data) {
+  const cb = (e && e.parameter && e.parameter.callback) || 'callback';
+  return ContentService
+    .createTextOutput(`${cb}(${JSON.stringify(data)})`)
+    .setMimeType(ContentService.MimeType.JAVASCRIPT);
 }
 
-function showToast(msg, ms=2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('on');
-  setTimeout(()=>t.classList.remove('on'), ms);
+function postResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ══════════════════════════════════════════════════════════
-// GAS 通訊
-// ══════════════════════════════════════════════════════════
-function callGAS(params) {
-  return new Promise((resolve, reject) => {
-    const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
-    const script = document.createElement('script');
-    const timer = setTimeout(() => {
-      reject(new Error('Timeout'));
-      delete window[cb]; script.remove();
-    }, 18000);
-    window[cb] = d => {
-      clearTimeout(timer); resolve(d);
-      delete window[cb]; script.remove();
-    };
-    const qs = Object.entries({...params, callback:cb})
-      .map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
-    script.src = `${GAS_URL}?${qs}`;
-    script.onerror = ()=>{ clearTimeout(timer); reject(new Error('網路錯誤')); script.remove(); };
-    document.body.appendChild(script);
-  });
-}
+// ─── 月份點名分頁 ────────────────────────────────────────────
+// 分頁命名：RECORD_YYYY-MM（例如：RECORD_2026-05）
 
-async function postGAS(payload) {
-  return callGAS({ action: payload.action, payload: JSON.stringify(payload) });
-}
-
-// ══════════════════════════════════════════════════════════
-// 接送時間規則
-// ══════════════════════════════════════════════════════════
-function getPickupTime(s, dow) {
-  const ct = s.customTimes || {};
-  if (ct[dow] && ct[dow] !== '') return ct[dow];
-  if (s.grade <= 2) return dow === 2 ? 'pm' : 'am';
-  if (s.grade <= 4) return (dow===3||dow===5) ? 'am' : 'pm';
-  return dow === 3 ? 'am' : 'pm';
-}
-
-function shouldPickup(s, dow) {
-  if (!dow) return false;
-  const ct = s.customTimes || {};
-  if (ct[dow] === 'none') return false;
-  if (s.type === '安親') return true;
-  return (s.pickupDays||[]).includes(dow);
-}
-
-function ptLabel(code) { return code==='am'?'12:00':'16:00'; }
-
-// ══════════════════════════════════════════════════════════
-// 月份 / 週次工具
-// ══════════════════════════════════════════════════════════
-function getWeekNum(dateStr) {
-  const d = dateFromStr(dateStr);
-  const soy = new Date(d.getFullYear(),0,1);
-  return Math.ceil(((d-soy)/86400000 + soy.getDay()+1)/7);
-}
-
-function getMonthWeekdays(year, month) {
-  const days=[], d=new Date(year,month-1,1);
-  const names=['','一','二','三','四','五'];
-  while(d.getMonth()===month-1){
-    const dow=d.getDay();
-    if(dow>=1&&dow<=5) days.push({
-      date:formatDate(new Date(d)), dow,
-      label:`${month}/${d.getDate()}`, dayName:names[dow],
-      weekNum:getWeekNum(formatDate(new Date(d)))
-    });
-    d.setDate(d.getDate()+1);
+function getRecordSheet(yearMonth) {
+  const ss = getSpreadsheet();
+  const name = 'RECORD_' + yearMonth;
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(['日期', '學生ID', '狀態', '備註', '更新時間']);
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 100);
+    sheet.setColumnWidth(2, 100);
+    sheet.setColumnWidth(3, 60);
+    sheet.setColumnWidth(4, 200);
+    sheet.setColumnWidth(5, 140);
+    // 凍結前兩欄
+    sheet.setFrozenColumns(0);
   }
-  return days;
+  return sheet;
 }
 
-function gradeGroup(g){ return g<=2?'low':g<=4?'mid':'high'; }
-function gradeGroupName(g){ return g<=2?'低年級（1-2年級）':g<=4?'中年級（3-4年級）':'高年級（5-6年級）'; }
-function gradeGroupLabel(g){ return g<=2?'低':g<=4?'中':'高'; }
-
-// ══════════════════════════════════════════════════════════
-// 學校選單
-// ══════════════════════════════════════════════════════════
-function buildSchoolOptions() {
-  const schools = [...new Set(allStudents.map(s=>s.school).filter(Boolean))].sort();
-  ['roll-school-filter','table-school-filter','mgmt-school-filter'].forEach(id=>{
-    const sel = document.getElementById(id);
-    if(!sel) return;
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">🏫 所有學校</option>' +
-      schools.map(s=>`<option value="${escHtml(s)}"${s===cur?' selected':''}>${escHtml(s)}</option>`).join('');
-  });
-  buildTmpStudentSel();
+function yearMonthFromDate(dateStr) {
+  // dateStr: 'YYYY-MM-DD' → 'YYYY-MM'
+  return String(dateStr).slice(0, 7);
 }
 
-// ══════════════════════════════════════════════════════════
-// Tab 切換
-// ══════════════════════════════════════════════════════════
-function switchTab(name, btn) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
-  btn.classList.add('active');
-  if(name==='roll'){ updateDateNav(); renderRollList(); buildTmpStudentSel(); }
-  if(name==='mgmt') renderStudentList();
+// 把前端傳來的 ASCII status 還原成顯示用符號
+// 前端傳: 'ok' → '✓', 'no' → '✗', '' → ''
+// 這樣避免 Unicode 字元在 JSONP URL 中的亂碼問題
+function decodeStatus(s) {
+  if (s === 'ok') return '✓';
+  if (s === 'no') return '✗';
+  return String(s || '');
+}
+function encodeStatus(s) {
+  if (s === '✓') return 'ok';
+  if (s === '✗') return 'no';
+  return '';
 }
 
-// ══════════════════════════════════════════════════════════
-// 日期導航
-// ══════════════════════════════════════════════════════════
-function changeRollDate(delta) {
-  const d = dateFromStr(currentRollDate);
-  d.setDate(d.getDate()+delta);
-  currentRollDate = formatDate(d);
-  loadRollForDate(currentRollDate);
-}
-function jumpToToday() { currentRollDate = TODAY; loadRollForDate(TODAY); }
+// ─── doGet 路由 ─────────────────────────────────────────────
 
-function updateDateNav() {
-  const d = dateFromStr(currentRollDate);
-  const dayNames=['日','一','二','三','四','五','六'];
-  const isToday = currentRollDate === TODAY;
-  const tw = d.toLocaleDateString('zh-TW',{month:'long',day:'numeric'});
-  document.getElementById('date-nav-label').innerHTML =
-    `${tw}（${dayNames[d.getDay()]}）` + (isToday?'<span class="today-tag">今日</span>':'');
-  document.getElementById('date-nav-sub').textContent = isToday ? '今日接車' : currentRollDate;
-  document.getElementById('jump-today-btn').style.display = isToday ? 'none' : 'flex';
-}
-
-// ══════════════════════════════════════════════════════════
-// 今日點名
-// ══════════════════════════════════════════════════════════
-async function loadRollForDate(date) {
-  updateDateNav();
-  setTimeBanner(date);
-  document.getElementById('roll-date-label').textContent = (() => {
-    const d=dateFromStr(date);
-    const dayNames=['日','一','二','三','四','五','六'];
-    return d.toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) +
-      `（${dayNames[d.getDay()]}）`;
-  })();
-  const el=document.getElementById('roll-list');
-  el.innerHTML='<div class="loading">載入中…</div>';
+function doGet(e) {
+  const action = e.parameter.action;
   try {
-    const [rr, hr] = await Promise.all([
-      callGAS({action:'getDayRecords', date}),
-      callGAS({action:'getHolidays', yearMonth:date.slice(0,7)})
+    switch (action) {
+      case 'getStudents':
+        return jsonpResponse(e, getStudents());
+      case 'getDayRecords':
+        return jsonpResponse(e, getDayRecords(e.parameter.date));
+      case 'getMonthRecords':
+        return jsonpResponse(e, getMonthRecords(e.parameter.yearMonth));
+      case 'getHolidays':
+        return jsonpResponse(e, getHolidays(e.parameter.yearMonth));
+      case 'saveStudent': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, saveStudent(p.student));
+      }
+      case 'deleteStudent': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, deleteStudent(p.id));
+      }
+      case 'saveRecord': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, saveRecord(p.record));
+      }
+      case 'saveDayRecords': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, saveDayRecords(p.date, p.records));
+      }
+      case 'saveHoliday': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, saveHoliday(p.date, p.note || ''));
+      }
+      case 'deleteHoliday': {
+        const p = JSON.parse(e.parameter.payload || '{}');
+        return jsonpResponse(e, deleteHoliday(p.date));
+      }
+      default:
+        return jsonpResponse(e, { error: 'Unknown action: ' + action });
+    }
+  } catch (err) {
+    return jsonpResponse(e, { error: err.message });
+  }
+}
+
+// ─── doPost 路由 ────────────────────────────────────────────
+
+function doPost(e) {
+  const data = JSON.parse(e.postData.contents);
+  try {
+    switch (data.action) {
+      case 'saveStudent':   return postResponse(saveStudent(data.student));
+      case 'deleteStudent': return postResponse(deleteStudent(data.id));
+      case 'saveRecord':    return postResponse(saveRecord(data.record));
+      case 'saveDayRecords':return postResponse(saveDayRecords(data.date, data.records));
+      case 'saveHoliday':   return postResponse(saveHoliday(data.date, data.note || ''));
+      case 'deleteHoliday': return postResponse(deleteHoliday(data.date));
+      default: return postResponse({ error: 'Unknown action: ' + data.action });
+    }
+  } catch (err) {
+    return postResponse({ error: err.message });
+  }
+}
+
+// ─── 學生名單 ────────────────────────────────────────────────
+
+function initStudentSheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(STUDENT_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(STUDENT_SHEET);
+    sheet.appendRow([
+      'ID', '中文姓名', '英文名', '學校', '年級', '班級',
+      '學生類型', '手機M', '電話D', '接送天', '備註', '自訂時間'
     ]);
-    rollRecords = rr.records || {};
-    const hols = {};
-    (hr.holidays||[]).forEach(h=>{ hols[h.date]=h.note||'假日'; });
-    window._rollHoliday = hols[date] || null;
-    renderRollList();
-  } catch(e) {
-    el.innerHTML=`<div class="card" style="color:var(--danger)">⚠️ 載入失敗：${e.message}</div>`;
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 90);  sheet.setColumnWidth(2, 80);
+    sheet.setColumnWidth(3, 80);  sheet.setColumnWidth(7, 70);
+    sheet.setColumnWidth(9, 150); sheet.setColumnWidth(10, 150);
+    sheet.setColumnWidth(12, 200);
+  } else {
+    // 若現有 Sheet 無 L 欄，自動補上
+    if (sheet.getLastColumn() < 12) {
+      sheet.getRange(1, 12).setValue('自訂時間');
+    }
   }
+  return sheet;
 }
 
-async function refreshRollCall() {
-  const el=document.getElementById('roll-list');
-  el.innerHTML='<div class="loading">載入中…</div>';
-  try {
-    const sr = await callGAS({action:'getStudents'});
-    allStudents = sr.students || [];
-    allStudents.forEach(storeStudent);
-    buildSchoolOptions();
-  } catch(e) {}
-  await loadRollForDate(currentRollDate);
+function getStudents() {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(STUDENT_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return { students: [] };
+
+  const lastCol = Math.max(sheet.getLastColumn(), 12);
+  const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, lastCol).getValues();
+
+  const students = data
+    .filter(row => row[0] !== '' && row[0] !== null)
+    .map(row => {
+      let customTimes = {};
+      try { if (row[11]) customTimes = JSON.parse(String(row[11])); } catch(e) {}
+      return {
+        id:         String(row[0]),
+        name:       String(row[1]),
+        engName:    String(row[2] || ''),
+        school:     String(row[3] || ''),
+        grade:      Number(row[4]) || 1,
+        class:      String(row[5] || ''),
+        type:       String(row[6] || '安親'),
+        phoneM:     String(row[7] || ''),
+        phoneD:     String(row[8] || ''),
+        pickupDays: row[9] ? String(row[9]).split(',').map(Number) : [1,2,3,4,5],
+        notes:      String(row[10] || ''),
+        customTimes
+      };
+    })
+    .sort((a, b) => {
+      const ga = a.grade<=2?0:a.grade<=4?1:2;
+      const gb = b.grade<=2?0:b.grade<=4?1:2;
+      if (ga!==gb) return ga-gb;
+      if (a.class!==b.class) return a.class<b.class?-1:1;
+      return a.name<b.name?-1:1;
+    });
+
+  return { students };
 }
 
-function setTimeBanner(date) {
-  const d=dateFromStr(date);
-  const dow=d.getDay();
-  const mapDow=(dow===0||dow===6)?0:dow;
-  let parts=[];
-  if(mapDow>=1&&mapDow<=5){
-    parts=[
-      `低年級：${ptLabel(getPickupTime({grade:1,customTimes:{}},mapDow))}接`,
-      `中年級：${ptLabel(getPickupTime({grade:3,customTimes:{}},mapDow))}接`,
-      `高年級：${ptLabel(getPickupTime({grade:5,customTimes:{}},mapDow))}接`
+function saveStudent(student) {
+  const sheet = initStudentSheet();
+  const pickupStr = (student.pickupDays || [1,2,3,4,5]).join(',');
+  const customTimesStr = JSON.stringify(student.customTimes || {});
+  const rowData = [
+    student.id || '', student.name, student.engName || '',
+    student.school || '', student.grade, student.class,
+    student.type || '安親', student.phoneM || '', student.phoneD || '',
+    pickupStr, student.notes || '', customTimesStr
+  ];
+
+  if (student.id) {
+    const allData = sheet.getDataRange().getValues();
+    for (let i = 1; i < allData.length; i++) {
+      if (String(allData[i][0]) === String(student.id)) {
+        sheet.getRange(i + 1, 1, 1, 12).setValues([rowData]);
+        return { success: true, id: student.id };
+      }
+    }
+  }
+
+  const newId = 'S' + String(Date.now()).slice(-8);
+  rowData[0] = newId;
+  sheet.appendRow(rowData);
+  return { success: true, id: newId };
+}
+
+function deleteStudent(id) {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(STUDENT_SHEET);
+  if (!sheet) return { error: '找不到學生名單' };
+  const allData = sheet.getDataRange().getValues();
+  for (let i = 1; i < allData.length; i++) {
+    if (String(allData[i][0]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
+    }
+  }
+  return { error: '找不到該學生 ID: ' + id };
+}
+
+// ─── 點名記錄（月份分頁）────────────────────────────────────
+
+function getDayRecords(date) {
+  // date: 'YYYY-MM-DD'
+  const yearMonth = yearMonthFromDate(date);
+  const sheet = getRecordSheet(yearMonth);
+  if (sheet.getLastRow() < 2) return { records: {}, date };
+
+  const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues();
+  const records = {};
+  for (const row of allData) {
+    const d = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(row[0]);
+    if (d === date && row[1]) {
+      records[String(row[1]).trim()] = {
+        status: encodeStatus(String(row[2]||'')),  // 傳回前端用 ASCII ok/no
+        notes: String(row[3]||'')
+      };
+    }
+  }
+  return { records, date };
+}
+
+function getMonthRecords(yearMonth) {
+  // yearMonth: 'YYYY-MM'
+  const sheet = getRecordSheet(yearMonth);
+  if (sheet.getLastRow() < 2) return { records: {}, yearMonth };
+
+  const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues();
+  const records = {};
+  for (const row of allData) {
+    // ★ 修正：統一轉成 yyyy-MM-dd 字串再比對
+    const d = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(row[0]).trim();
+    if (d.startsWith(yearMonth) && row[1]) {
+      if (!records[d]) records[d] = {};
+      records[d][String(row[1]).trim()] = {
+        status: encodeStatus(String(row[2]||'')),  // 傳回前端用 ASCII ok/no
+        notes: String(row[3]||'')
+      };
+    }
+  }
+  return { records, yearMonth };
+}
+
+function saveRecord(record) {
+  // record: { date, studentId, status, notes }
+  const yearMonth = yearMonthFromDate(record.date);
+  const sheet = getRecordSheet(yearMonth);
+
+  // ★ 修正：getLastRow() < 2 代表只有標題，直接 append
+  if (sheet.getLastRow() < 2) {
+    sheet.appendRow([record.date, record.studentId, record.status, record.notes || '', new Date()]);
+    return { success: true, action: 'created' };
+  }
+
+  const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, 5).getValues();
+
+  for (let i = 0; i < allData.length; i++) {
+    // ★ 修正：統一先轉成 yyyy-MM-dd 再比對，避免 Date 物件 toString 格式不一致
+    const d = allData[i][0] instanceof Date
+      ? Utilities.formatDate(allData[i][0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(allData[i][0]).trim();
+    const sid = String(allData[i][1]).trim();
+
+    if (d === record.date.trim() && sid === String(record.studentId).trim()) {
+      // ★ 找到現有紀錄：decode status 後寫入
+      const statusToWrite = decodeStatus(record.status);
+      sheet.getRange(i + 2, 1, 1, 5).setValues([[
+        record.date, record.studentId, statusToWrite, record.notes || '', new Date()
+      ]]);
+      return { success: true, action: 'updated' };
+    }
+  }
+
+  // 找不到現有紀錄：新增一列
+  const statusToWrite = decodeStatus(record.status);
+  sheet.appendRow([record.date, record.studentId, statusToWrite, record.notes || '', new Date()]);
+  return { success: true, action: 'created' };
+}
+
+function saveDayRecords(date, records) {
+  for (const r of records) {
+    // status 已經是 ASCII ok/no，saveRecord 內部會 decode
+    saveRecord({ date, studentId: r.studentId, status: r.status, notes: r.notes || '' });
+  }
+  return { success: true, count: records.length };
+}
+
+// ─── 假日管理 ────────────────────────────────────────────────
+
+function initHolidaySheet() {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(HOLIDAY_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(HOLIDAY_SHEET);
+    sheet.appendRow(['日期', '假日名稱', '建立時間']);
+    sheet.setFrozenRows(1);
+    sheet.setColumnWidth(1, 110);
+    sheet.setColumnWidth(2, 180);
+
+    // ★ 完整 2026 台灣國定假日（含所有連假）
+    const h2026 = [
+      ['2026-01-01','元旦'],
+      ['2026-01-02','元旦連假'],
+      ['2026-02-17','農曆春節連假'],
+      ['2026-02-18','農曆春節連假'],
+      ['2026-02-19','農曆春節連假'],
+      ['2026-02-20','農曆春節連假'],
+      ['2026-02-21','農曆春節連假'],
+      ['2026-02-22','農曆春節連假'],
+      ['2026-02-27','和平紀念日連假'],
+      ['2026-02-28','和平紀念日'],
+      ['2026-03-01','和平紀念日連假'],
+      ['2026-04-03','兒童節清明節連假'],
+      ['2026-04-04','兒童節、清明節'],
+      ['2026-04-05','兒童節清明節連假'],
+      ['2026-04-06','兒童節清明節連假'],
+      ['2026-05-01','勞動節'],
+      ['2026-05-02','勞動節連假'],
+      ['2026-05-03','勞動節連假（日）'],
+      ['2026-06-19','端午節連假'],
+      ['2026-06-20','端午節連假'],
+      ['2026-06-21','端午節（日）'],
+      ['2026-09-25','中秋節教師節連假'],
+      ['2026-09-26','中秋節教師節連假'],
+      ['2026-09-27','中秋節教師節（日）'],
+      ['2026-09-28','教師節'],
+      ['2026-10-09','國慶日連假'],
+      ['2026-10-10','國慶日'],
+      ['2026-10-11','國慶日（日）'],
+      ['2026-10-24','光復節連假'],
+      ['2026-10-25','光復節'],
+      ['2026-10-26','光復節（日）'],
+      ['2026-12-25','行憲紀念日'],
+      ['2026-12-26','行憲紀念日連假'],
+      ['2026-12-27','行憲紀念日（日）'],
     ];
-  } else { parts=['今日為週末，無需接送']; }
-  document.getElementById('time-banner').innerHTML=`<b>接車時間</b>　${parts.join('　')}`;
+    h2026.forEach(([d, n]) => sheet.appendRow([d, n, new Date()]));
+  }
+  return sheet;
 }
 
-function renderRollList() {
-  const el=document.getElementById('roll-list');
-  if(!allStudents.length){
-    el.innerHTML='<div class="empty"><div class="e-ico">🎒</div><p>尚無學生資料<br>請至「學生管理」新增</p></div>';
-    return;
-  }
-  const d=dateFromStr(currentRollDate);
-  const dow=d.getDay();
-  const mapDow=(dow===0||dow===6)?0:dow;
-
-  if(window._rollHoliday){
-    el.innerHTML=`<div class="card" style="text-align:center;padding:40px 16px">
-      <div style="font-size:52px;margin-bottom:12px">🎌</div>
-      <div style="font-size:18px;font-weight:700;margin-bottom:8px">今日為國定假日</div>
-      <div style="color:var(--gray);font-size:15px">${escHtml(window._rollHoliday)}</div>
-      <div style="margin-top:12px;font-size:13px;color:var(--gray-2)">今日無需接送學生</div>
-    </div>`;
-    return;
+function getHolidays(yearMonth) {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(HOLIDAY_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) {
+    initHolidaySheet();
+    return getHolidays(yearMonth);
   }
 
-  const schoolF = document.getElementById('roll-school-filter')?.value||'';
-  const timeF   = document.getElementById('roll-time-filter')?.value||'';
+  const allData = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+  // ★ 修正：先統一把日期轉成 yyyy-MM-dd 字串再比對
+  // （直接用 String(Date物件) 會得到 "Fri May 01 2026..." 格式，導致 startsWith 失效）
+  const holidays = allData
+    .filter(row => row[0] !== '' && row[0] !== null)
+    .map(row => ({
+      date: row[0] instanceof Date
+        ? Utilities.formatDate(row[0], 'Asia/Taipei', 'yyyy-MM-dd')
+        : String(row[0]),
+      note: String(row[1] || '')
+    }))
+    .filter(h => !yearMonth || h.date.startsWith(yearMonth));
 
-  let students = allStudents.filter(s=>mapDow>0&&shouldPickup(s,mapDow));
-  if(schoolF) students=students.filter(s=>s.school===schoolF);
-  if(timeF)   students=students.filter(s=>getPickupTime(s,mapDow)===timeF);
+  return { holidays };
+}
 
-  const tmpAll = currentRollDate===TODAY ? tmpStudents : [];
-
-  let html='', lastGroup='', idx=0;
-
-  students.forEach(s => {
-    const gg=gradeGroup(s.grade);
-    if(gg!==lastGroup){
-      lastGroup=gg;
-      const pt=getPickupTime(s,mapDow);
-      html+=`<div class="grade-header ${gg}">${gradeGroupName(s.grade)}・${ptLabel(pt)} 接</div>`;
+function saveHoliday(date, note) {
+  const sheet = initHolidaySheet();
+  const allData = sheet.getDataRange().getValues();
+  for (let i = 1; i < allData.length; i++) {
+    const d = allData[i][0] instanceof Date
+      ? Utilities.formatDate(allData[i][0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(allData[i][0]);
+    if (d === date) {
+      sheet.getRange(i + 1, 1, 1, 3).setValues([[date, note, new Date()]]);
+      return { success: true, action: 'updated' };
     }
-    idx++;
-    html+=buildCard(s, idx, mapDow, false);
-  });
-
-  if(tmpAll.length){
-    html+=`<div class="grade-header" style="background:#B45309">⚡ 臨時加接 <span style="font-size:9px;font-weight:400;opacity:.85">（可切換接到/請假）</span></div>`;
-    tmpAll.forEach((s,i)=>{ html+=buildCard(s, idx+i+1, mapDow, true); });
   }
-
-  if(!students.length&&!tmpAll.length){
-    html='<div class="empty"><div class="e-ico">🎉</div><p>今日' +(mapDow===0?'為週末，':'')+'無接送學生</p></div>';
-  }
-  el.innerHTML=html;
+  sheet.appendRow([date, note, new Date()]);
+  return { success: true, action: 'created' };
 }
 
-function buildCard(s, idx, mapDow, isTmp) {
-  storeStudent(s);
-  const rec=rollRecords[s.id]||{};
-  const status=rec.status||'';
-  const notes=rec.notes||'';
-  const cardCls=(isTmp?'tmp-card ':'')+(status==='✓'?'chk':status==='✗'?'abs':'');
-  const chkCls=status==='✓'?'on-chk':'';
-  const absCls=status==='✗'?'on-abs':'';
-  const isSwitch = isTmp && s._fromList;
-  const typeBadge=isTmp?(isSwitch?'badge-tmpswitch':'badge-tmp'):(s.type==='安親'?'badge-aq':'badge-ws');
-  const typeLabel=isTmp?(isSwitch?'換時':'臨時'):s.type;
-  const gg=gradeGroup(s.grade||1);
-  const sid=escHtml(s.id);
-
-  return `<div class="s-card ${cardCls}" id="card-${sid}">
-    <div class="s-body">
-      <div class="s-seq${isTmp?' tmp-seq':''}">${idx}</div>
-      <div class="s-info">
-        <div class="s-name">${escHtml(s.name)}</div>
-        ${s.engName?`<div class="s-eng">${escHtml(s.engName)}</div>`:''}
-        <div class="s-meta">
-          <span>${escHtml(s.class||'')}班</span>
-          <span class="badge ${typeBadge}">${typeLabel}</span>
-          ${!isTmp?`<span class="badge badge-${gg}">${gradeGroupLabel(s.grade)}</span>`:''}
-        </div>
-      </div>
-      <div class="s-actions">
-        <button class="act-btn ${chkCls}" data-sid="${sid}" data-act="chk" title="接到">✓</button>
-        <button class="act-btn ${absCls}" data-sid="${sid}" data-act="abs" title="請假">✗</button>
-        <button class="act-btn" data-sid="${sid}" data-act="note" title="備註">💬</button>
-        <button class="act-btn" data-sid="${sid}" data-act="phone" title="電話">📞</button>
-      </div>
-    </div>
-    ${notes?`<div class="s-note-bar">📝 ${escHtml(notes)}</div>`:''}
-  </div>`;
-}
-
-// 事件委派 — 完全避免 onclick 中的 JSON 引號問題
-document.getElementById('roll-list').addEventListener('click', e => {
-  const btn = e.target.closest('[data-act]');
-  if(!btn) return;
-  const sid = btn.dataset.sid;
-  const act = btn.dataset.act;
-  if(act==='chk') toggleStatus(sid,'✓');
-  else if(act==='abs') toggleStatus(sid,'✗');
-  else if(act==='note') {
-    const s = getStored(sid);
-    openNotesModal(sid, s?.name||sid);
-  }
-  else if(act==='phone') {
-    const s = getStored(sid);
-    openPhoneModal(s);
-  }
-});
-
-async function toggleStatus(sid, newStatus) {
-  const rec=rollRecords[sid]||{};
-  const status=rec.status===newStatus?'':newStatus;
-  rollRecords[sid]={...rec, status};
-  updateCardUI(sid, status);
-  await postGAS({action:'saveRecord', record:{date:currentRollDate, studentId:sid, status, notes:rec.notes||''}});
-}
-
-function updateCardUI(sid, status) {
-  const card=document.getElementById('card-'+sid);
-  if(!card) return;
-  const isTmp=card.classList.contains('tmp-card');
-  card.className='s-card'+(isTmp?' tmp-card':'')+(status==='✓'?' chk':status==='✗'?' abs':'');
-  card.querySelectorAll('[data-act]').forEach(btn=>{
-    if(btn.dataset.act==='chk') btn.className='act-btn'+(status==='✓'?' on-chk':'');
-    if(btn.dataset.act==='abs') btn.className='act-btn'+(status==='✗'?' on-abs':'');
-  });
-}
-
-async function quickAllCheck() {
-  const d=dateFromStr(currentRollDate);
-  const mapDow=(()=>{const w=d.getDay();return(w===0||w===6)?0:w;})();
-  const schoolF=document.getElementById('roll-school-filter')?.value||'';
-  let pool=allStudents.filter(s=>mapDow>0&&shouldPickup(s,mapDow)&&!(rollRecords[s.id]?.status));
-  if(schoolF) pool=pool.filter(s=>s.school===schoolF);
-  pool=[...pool,...tmpStudents.filter(s=>!(rollRecords[s.id]?.status))];
-  pool.forEach(s=>{ rollRecords[s.id]={...(rollRecords[s.id]||{}),status:'✓'}; updateCardUI(s.id,'✓'); });
-  if(pool.length){
-    await postGAS({action:'saveDayRecords', date:currentRollDate, records:pool.map(s=>({studentId:s.id,status:'✓',notes:rollRecords[s.id]?.notes||''}))});
-    showToast(`✅ 已標記 ${pool.length} 位接到`);
-  } else showToast('已全部標記過了');
-}
-
-async function clearAllRecords() {
-  if(!confirm('確定清除此日所有點名記錄？')) return;
-  const d=dateFromStr(currentRollDate);
-  const mapDow=(()=>{const w=d.getDay();return(w===0||w===6)?0:w;})();
-  const all=[...allStudents.filter(s=>mapDow>0&&shouldPickup(s,mapDow)),...tmpStudents];
-  all.forEach(s=>{ rollRecords[s.id]={status:'',notes:''}; updateCardUI(s.id,''); });
-  if(all.length) await postGAS({action:'saveDayRecords', date:currentRollDate, records:all.map(s=>({studentId:s.id,status:'',notes:''}))});
-  showToast('已清除記錄');
-}
-
-// ── 臨時加接 ──────────────────────────────────────────────
-
-// 更新「從名單選」的 select 選項
-function buildTmpStudentSel() {
-  const sel = document.getElementById('tmp-student-sel');
-  if(!sel) return;
-  const existing = new Set(tmpStudents.filter(t=>t._fromList).map(t=>t._origId));
-  sel.innerHTML = '<option value="">從名單選（改時間接送）…</option>' +
-    allStudents
-      .filter(s=>!existing.has(s.id))
-      .map(s=>`<option value="${escHtml(s.id)}">${escHtml(s.name)} ${escHtml(s.class)}班</option>`)
-      .join('');
-}
-
-// 從名單加入臨時接送（使用原學生資料，但標記為臨時）
-function addTmpFromList() {
-  const sel = document.getElementById('tmp-student-sel');
-  const origId = sel.value;
-  if(!origId){ showToast('請從名單選一位學生'); return; }
-  const orig = allStudents.find(s=>s.id===origId);
-  if(!orig){ showToast('找不到學生資料'); return; }
-  // 已在 tmpStudents 中
-  if(tmpStudents.some(t=>t._origId===origId)){
-    showToast(`${orig.name} 已在臨時加接清單`); return;
-  }
-  const tmpId = 'TMP_'+Date.now();
-  const s = {...orig, id:tmpId, _origId:origId, _fromList:true, type:'臨時換時'};
-  tmpStudents.push(s);
-  storeStudent(s);
-  rollRecords[tmpId] = {status:'', notes:''};
-  sel.value='';
-  buildTmpStudentSel();
-  renderRollList();
-  showToast(`⚡ 已加入：${orig.name}（臨時換時）`);
-}
-
-// 名單外學生直接加入
-function addTmpStudent() {
-  const el=document.getElementById('tmp-name');
-  const name=el.value.trim();
-  if(!name){ showToast('請輸入姓名'); return; }
-  const tmpId='TMP_'+Date.now();
-  const s={id:tmpId, name, engName:'', class:'臨時', grade:1, type:'臨時',
-            phoneM:'', phoneD:'', customTimes:{}, pickupDays:[1,2,3,4,5]};
-  tmpStudents.push(s);
-  storeStudent(s);
-  rollRecords[tmpId]={status:'',notes:''};
-  el.value='';
-  renderRollList();
-  showToast(`⚡ 已加入：${name}`);
-}
-
-// ── 電話 Modal ──────────────────────────────────────────────
-function openPhoneModal(s) {
-  if(!s){ showToast('找不到學生資料'); return; }
-  document.getElementById('phone-modal-name').textContent =
-    `${s.name}${s.class&&s.class!=='臨時'?' （'+s.class+'班）':''}`;
-  let html='';
-  if(s.phoneM) html+=phoneRow('媽 M', s.phoneM);
-  if(s.phoneD) html+=phoneRow('爸 D', s.phoneD);
-  if(!s.phoneM&&!s.phoneD) html='<p style="color:var(--gray);padding:16px 0;text-align:center">無電話資料</p>';
-  document.getElementById('phone-modal-body').innerHTML=html;
-  document.getElementById('phone-overlay').classList.remove('hidden');
-}
-
-function phoneRow(lbl, num) {
-  const cleanNum = num.replace(/\s/g,'');
-  return `<div class="phone-item">
-    <span class="phone-lbl">${lbl}</span>
-    <div style="flex:1">
-      <div class="phone-num">${escHtml(num)}</div>
-      <div class="phone-copy" style="font-size:11px;color:var(--gray);margin-top:2px">長按可複製號碼</div>
-    </div>
-    <a href="tel:${cleanNum}" class="btn-call">📞 撥打</a>
-  </div>`;
-}
-function closePhoneModal(){ document.getElementById('phone-overlay').classList.add('hidden'); }
-document.getElementById('phone-overlay').addEventListener('click', e=>{
-  if(e.target===e.currentTarget) closePhoneModal();
-});
-
-// ── 備註 Modal ──────────────────────────────────────────────
-function openNotesModal(sid, name) {
-  notesTarget=sid;
-  document.getElementById('notes-modal-name').textContent=`備註：${name}`;
-  document.getElementById('notes-ta').value=rollRecords[sid]?.notes||'';
-  document.getElementById('notes-overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('notes-ta').focus(),100);
-}
-async function saveNotes() {
-  const notes=document.getElementById('notes-ta').value.trim();
-  const rec=rollRecords[notesTarget]||{};
-  rollRecords[notesTarget]={...rec, notes};
-  await postGAS({action:'saveRecord', record:{date:currentRollDate, studentId:notesTarget, status:rec.status||'', notes}});
-  closeNotesModal();
-  renderRollList();
-  showToast('備註已儲存');
-}
-function closeNotesModal(){ document.getElementById('notes-overlay').classList.add('hidden'); notesTarget=null; }
-document.getElementById('notes-overlay').addEventListener('click', e=>{
-  if(e.target===e.currentTarget) closeNotesModal();
-});
-
-// ══════════════════════════════════════════════════════════
-// 接車總表
-// ══════════════════════════════════════════════════════════
-async function generateTable() {
-  const val=document.getElementById('month-picker').value;
-  if(!val){ showToast('請選擇月份'); return; }
-  const [year,month]=val.split('-').map(Number);
-  currentTableMonth=val;
-  document.getElementById('table-area').innerHTML='<div class="loading">載入中…</div>';
-  try {
-    // ★ 修正：每次產生都強制重新抓取假日與點名記錄，不使用快取
-    // 假日只快取 students，避免舊假日設定殘留
-    const [sr,mr,hr]=await Promise.all([
-      allStudents.length?Promise.resolve({students:allStudents}):callGAS({action:'getStudents'}),
-      callGAS({action:'getMonthRecords', yearMonth:val}),
-      callGAS({action:'getHolidays', yearMonth:val})  // ← 永遠重新抓
-    ]);
-    allStudents=sr.students||[];
-    allStudents.forEach(storeStudent);
-    monthRecords=mr.records||{};
-    // ★ 修正：每次重新生成都完整重建 monthHolidays，清除舊快取
-    monthHolidays={};
-    (hr.holidays||[]).forEach(h=>{
-      if(h.date) monthHolidays[h.date]=h.note||'假日';
-    });
-    buildSchoolOptions();
-    document.getElementById('print-title').textContent=`安親接車　${year}年${month}月　接車點名表`;
-    renderTable(year,month);
-    renderHolidayChips(val);
-    showToast(`✅ ${year}年${month}月 已載入`);
-  } catch(e){
-    document.getElementById('table-area').innerHTML=`<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
-  }
-}
-
-function regenerateTable() {
-  if(!currentTableMonth) return;
-  const [y,m]=currentTableMonth.split('-').map(Number);
-  renderTable(y,m);
-}
-
-function renderTable(y,m){ document.getElementById('table-area').innerHTML=buildTable(y,m); }
-
-function buildTable(year, month) {
-  const schoolF=document.getElementById('table-school-filter')?.value||'';
-  const days=getMonthWeekdays(year,month);
-  if(!days.length) return '<div class="card">本月無工作日</div>';
-
-  // 週次奇偶
-  const wp={};
-  let lastWk=-1, par='a';
-  days.forEach(d=>{
-    if(d.weekNum!==lastWk){ if(lastWk!==-1) par=par==='a'?'b':'a'; lastWk=d.weekNum; }
-    wp[d.date]=par;
-  });
-
-  // 表頭
-  let head=`<thead><tr>
-    <th class="no-col">No</th>
-    <th class="name-col">姓名</th>
-    <th class="eng-col">英文</th>
-    <th class="cls-col">班</th>
-    <th class="type-col">類型</th>
-    <th class="tel-col">電話</th>`;
-  days.forEach(d=>{
-    const isH=!!monthHolidays[d.date];
-    if(isH) head+=`<th class="th-holiday">${d.label}<br><span style="font-size:8px">假</span></th>`;
-    else head+=`<th class="wk-hd-${wp[d.date]}">${d.label}</th>`;
-  });
-  head+=`</tr><tr><th></th><th></th><th></th><th></th><th></th><th></th>`;
-  days.forEach(d=>{
-    const isH=!!monthHolidays[d.date];
-    if(isH) head+=`<th class="th-holiday-day">${escHtml(monthHolidays[d.date]).slice(0,4)}</th>`;
-    else head+=`<th class="wk-hd-${wp[d.date]}" style="font-size:9px;font-weight:400">${d.dayName}</th>`;
-  });
-  head+=`</tr></thead>`;
-
-  // 表身
-  let body='<tbody>';
-  let lastGroup='', seq=0;
-  let filtered=allStudents;
-  if(schoolF) filtered=filtered.filter(s=>s.school===schoolF);
-
-  filtered.forEach(s=>{
-    const gg=gradeGroup(s.grade);
-    if(gg!==lastGroup){
-      lastGroup=gg;
-      body+=`<tr class="grade-row"><td colspan="${6+days.length}">${gradeGroupName(s.grade)}</td></tr>`;
+function deleteHoliday(date) {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(HOLIDAY_SHEET);
+  if (!sheet) return { error: '找不到假日設定' };
+  const allData = sheet.getDataRange().getValues();
+  for (let i = 1; i < allData.length; i++) {
+    const d = allData[i][0] instanceof Date
+      ? Utilities.formatDate(allData[i][0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(allData[i][0]);
+    if (d === date) {
+      sheet.deleteRow(i + 1);
+      return { success: true };
     }
-    seq++;
-    const tel=[s.phoneM,s.phoneD].filter(Boolean).join(' / ');
-    const isWs=s.type==='外生';
-    const rowCls=isWs?'ws-row':'aq-row';
-    body+=`<tr class="${rowCls}">
-      <td class="no-col">${seq}</td>
-      <td class="name-col">${escHtml(s.name)}</td>
-      <td class="eng-col">${escHtml(s.engName||'')}</td>
-      <td class="cls-col">${escHtml(s.class)}</td>
-      <td class="type-col"><span class="type-badge">${escHtml(s.type)}</span></td>
-      <td class="tel-col">${escHtml(tel)}</td>`;
-    days.forEach(d=>{
-      const wkCls='wk-'+wp[d.date];
-      if(monthHolidays[d.date]){
-        body+=`<td class="cell-holiday ${wkCls}">假</td>`; return;
-      }
-      if(!shouldPickup(s,d.dow)){
-        body+=`<td class="cell-no ${wkCls}">－</td>`; return;
-      }
-      const pt=getPickupTime(s,d.dow);
-      const cellCls=pt==='am'?'cell-am':'cell-pm';
-      const rec=(monthRecords[d.date]||{})[s.id]||{};
-      const st=rec.status||'';
-      let inner='';
-      if(st==='✓') inner=`<span class="cell-chk">✓</span>`;
-      else if(st==='✗') inner=`<span class="cell-abs">✕</span>`;
-      body+=`<td class="${cellCls} ${wkCls}" data-date="${d.date}" data-sid="${s.id}" style="cursor:pointer">${inner}</td>`;
-    });
-    body+=`</tr>`;
-  });
-  // ── 臨時加接列（若當月有日期且有臨時學生）──
-  if(tmpStudents.length && currentTableMonth) {
-    const colspan = 6 + days.length;
-    body+=`<tr><td colspan="${colspan}" style="background:#FEF3C7;color:#B45309;font-weight:700;font-size:10px;text-align:left;padding-left:8px">⚡ 臨時加接</td></tr>`;
-    tmpStudents.forEach((s,i)=>{
-      seq++;
-      const tel=[s.phoneM,s.phoneD].filter(Boolean).join(' / ');
-      body+=`<tr style="background:#FFFBEB">
-        <td class="no-col" style="color:#B45309">${seq}</td>
-        <td class="name-col" style="color:#B45309;font-style:italic">${escHtml(s.name)}</td>
-        <td class="eng-col">${escHtml(s.engName||'')}</td>
-        <td class="cls-col">${escHtml(s._fromList?s.class:'外')}</td>
-        <td class="type-col"><span class="type-badge" style="background:#FEF3C7;color:#B45309">臨時</span></td>
-        <td class="tel-col">${escHtml(tel)}</td>`;
-      days.forEach(d=>{
-        const wkCls='wk-'+wp[d.date];
-        if(monthHolidays[d.date]){
-          body+=`<td class="cell-holiday ${wkCls}">假</td>`; return;
-        }
-        const rec=(monthRecords[d.date]||{})[s.id]||{};
-        const st=rec.status||'';
-        let inner='';
-        if(st==='✓') inner=`<span class="cell-chk">✓</span>`;
-        else if(st==='✗') inner=`<span class="cell-abs">✕</span>`;
-        // 臨時學生只顯示今日或有記錄的格子
-        const isCurrentDate = d.date === currentRollDate;
-        body+=`<td class="cell-am ${wkCls}"${(isCurrentDate||st)?` data-date="${d.date}" data-sid="${s.id}" style="cursor:pointer"`:''}>${inner}</td>`;
-      });
-      body+=`</tr>`;
-    });
   }
-
-  body+='</tbody>';
-  return `<table class="pt">${head}${body}</table>`;
+  return { error: '找不到該假日：' + date };
 }
 
-// 表格點擊事件委派（含防重複點擊 + 存檔確認 toast）
-let _tableSaving = false;
-document.getElementById('table-area').addEventListener('click', async e=>{
-  const td=e.target.closest('td[data-date]');
-  if(!td || _tableSaving) return;
-  const {date, sid}=td.dataset;
-  if(!date || !sid) return;
-  if(!monthRecords[date]) monthRecords[date]={};
-  const rec=monthRecords[date][sid]||{};
-  const next=rec.status===''||!rec.status?'✓':rec.status==='✓'?'✗':'';
-  // ★ 先更新本地狀態並重繪，讓使用者立刻看到變化
-  monthRecords[date][sid]={...rec, status:next};
-  const [y,m]=date.split('-').map(Number);
-  renderTable(y,m);
-  // ★ 非同步存到 GAS，存完後用 toast 確認（不重繪，避免覆蓋本地變更）
-  _tableSaving = true;
-  try {
-    const r = await postGAS({action:'saveRecord', record:{date, studentId:sid, status:next, notes:rec.notes||''}});
-    if(r && r.error) showToast('⚠️ 儲存失敗：'+r.error);
-    // else showToast('💾 已儲存', 1200);  // 太頻繁可關掉
-  } catch(err){
-    showToast('⚠️ 網路錯誤，請重試');
-    // rollback
-    monthRecords[date][sid]={...rec};
-    renderTable(y,m);
-  } finally {
-    _tableSaving = false;
-  }
-});
-
-// ══════════════════════════════════════════════════════════
-// 學生管理
-// ══════════════════════════════════════════════════════════
-async function loadStudents() {
-  try {
-    const r=await callGAS({action:'getStudents'});
-    allStudents=r.students||[];
-    allStudents.forEach(storeStudent);
-    buildSchoolOptions();
-    renderStudentList();
-  } catch(e){
-    document.getElementById('student-list-area').innerHTML=
-      `<div class="card" style="color:var(--danger)">⚠️ ${e.message}</div>`;
-  }
-}
-
-function renderStudentList() {
-  const query=(document.getElementById('search-input')?.value||'').trim().toLowerCase();
-  const schoolF=document.getElementById('mgmt-school-filter')?.value||'';
-  document.getElementById('student-count-label').textContent=`共 ${allStudents.length} 位學生`;
-
-  let list=allStudents;
-  if(schoolF) list=list.filter(s=>s.school===schoolF);
-  if(query) list=list.filter(s=>
-    s.name.includes(query)||s.class.toLowerCase().includes(query)||
-    (s.engName||'').toLowerCase().includes(query));
-
-  if(!list.length){
-    document.getElementById('student-list-area').innerHTML=
-      query||schoolF?'<div class="empty"><p>無符合結果</p></div>'
-      :'<div class="empty"><div class="e-ico">🎒</div><p>尚無學生<br>點擊右下角 ＋ 新增</p></div>';
+// ─── 工具：舊版 RECORD 分頁資料遷移（選用）──────────────────
+// 若你的 Sheet 已有「點名記錄」分頁，執行此函式可以把舊資料搬移到新的月份分頁
+// 在 Apps Script 直接執行 migrateOldRecords() 即可，不需部署
+function migrateOldRecords() {
+  const ss = getSpreadsheet();
+  const oldSheet = ss.getSheetByName('點名記錄');
+  if (!oldSheet || oldSheet.getLastRow() < 2) {
+    Logger.log('找不到舊版點名記錄，或資料為空');
     return;
   }
-
-  let html='<div class="student-list">';
-  let lastGroup='';
-  list.forEach(s=>{
-    storeStudent(s);
-    const gg=gradeGroup(s.grade);
-    if(gg!==lastGroup){ lastGroup=gg; html+=`<div class="grade-sep ${gg}">${gradeGroupName(s.grade)}</div>`; }
-    const tel=[s.phoneM,s.phoneD].filter(Boolean).join('  ');
-    const typeBadge=s.type==='安親'?'badge-aq':'badge-ws';
-    const pickLabel=s.type==='外生'?`週${(s.pickupDays||[]).map(d=>['','一','二','三','四','五'][d]).join('')}`:'';
-    html+=`<div class="sl-item">
-      <div class="sl-info">
-        <div class="sl-name">${escHtml(s.name)} <span style="font-size:12px;font-weight:400;color:var(--gray)">${escHtml(s.engName||'')}</span>
-          <span class="badge ${typeBadge}" style="margin-left:4px">${s.type}</span></div>
-        <div class="sl-meta">${s.grade}年${escHtml(s.class)}班　${escHtml(tel)}${pickLabel?'　'+pickLabel:''}</div>
-      </div>
-      <div>
-        <button class="btn-icon" style="font-size:22px" data-edit-sid="${escHtml(s.id)}">✏️</button>
-      </div>
-    </div>`;
-  });
-  html+='</div>';
-  document.getElementById('student-list-area').innerHTML=html;
-}
-
-// 編輯按鈕事件委派
-document.getElementById('student-list-area').addEventListener('click', e=>{
-  const btn=e.target.closest('[data-edit-sid]');
-  if(!btn) return;
-  const s=getStored(btn.dataset.editSid);
-  if(s) openStudentForm(s);
-  else showToast('找不到學生資料');
-});
-
-// ── 學生表單 ──────────────────────────────────────────────
-function buildCtGrid(ct={}) {
-  const days=[['一',1],['二',2],['三',3],['四',4],['五',5]];
-  return days.map(([n,d])=>`<div class="ct-item">
-    <label>週${n}</label>
-    <select id="ct-${d}">
-      <option value="">預設</option>
-      <option value="am"${ct[d]==='am'?' selected':''}>12:00</option>
-      <option value="pm"${ct[d]==='pm'?' selected':''}>16:00</option>
-      <option value="none"${ct[d]==='none'?' selected':''}>不接</option>
-    </select>
-  </div>`).join('');
-}
-
-function getCtFromForm() {
-  const ct={};
-  for(let d=1;d<=5;d++){
-    const v=document.getElementById('ct-'+d)?.value||'';
-    if(v) ct[d]=v;
+  const allData = oldSheet.getRange(2, 1, oldSheet.getLastRow() - 1, 5).getValues();
+  let count = 0;
+  for (const row of allData) {
+    if (!row[0]) continue;
+    const date = row[0] instanceof Date
+      ? Utilities.formatDate(row[0], 'Asia/Taipei', 'yyyy-MM-dd')
+      : String(row[0]);
+    const record = { date, studentId: String(row[1]), status: String(row[2]||''), notes: String(row[3]||'') };
+    saveRecord(record);
+    count++;
   }
-  return ct;
+  Logger.log('已遷移 ' + count + ' 筆記錄');
 }
-
-function openStudentForm(s) {
-  document.getElementById('form-title').textContent=s?'編輯學生':'新增學生';
-  document.getElementById('f-id').value=s?.id||'';
-  document.getElementById('f-name').value=s?.name||'';
-  document.getElementById('f-eng').value=s?.engName||'';
-  document.getElementById('f-school').value=s?.school||'';
-  document.getElementById('f-grade').value=s?.grade||'1';
-  document.getElementById('f-class').value=s?.class||'';
-  document.getElementById('f-type').value=s?.type||'安親';
-  document.getElementById('f-phoneM').value=s?.phoneM||'';
-  document.getElementById('f-phoneD').value=s?.phoneD||'';
-  document.getElementById('f-notes').value=s?.notes||'';
-
-  const days=s?.pickupDays||[1,2,3,4,5];
-  document.querySelectorAll('input[name="pd"]').forEach(cb=>{
-    cb.checked=days.includes(Number(cb.value));
-  });
-  document.getElementById('ct-grid').innerHTML=buildCtGrid(s?.customTimes||{});
-  document.getElementById('form-del-btn').style.display=s?'inline-flex':'none';
-  onTypeChange();
-  document.getElementById('student-overlay').classList.remove('hidden');
-}
-
-function onTypeChange(){
-  const isWai=document.getElementById('f-type').value==='外生';
-  document.getElementById('pickup-days-group').style.display=isWai?'block':'none';
-}
-
-function closeStudentForm(){ document.getElementById('student-overlay').classList.add('hidden'); }
-document.getElementById('student-overlay').addEventListener('click', e=>{
-  if(e.target===e.currentTarget) closeStudentForm();
-});
-
-async function submitStudentForm() {
-  const name=document.getElementById('f-name').value.trim();
-  const cls=document.getElementById('f-class').value.trim();
-  if(!name||!cls){ showToast('請填寫姓名和班級'); return; }
-  const type=document.getElementById('f-type').value;
-  const pickupDays=[...document.querySelectorAll('input[name="pd"]:checked')].map(c=>Number(c.value));
-  const student={
-    id:document.getElementById('f-id').value||null,
-    name, engName:document.getElementById('f-eng').value.trim(),
-    school:document.getElementById('f-school').value.trim(),
-    grade:Number(document.getElementById('f-grade').value),
-    class:cls, type,
-    phoneM:document.getElementById('f-phoneM').value.trim(),
-    phoneD:document.getElementById('f-phoneD').value.trim(),
-    pickupDays:type==='外生'?pickupDays:[1,2,3,4,5],
-    customTimes:getCtFromForm(),
-    notes:document.getElementById('f-notes').value.trim()
-  };
-  try {
-    const r=await postGAS({action:'saveStudent', student});
-    if(r.error) throw new Error(r.error);
-    closeStudentForm();
-    await loadStudents();
-    showToast('✅ 儲存成功');
-  } catch(e){ showToast('⚠️ 儲存失敗：'+e.message); }
-}
-
-async function confirmDelete() {
-  const id=document.getElementById('f-id').value;
-  const name=document.getElementById('f-name').value;
-  if(!confirm(`確定刪除「${name}」？此動作無法還原。`)) return;
-  try {
-    const r=await postGAS({action:'deleteStudent', id});
-    if(r.error) throw new Error(r.error);
-    closeStudentForm();
-    await loadStudents();
-    showToast('已刪除');
-  } catch(e){ showToast('⚠️ 刪除失敗：'+e.message); }
-}
-
-// ══════════════════════════════════════════════════════════
-// 假日管理
-// ══════════════════════════════════════════════════════════
-function toggleHolidayPanel() {
-  const p=document.getElementById('holiday-panel');
-  const show=p.style.display==='none';
-  p.style.display=show?'block':'none';
-  if(show&&currentTableMonth){
-    const [y,m]=currentTableMonth.split('-');
-    document.getElementById('h-date').value=`${y}-${m}-01`;
-    document.getElementById('h-date').min=`${y}-${m}-01`;
-    document.getElementById('h-date').max=`${y}-${m}-31`;
-  }
-}
-
-function renderHolidayChips(ym) {
-  const chips=document.getElementById('holiday-chips');
-  const entries=Object.entries(monthHolidays).filter(([d])=>d.startsWith(ym)).sort(([a],[b])=>a.localeCompare(b));
-  if(!entries.length){
-    chips.innerHTML='<span style="font-size:12px;color:var(--gray-2)">本月無假日設定</span>'; return;
-  }
-  chips.innerHTML=entries.map(([date,note])=>{
-    return `<span class="h-chip">${escHtml(date.slice(5))} ${escHtml(note)}
-      <button data-del-holiday="${escHtml(date)}">×</button></span>`;
-  }).join('');
-}
-
-document.getElementById('holiday-chips').addEventListener('click', async e=>{
-  const btn=e.target.closest('[data-del-holiday]');
-  if(!btn) return;
-  await removeHoliday(btn.dataset.delHoliday);
-});
-
-async function addHoliday() {
-  const date=document.getElementById('h-date').value;
-  const note=document.getElementById('h-note').value.trim()||'假日';
-  if(!date){ showToast('請選擇日期'); return; }
-  if(!currentTableMonth){ showToast('請先產生月份表'); return; }
-  try {
-    const r=await postGAS({action:'saveHoliday', date, note});
-    if(r.error) throw new Error(r.error);
-    monthHolidays[date]=note;
-    document.getElementById('h-note').value='';
-    renderHolidayChips(currentTableMonth);
-    const [y,m]=currentTableMonth.split('-').map(Number);
-    renderTable(y,m);
-    showToast(`✅ ${date} ${note}`);
-  } catch(e){ showToast('⚠️ 新增失敗：'+e.message); }
-}
-
-async function removeHoliday(date) {
-  if(!confirm(`確定移除 ${date} 的假日？`)) return;
-  try {
-    const r=await postGAS({action:'deleteHoliday', date});
-    if(r.error) throw new Error(r.error);
-    delete monthHolidays[date];
-    renderHolidayChips(currentTableMonth);
-    const [y,m]=currentTableMonth.split('-').map(Number);
-    renderTable(y,m);
-    showToast('已移除假日');
-  } catch(e){ showToast('⚠️ 失敗：'+e.message); }
-}
-
-// ══════════════════════════════════════════════════════════
-// 初始化
-// ══════════════════════════════════════════════════════════
-(async function init() {
-  const now=new Date();
-  document.getElementById('month-picker').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}`;
-  updateDateNav();
-  setTimeBanner(currentRollDate);
-  document.getElementById('roll-date-label').textContent=
-    dateFromStr(currentRollDate).toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric'}) +
-    '（' + ['日','一','二','三','四','五','六'][dateFromStr(currentRollDate).getDay()] + '）';
-  try {
-    const sr=await callGAS({action:'getStudents'});
-    allStudents=sr.students||[];
-    allStudents.forEach(storeStudent);
-    buildSchoolOptions();
-  } catch(e){}
-  await loadRollForDate(currentRollDate);
-})();
-</script>
-</body>
-</html>
