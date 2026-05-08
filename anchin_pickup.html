@@ -848,9 +848,10 @@ function updateCardUI(sid, status) {
   if(!card) return;
   const isTmp=card.classList.contains('tmp-card');
   card.className='s-card'+(isTmp?' tmp-card':'')+(status==='ok'?' chk':status==='no'?' abs':'');
+  // ★ 修正：data-act 現在是 "ok"/"no"，不是舊的 "chk"/"abs"
   card.querySelectorAll('[data-act]').forEach(btn=>{
-    if(btn.dataset.act==='chk') btn.className='act-btn'+(status==='✓'?' on-chk':'');
-    if(btn.dataset.act==='abs') btn.className='act-btn'+(status==='✗'?' on-abs':'');
+    if(btn.dataset.act==='ok')   btn.className='act-btn'+(status==='ok'?' on-chk':'');
+    if(btn.dataset.act==='no')   btn.className='act-btn'+(status==='no'?' on-abs':'');
   });
 }
 
@@ -1136,33 +1137,49 @@ function buildTable(year, month) {
   return `<table class="pt">${head}${body}</table>`;
 }
 
-// 表格點擊事件委派（含防重複點擊 + 存檔確認 toast）
-let _tableSaving = false;
+// 表格點擊事件委派
+// ★ 改為 per-cell 鎖，不鎖整張表，每格獨立防重複點擊
+const _cellSaving = new Set();
 document.getElementById('table-area').addEventListener('click', async e=>{
   const td=e.target.closest('td[data-date]');
-  if(!td || _tableSaving) return;
+  if(!td) return;
   const {date, sid}=td.dataset;
   if(!date || !sid) return;
+  const cellKey = date+'_'+sid;
+  if(_cellSaving.has(cellKey)) return;  // 此格正在儲存中，忽略重複點擊
+
   if(!monthRecords[date]) monthRecords[date]={};
   const rec=monthRecords[date][sid]||{};
-    const next=rec.status===''||!rec.status?'ok':rec.status==='ok'||rec.status==='✓'?'no':'';
-  // ★ 先更新本地狀態並重繪，讓使用者立刻看到變化
+  const cur = rec.status||'';
+  const next = cur===''?'ok':cur==='ok'||cur==='✓'?'no':'';
+
+  // 先更新本地狀態並重繪（立即視覺回饋）
   monthRecords[date][sid]={...rec, status:next};
   const [y,m]=date.split('-').map(Number);
   renderTable(y,m);
-  // ★ 非同步存到 GAS，存完後用 toast 確認（不重繪，避免覆蓋本地變更）
-  _tableSaving = true;
+
+  // 鎖住此格，開始儲存
+  _cellSaving.add(cellKey);
   try {
-    const r = await postGAS({action:'saveRecord', record:{date, studentId:sid, status:next, notes:rec.notes||''}});
-    if(r && r.error) showToast('⚠️ 儲存失敗：'+r.error);
-    // else showToast('💾 已儲存', 1200);  // 太頻繁可關掉
+    const r = await postGAS({
+      action:'saveRecord',
+      record:{ date, studentId:sid, status:next, notes:rec.notes||'' }
+    });
+    if(r && r.error){
+      showToast('⚠️ 儲存失敗：'+r.error);
+      // 回滾
+      monthRecords[date][sid]={...rec};
+      renderTable(y,m);
+    } else {
+      showToast('💾 已儲存', 1000);
+    }
   } catch(err){
     showToast('⚠️ 網路錯誤，請重試');
-    // rollback
+    // 回滾
     monthRecords[date][sid]={...rec};
     renderTable(y,m);
   } finally {
-    _tableSaving = false;
+    _cellSaving.delete(cellKey);
   }
 });
 
