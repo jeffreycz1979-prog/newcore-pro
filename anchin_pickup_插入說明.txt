@@ -1,0 +1,84 @@
+===========================================
+貼入 anchin_pickup.html 的程式碼片段
+===========================================
+
+【1】貼在 <head> 裡面（緊接在 <meta charset> 之後）
+──────────────────────────────────────────
+<link rel="manifest" href="/newcore-pro/anchin_pickup_manifest.json">
+<meta name="theme-color" content="#CCFF00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="接車">
+
+
+【2】貼在 </body> 結束標籤之前
+──────────────────────────────────────────
+<script>
+  // 離線提示橫幅
+  function showOfflineBanner(msg) {
+    let banner = document.getElementById('sw-offline-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'sw-offline-banner';
+      banner.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0;
+        background: #ff6b35; color: white;
+        text-align: center; padding: 8px;
+        font-size: 14px; z-index: 9999;
+        font-family: 'Noto Sans TC', sans-serif;
+      `;
+      document.body.prepend(banner);
+    }
+    banner.textContent = msg;
+    banner.style.display = 'block';
+  }
+
+  function hideOfflineBanner() {
+    const banner = document.getElementById('sw-offline-banner');
+    if (banner) banner.style.display = 'none';
+  }
+
+  window.addEventListener('offline', () => {
+    showOfflineBanner('⚠️ 目前離線 — 顯示上次載入的名單，操作記錄稍後自動同步');
+  });
+  window.addEventListener('online', () => {
+    hideOfflineBanner();
+  });
+
+  // 若一開始就離線
+  if (!navigator.onLine) {
+    showOfflineBanner('⚠️ 目前離線 — 顯示上次載入的名單，操作記錄稍後自動同步');
+  }
+
+  // 註冊 Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/newcore-pro/anchin_pickup_sw.js', {
+          scope: '/newcore-pro/'
+        })
+        .then(reg => console.log('[PWA] Service Worker 已註冊', reg.scope))
+        .catch(err => console.warn('[PWA] SW 註冊失敗：', err));
+    });
+  }
+</script>
+
+
+【3】新增到 newcore-pro repo 的資料夾結構
+──────────────────────────────────────────
+newcore-pro/
+├── anchin_pickup.html         ← 原有，加入上方兩段程式碼
+├── anchin_pickup_manifest.json  ← 新增
+├── anchin_pickup_sw.js          ← 新增
+└── icons/
+    ├── pickup-icon-192.png      ← 需自行準備（見下方說明）
+    └── pickup-icon-512.png      ← 需自行準備（見下方說明）
+
+
+【4】Icon 圖示製作（最簡單方式）
+──────────────────────────────────────────
+用 Claude 或 Canva 製作：
+- 底色：深綠 #1a3a1a
+- 圖案：🚗 或 🏫 配上黃色 #CCFF00
+- 尺寸：192x192 與 512x512，存成 PNG
+放入 newcore-pro/icons/ 資料夾即可

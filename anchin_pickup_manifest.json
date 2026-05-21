@@ -1,0 +1,25 @@
+{
+  "name": "安親接車管理系統",
+  "short_name": "接車",
+  "description": "NewCore 安親接車點名與管理系統",
+  "start_url": "/newcore-pro/anchin_pickup.html",
+  "scope": "/newcore-pro/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a3a1a",
+  "theme_color": "#CCFF00",
+  "icons": [
+    {
+      "src": "/newcore-pro/icons/pickup-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/newcore-pro/icons/pickup-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
