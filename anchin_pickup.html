@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>安親接車管理系統</title>
+
+<!-- ══ PWA ══ -->
+<link rel="manifest" href="/newcore-pro/anchin_pickup_manifest.json">
+<meta name="theme-color" content="#CCFF00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="接車">
+
 <style>
 :root {
   --primary:#2563EB; --primary-d:#1D4ED8; --primary-light:#DBEAFE;
@@ -19,6 +27,16 @@ html{touch-action:manipulation}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans-serif;
      background:#F8FAFC;color:#1F2937;min-height:100vh;overflow-x:hidden;
      -webkit-font-smoothing:antialiased}
+
+/* ── 離線橫幅 ── */
+#sw-offline-banner{
+  position:fixed;top:0;left:0;right:0;
+  background:#ff6b35;color:#fff;
+  text-align:center;padding:10px 16px;
+  font-size:13px;z-index:9999;
+  font-family:'Noto Sans TC',-apple-system,sans-serif;
+  display:none;
+}
 
 .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;
      border-top:1px solid var(--border);display:flex;z-index:100;
@@ -80,7 +98,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 .grade-header.mid{background:var(--mid-c)}
 .grade-header.high{background:var(--high-c)}
 
-/* ── 點名卡片：精簡版，一行顯示所有資訊 ── */
 .s-card{background:#fff;border-radius:10px;margin:4px 10px;
         box-shadow:0 1px 3px rgba(0,0,0,.07);
         border-left:4px solid var(--border);overflow:hidden}
@@ -88,14 +105,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 .s-card.abs{border-left-color:var(--danger);background:#FFF5F5}
 .s-card.tmp-card{border-left-color:var(--warning);background:#FFFBEB}
 
-/* 主體：一行，垂直居中 */
 .s-body{display:flex;align-items:center;padding:9px 10px;gap:8px;min-height:56px}
 .s-seq{width:24px;height:24px;border-radius:50%;background:var(--gray-light);
        display:flex;align-items:center;justify-content:center;
        font-size:10px;font-weight:700;color:var(--gray);flex-shrink:0}
 .s-seq.tmp-seq{background:#FEF3C7;color:#B45309}
 
-/* 資訊區：名字＋meta 橫排，不換行 */
 .s-info{flex:1;min-width:0;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden}
 .s-name{font-size:15px;font-weight:700;line-height:1;white-space:nowrap;flex-shrink:0}
 .s-eng{font-size:11px;color:var(--gray);white-space:nowrap;flex-shrink:0}
@@ -109,7 +124,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 .badge-mid{background:#FEF9C3;color:#854D0E}
 .badge-high{background:#FEE2E2;color:#991B1B}
 
-/* 操作按鈕：縮小 */
 .s-actions{display:flex;gap:5px;flex-shrink:0}
 .act-btn{width:42px;height:42px;border-radius:9px;border:1.5px solid var(--border);
          background:#fff;font-size:16px;cursor:pointer;
@@ -127,19 +141,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans TC',sans
 .tmp-input{flex:1;padding:9px 12px;border:1.5px solid #FCD34D;border-radius:9px;font-size:14px;outline:none}
 .tmp-input:focus{border-color:#F59E0B}
 
-/* ── 接車總表 ── */
 .table-ctrl{padding:10px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;
             margin:0 8px 12px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 table.pt{border-collapse:collapse;font-size:11px;white-space:nowrap;background:#fff}
 table.pt th,table.pt td{border:1px solid #CBD5E1;text-align:center;padding:4px 5px}
 table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
-/* 週次交替 */
 .wk-hd-a{background:#1E40AF!important}
 .wk-hd-b{background:#065F46!important}
 .wk-a{border-left:2px solid #93C5FD!important}
 .wk-b{border-left:2px solid #6EE7B7!important}
-/* 接送色 */
 .cell-am{background:#FFFFFF}
 .cell-pm{background:#FEF08A}
 .cell-no{background:#374151;color:#9CA3AF;font-size:9px}
@@ -155,7 +166,6 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 .pt .type-col{min-width:28px}
 .pt .tel-col{text-align:left!important;min-width:80px;font-size:9px;color:var(--gray)}
 .pt .no-col{min-width:22px;color:var(--gray-2);font-size:10px}
-/* 外生列着色 */
 .pt .ws-row .name-col{color:#B45309}
 .pt .ws-row .type-badge{background:#FEF3C7;color:#B45309;padding:1px 4px;border-radius:4px;font-size:8px;font-weight:700}
 .pt .aq-row .type-badge{background:#DBEAFE;color:#1D4ED8;padding:1px 4px;border-radius:4px;font-size:8px;font-weight:700}
@@ -164,7 +174,6 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 .leg{display:flex;align-items:center;gap:4px}
 .leg-box{width:16px;height:16px;border-radius:4px;border:1px solid var(--border)}
 
-/* ── 假日面板 ── */
 .holiday-panel{background:#FFF7F7;border:1px solid #FECACA;border-radius:10px;
                margin:0 12px 8px;padding:12px}
 .holiday-panel-title{font-size:13px;font-weight:700;color:#DC2626;margin-bottom:8px;
@@ -178,7 +187,6 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 .h-inp-d:focus{border-color:#DC2626}
 .h-inp-n{flex:1;padding:8px 12px;border:1.5px solid #FECACA;border-radius:8px;font-size:13px;outline:none;min-height:42px}
 
-/* ── 學生管理 ── */
 .search-bar{margin:10px 12px 6px;display:flex;gap:8px}
 .search-input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;outline:none;min-height:44px}
 .search-input:focus{border-color:var(--primary)}
@@ -197,7 +205,6 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
      font-size:28px;cursor:pointer;z-index:60;
      box-shadow:0 4px 16px rgba(37,99,235,.45);display:flex;align-items:center;justify-content:center}
 
-/* ── Modal ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
          display:flex;align-items:flex-end;justify-content:center}
 .overlay.hidden{display:none}
@@ -253,7 +260,7 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 
 @media print{
   .nav,.pg-header,.table-ctrl,.legend,.quick-bar,.fab,
-  .filter-bar,.date-nav,.holiday-panel,.tmp-section{display:none!important}
+  .filter-bar,.date-nav,.holiday-panel,.tmp-section,#sw-offline-banner{display:none!important}
   body{background:#fff}
   .content{padding-bottom:0}
   .page{display:none!important}.page.active{display:block!important}
@@ -265,6 +272,9 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 </style>
 </head>
 <body>
+
+<!-- 離線提示橫幅 -->
+<div id="sw-offline-banner">⚠️ 目前離線 — 顯示上次載入的名單，操作記錄稍後自動同步</div>
 
 <div class="content">
 
@@ -496,17 +506,10 @@ table.pt th{background:#1E3A8A;color:#fff;font-weight:600;font-size:10px}
 // ══════════════════════════════════════════════════════════
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwsdHanASq5Gjfhf0xMtwpfF_t4J9dECzAsK69CnWJDv0WlICW2KONuPisr_nedDp9s/exec';
 
-// ══════════════════════════════════════════════════════════
-// 全域資料 store — 解決 onclick JSON 引號問題的核心
-// 所有按鈕動作透過 data-sid / data-idx 查此表，不傳 JSON
-// ══════════════════════════════════════════════════════════
-const STORE = {};   // { sid: studentObj }
+const STORE = {};
 function storeStudent(s) { STORE[s.id] = s; }
 function getStored(sid) { return STORE[sid] || null; }
 
-// ══════════════════════════════════════════════════════════
-// 狀態
-// ══════════════════════════════════════════════════════════
 let allStudents   = [];
 let rollRecords   = {};
 let monthRecords  = {};
@@ -518,9 +521,6 @@ let tmpStudents   = [];
 const TODAY = formatDate(new Date());
 let currentRollDate = TODAY;
 
-// ══════════════════════════════════════════════════════════
-// 工具
-// ══════════════════════════════════════════════════════════
 function formatDate(d) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
@@ -535,8 +535,6 @@ function escHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-// ★ status 傳輸用 ASCII，顯示時轉回 Unicode
-// GAS JSONP URL 中 ✓/✗ 有時被截斷，改用 ok/no 更可靠
 function encSt(s){ return s==='ok'?'✓':s==='no'?'✗':''; }
 function decSt(s){ return s==='✓'?'ok':s==='✗'?'no':''; }
 
@@ -546,9 +544,6 @@ function showToast(msg, ms=2500) {
   setTimeout(()=>t.classList.remove('on'), ms);
 }
 
-// ══════════════════════════════════════════════════════════
-// GAS 通訊
-// ══════════════════════════════════════════════════════════
 function callGAS(params) {
   return new Promise((resolve, reject) => {
     const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*9999);
@@ -573,9 +568,6 @@ async function postGAS(payload) {
   return callGAS({ action: payload.action, payload: JSON.stringify(payload) });
 }
 
-// ══════════════════════════════════════════════════════════
-// 接送時間規則
-// ══════════════════════════════════════════════════════════
 function getPickupTime(s, dow) {
   const ct = s.customTimes || {};
   if (ct[dow] && ct[dow] !== '') return ct[dow];
@@ -594,9 +586,6 @@ function shouldPickup(s, dow) {
 
 function ptLabel(code) { return code==='am'?'12:00':'16:00'; }
 
-// ══════════════════════════════════════════════════════════
-// 月份 / 週次工具
-// ══════════════════════════════════════════════════════════
 function getWeekNum(dateStr) {
   const d = dateFromStr(dateStr);
   const soy = new Date(d.getFullYear(),0,1);
@@ -622,9 +611,6 @@ function gradeGroup(g){ return g<=2?'low':g<=4?'mid':'high'; }
 function gradeGroupName(g){ return g<=2?'低年級（1-2年級）':g<=4?'中年級（3-4年級）':'高年級（5-6年級）'; }
 function gradeGroupLabel(g){ return g<=2?'低':g<=4?'中':'高'; }
 
-// ══════════════════════════════════════════════════════════
-// 學校選單
-// ══════════════════════════════════════════════════════════
 function buildSchoolOptions() {
   const schools = [...new Set(allStudents.map(s=>s.school).filter(Boolean))].sort();
   ['roll-school-filter','table-school-filter','mgmt-school-filter'].forEach(id=>{
@@ -637,9 +623,6 @@ function buildSchoolOptions() {
   buildTmpStudentSel();
 }
 
-// ══════════════════════════════════════════════════════════
-// Tab 切換
-// ══════════════════════════════════════════════════════════
 function switchTab(name, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -649,9 +632,6 @@ function switchTab(name, btn) {
   if(name==='mgmt') renderStudentList();
 }
 
-// ══════════════════════════════════════════════════════════
-// 日期導航
-// ══════════════════════════════════════════════════════════
 function changeRollDate(delta) {
   const d = dateFromStr(currentRollDate);
   d.setDate(d.getDate()+delta);
@@ -661,7 +641,7 @@ function changeRollDate(delta) {
 function jumpToToday() { currentRollDate = TODAY; loadRollForDate(TODAY); }
 
 function updateDateNav() {
-  const d = dateFromStr(currentRollDate);
+  const d=dateFromStr(currentRollDate);
   const dayNames=['日','一','二','三','四','五','六'];
   const isToday = currentRollDate === TODAY;
   const tw = d.toLocaleDateString('zh-TW',{month:'long',day:'numeric'});
@@ -671,9 +651,6 @@ function updateDateNav() {
   document.getElementById('jump-today-btn').style.display = isToday ? 'none' : 'flex';
 }
 
-// ══════════════════════════════════════════════════════════
-// 今日點名
-// ══════════════════════════════════════════════════════════
 async function loadRollForDate(date) {
   updateDateNav();
   setTimeBanner(date);
@@ -817,7 +794,6 @@ function buildCard(s, idx, mapDow, isTmp) {
   </div>`;
 }
 
-// 事件委派 — 完全避免 onclick 中的 JSON 引號問題
 document.getElementById('roll-list').addEventListener('click', e => {
   const btn = e.target.closest('[data-act]');
   if(!btn) return;
@@ -848,7 +824,6 @@ function updateCardUI(sid, status) {
   if(!card) return;
   const isTmp=card.classList.contains('tmp-card');
   card.className='s-card'+(isTmp?' tmp-card':'')+(status==='ok'?' chk':status==='no'?' abs':'');
-  // ★ 修正：data-act 現在是 "ok"/"no"，不是舊的 "chk"/"abs"
   card.querySelectorAll('[data-act]').forEach(btn=>{
     if(btn.dataset.act==='ok')   btn.className='act-btn'+(status==='ok'?' on-chk':'');
     if(btn.dataset.act==='no')   btn.className='act-btn'+(status==='no'?' on-abs':'');
@@ -879,9 +854,6 @@ async function clearAllRecords() {
   showToast('已清除記錄');
 }
 
-// ── 臨時加接 ──────────────────────────────────────────────
-
-// 更新「從名單選」的 select 選項
 function buildTmpStudentSel() {
   const sel = document.getElementById('tmp-student-sel');
   if(!sel) return;
@@ -893,14 +865,12 @@ function buildTmpStudentSel() {
       .join('');
 }
 
-// 從名單加入臨時接送（使用原學生資料，但標記為臨時）
 function addTmpFromList() {
   const sel = document.getElementById('tmp-student-sel');
   const origId = sel.value;
   if(!origId){ showToast('請從名單選一位學生'); return; }
   const orig = allStudents.find(s=>s.id===origId);
   if(!orig){ showToast('找不到學生資料'); return; }
-  // 已在 tmpStudents 中
   if(tmpStudents.some(t=>t._origId===origId)){
     showToast(`${orig.name} 已在臨時加接清單`); return;
   }
@@ -915,7 +885,6 @@ function addTmpFromList() {
   showToast(`⚡ 已加入：${orig.name}（臨時換時）`);
 }
 
-// 名單外學生直接加入
 function addTmpStudent() {
   const el=document.getElementById('tmp-name');
   const name=el.value.trim();
@@ -931,7 +900,6 @@ function addTmpStudent() {
   showToast(`⚡ 已加入：${name}`);
 }
 
-// ── 電話 Modal ──────────────────────────────────────────────
 function openPhoneModal(s) {
   if(!s){ showToast('找不到學生資料'); return; }
   document.getElementById('phone-modal-name').textContent =
@@ -960,7 +928,6 @@ document.getElementById('phone-overlay').addEventListener('click', e=>{
   if(e.target===e.currentTarget) closePhoneModal();
 });
 
-// ── 備註 Modal ──────────────────────────────────────────────
 function openNotesModal(sid, name) {
   notesTarget=sid;
   document.getElementById('notes-modal-name').textContent=`備註：${name}`;
@@ -982,9 +949,6 @@ document.getElementById('notes-overlay').addEventListener('click', e=>{
   if(e.target===e.currentTarget) closeNotesModal();
 });
 
-// ══════════════════════════════════════════════════════════
-// 接車總表
-// ══════════════════════════════════════════════════════════
 async function generateTable() {
   const val=document.getElementById('month-picker').value;
   if(!val){ showToast('請選擇月份'); return; }
@@ -992,17 +956,14 @@ async function generateTable() {
   currentTableMonth=val;
   document.getElementById('table-area').innerHTML='<div class="loading">載入中…</div>';
   try {
-    // ★ 修正：每次產生都強制重新抓取假日與點名記錄，不使用快取
-    // 假日只快取 students，避免舊假日設定殘留
     const [sr,mr,hr]=await Promise.all([
       allStudents.length?Promise.resolve({students:allStudents}):callGAS({action:'getStudents'}),
       callGAS({action:'getMonthRecords', yearMonth:val}),
-      callGAS({action:'getHolidays', yearMonth:val})  // ← 永遠重新抓
+      callGAS({action:'getHolidays', yearMonth:val})
     ]);
     allStudents=sr.students||[];
     allStudents.forEach(storeStudent);
     monthRecords=mr.records||{};
-    // ★ 修正：每次重新生成都完整重建 monthHolidays，清除舊快取
     monthHolidays={};
     (hr.holidays||[]).forEach(h=>{
       if(h.date) monthHolidays[h.date]=h.note||'假日';
@@ -1030,7 +991,6 @@ function buildTable(year, month) {
   const days=getMonthWeekdays(year,month);
   if(!days.length) return '<div class="card">本月無工作日</div>';
 
-  // 週次奇偶
   const wp={};
   let lastWk=-1, par='a';
   days.forEach(d=>{
@@ -1038,7 +998,6 @@ function buildTable(year, month) {
     wp[d.date]=par;
   });
 
-  // 表頭
   let head=`<thead><tr>
     <th class="no-col">No</th>
     <th class="name-col">姓名</th>
@@ -1059,7 +1018,6 @@ function buildTable(year, month) {
   });
   head+=`</tr></thead>`;
 
-  // 表身
   let body='<tbody>';
   let lastGroup='', seq=0;
   let filtered=allStudents;
@@ -1101,7 +1059,7 @@ function buildTable(year, month) {
     });
     body+=`</tr>`;
   });
-  // ── 臨時加接列（若當月有日期且有臨時學生）──
+
   if(tmpStudents.length && currentTableMonth) {
     const colspan = 6 + days.length;
     body+=`<tr><td colspan="${colspan}" style="background:#FEF3C7;color:#B45309;font-weight:700;font-size:10px;text-align:left;padding-left:8px">⚡ 臨時加接</td></tr>`;
@@ -1125,7 +1083,6 @@ function buildTable(year, month) {
         let inner='';
         if(st==='✓') inner=`<span class="cell-chk">✓</span>`;
         else if(st==='✗') inner=`<span class="cell-abs">✕</span>`;
-        // 臨時學生只顯示今日或有記錄的格子
         const isCurrentDate = d.date === currentRollDate;
         body+=`<td class="cell-am ${wkCls}"${(isCurrentDate||st)?` data-date="${d.date}" data-sid="${s.id}" style="cursor:pointer"`:''}>${inner}</td>`;
       });
@@ -1137,8 +1094,6 @@ function buildTable(year, month) {
   return `<table class="pt">${head}${body}</table>`;
 }
 
-// 表格點擊事件委派
-// ★ 改為 per-cell 鎖，不鎖整張表，每格獨立防重複點擊
 const _cellSaving = new Set();
 document.getElementById('table-area').addEventListener('click', async e=>{
   const td=e.target.closest('td[data-date]');
@@ -1146,19 +1101,17 @@ document.getElementById('table-area').addEventListener('click', async e=>{
   const {date, sid}=td.dataset;
   if(!date || !sid) return;
   const cellKey = date+'_'+sid;
-  if(_cellSaving.has(cellKey)) return;  // 此格正在儲存中，忽略重複點擊
+  if(_cellSaving.has(cellKey)) return;
 
   if(!monthRecords[date]) monthRecords[date]={};
   const rec=monthRecords[date][sid]||{};
   const cur = rec.status||'';
   const next = cur===''?'ok':cur==='ok'||cur==='✓'?'no':'';
 
-  // 先更新本地狀態並重繪（立即視覺回饋）
   monthRecords[date][sid]={...rec, status:next};
   const [y,m]=date.split('-').map(Number);
   renderTable(y,m);
 
-  // 鎖住此格，開始儲存
   _cellSaving.add(cellKey);
   try {
     const r = await postGAS({
@@ -1167,7 +1120,6 @@ document.getElementById('table-area').addEventListener('click', async e=>{
     });
     if(r && r.error){
       showToast('⚠️ 儲存失敗：'+r.error);
-      // 回滾
       monthRecords[date][sid]={...rec};
       renderTable(y,m);
     } else {
@@ -1175,7 +1127,6 @@ document.getElementById('table-area').addEventListener('click', async e=>{
     }
   } catch(err){
     showToast('⚠️ 網路錯誤，請重試');
-    // 回滾
     monthRecords[date][sid]={...rec};
     renderTable(y,m);
   } finally {
@@ -1183,9 +1134,6 @@ document.getElementById('table-area').addEventListener('click', async e=>{
   }
 });
 
-// ══════════════════════════════════════════════════════════
-// 學生管理
-// ══════════════════════════════════════════════════════════
 async function loadStudents() {
   try {
     const r=await callGAS({action:'getStudents'});
@@ -1241,7 +1189,6 @@ function renderStudentList() {
   document.getElementById('student-list-area').innerHTML=html;
 }
 
-// 編輯按鈕事件委派
 document.getElementById('student-list-area').addEventListener('click', e=>{
   const btn=e.target.closest('[data-edit-sid]');
   if(!btn) return;
@@ -1250,7 +1197,6 @@ document.getElementById('student-list-area').addEventListener('click', e=>{
   else showToast('找不到學生資料');
 });
 
-// ── 學生表單 ──────────────────────────────────────────────
 function buildCtGrid(ct={}) {
   const days=[['一',1],['二',2],['三',3],['四',4],['五',5]];
   return days.map(([n,d])=>`<div class="ct-item">
@@ -1346,9 +1292,6 @@ async function confirmDelete() {
   } catch(e){ showToast('⚠️ 刪除失敗：'+e.message); }
 }
 
-// ══════════════════════════════════════════════════════════
-// 假日管理
-// ══════════════════════════════════════════════════════════
 function toggleHolidayPanel() {
   const p=document.getElementById('holiday-panel');
   const show=p.style.display==='none';
@@ -1409,9 +1352,6 @@ async function removeHoliday(date) {
   } catch(e){ showToast('⚠️ 失敗：'+e.message); }
 }
 
-// ══════════════════════════════════════════════════════════
-// 初始化
-// ══════════════════════════════════════════════════════════
 (async function init() {
   const now=new Date();
   document.getElementById('month-picker').value=`${now.getFullYear()}-${pad(now.getMonth()+1)}`;
@@ -1429,5 +1369,36 @@ async function removeHoliday(date) {
   await loadRollForDate(currentRollDate);
 })();
 </script>
+
+<!-- ══ PWA：離線偵測 + Service Worker 註冊 ══ -->
+<script>
+  // 離線橫幅控制
+  // 有橫幅時，讓 content 往下推，避免遮住內容
+  function showOfflineBanner() {
+    const b = document.getElementById('sw-offline-banner');
+    b.style.display = 'block';
+    document.querySelector('.content').style.paddingTop = '40px';
+  }
+  function hideOfflineBanner() {
+    const b = document.getElementById('sw-offline-banner');
+    b.style.display = 'none';
+    document.querySelector('.content').style.paddingTop = '';
+  }
+
+  window.addEventListener('offline', showOfflineBanner);
+  window.addEventListener('online', hideOfflineBanner);
+  if (!navigator.onLine) showOfflineBanner();
+
+  // Service Worker 註冊
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/newcore-pro/anchin_pickup_sw.js', { scope: '/newcore-pro/' })
+        .then(reg => console.log('[PWA] SW 已註冊，scope：', reg.scope))
+        .catch(err => console.warn('[PWA] SW 註冊失敗：', err));
+    });
+  }
+</script>
+
 </body>
 </html>
