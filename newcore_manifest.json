@@ -2,21 +2,21 @@
   "name": "NewCore 班級管理系統",
   "short_name": "NewCore",
   "description": "語音點名、成績輸入、成績單管理系統",
-  "start_url": "/newcore-attendance/index.html",
-  "scope": "/newcore-attendance/",
+  "start_url": "/newcore-pro/index.html",
+  "scope": "/newcore-pro/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#274e13",
   "theme_color": "#274e13",
   "icons": [
     {
-      "src": "/newcore-attendance/icons/newcore-icon-192.png",
+      "src": "/newcore-pro/icons/newcore-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/newcore-attendance/icons/newcore-icon-512.png",
+      "src": "/newcore-pro/icons/newcore-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
