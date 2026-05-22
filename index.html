@@ -4,7 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
 <title>NewCore 語音點名</title>
+
+<!-- ══ PWA ══ -->
+<link rel="manifest" href="/newcore-pro/newcore_manifest.json">
+<meta name="theme-color" content="#274e13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NewCore">
+
 <style>
+  /* ── 離線橫幅 ── */
+  #sw-offline-banner {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #ff6b35; color: white;
+    text-align: center; padding: 10px 16px;
+    font-size: 13px; z-index: 9999;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; font-size: 14px; }
 
@@ -524,6 +542,9 @@
 <!-- ══════════════════════════════════════════════
      登入畫面
 ══════════════════════════════════════════════ -->
+<!-- ══ 離線提示橫幅 ══ -->
+<div id="sw-offline-banner">⚠️ 目前離線 — 使用上次登入資料，儲存操作需連網才生效</div>
+
 <div id="login-screen" class="login-wrap">
   <div class="login-box">
     <div class="login-logo">🎤</div>
@@ -1013,6 +1034,18 @@ window.addEventListener('load', function() {
     var sidEl = document.getElementById('login-sheet-id');
     if (sidEl) sidEl.value = SHEET_ID;
   }
+  // 離線偵測
+  if (!navigator.onLine) showOfflineBanner();
+  window.addEventListener('offline', showOfflineBanner);
+  window.addEventListener('online', function() {
+    hideOfflineBanner();
+    if (AUTH_CODE && SHEET_ID && API_URL) {
+      jsonpCall({ action: 'verifyAuth', authCode: AUTH_CODE }, function(err, data) {
+        if (err || !data || !data.ok) showToast('⚠️ 連線恢復但驗證失敗，請重新登入');
+      });
+    }
+  });
+
   // 嘗試自動登入
   if (SHEET_ID && AUTH_CODE && API_URL) autoLogin();
 
@@ -1023,12 +1056,44 @@ window.addEventListener('load', function() {
   buildWheel();
 });
 
+// ── 離線橫幅控制 ──
+function showOfflineBanner() {
+  var b = document.getElementById('sw-offline-banner');
+  if (b) b.style.display = 'block';
+}
+function hideOfflineBanner() {
+  var b = document.getElementById('sw-offline-banner');
+  if (b) b.style.display = 'none';
+}
+
 function autoLogin() {
   document.getElementById('login-btn').disabled = true;
-  document.getElementById('login-err').textContent = '自動登入中...';
+  document.getElementById('login-err').textContent = '驗證中...';
+
+  if (!navigator.onLine) {
+    var savedName = localStorage.getItem('nc_user_name');
+    var savedRole = localStorage.getItem('nc_user_role');
+    if (savedName) {
+      document.getElementById('login-btn').disabled = false;
+      document.getElementById('login-err').textContent = '';
+      onLoginSuccess({ name: savedName, role: savedRole || 'teacher' }, null, true);
+      return;
+    }
+    document.getElementById('login-btn').disabled = false;
+    document.getElementById('login-err').textContent = '⚠️ 離線中，請先連網登入一次';
+    return;
+  }
+
   jsonpCall({ action: 'verifyAuth', authCode: AUTH_CODE }, function(err, data) {
     document.getElementById('login-btn').disabled = false;
     if (err || !data || !data.ok) {
+      var savedName = localStorage.getItem('nc_user_name');
+      if (savedName) {
+        document.getElementById('login-err').textContent = '';
+        onLoginSuccess({ name: savedName, role: localStorage.getItem('nc_user_role') || 'teacher' }, null, true);
+        showToast('⚠️ 驗證異常，以離線模式進入');
+        return;
+      }
       localStorage.removeItem('nc_auth_code');
       AUTH_CODE = '';
       document.getElementById('login-err').textContent = '';
@@ -1100,9 +1165,14 @@ function checkLicense(sheetId, callback) {
   document.body.appendChild(script);
 }
 
-function onLoginSuccess(data, licData) {
+function onLoginSuccess(data, licData, isOffline) {
   currentUser = data;
   if (licData && licData.plan) currentUser.plan = licData.plan;
+
+  // ── 儲存使用者資料供離線使用 ──
+  localStorage.setItem('nc_user_name', data.name);
+  localStorage.setItem('nc_user_role', data.role || 'teacher');
+  if (isOffline) showOfflineBanner();
 
   // Trial 到期鎖定
   if (licData && licData.trialDaysLeft !== null && licData.trialDaysLeft !== undefined) {
@@ -1150,6 +1220,9 @@ function doLogout() {
   currentUser = null; AUTH_CODE = ''; SHEET_ID = '';
   localStorage.removeItem('nc_auth_code');
   localStorage.removeItem('nc_sheet_id');
+  localStorage.removeItem('nc_user_name');
+  localStorage.removeItem('nc_user_role');
+  hideOfflineBanner();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('main-screen').style.display  = 'none';
   document.getElementById('login-code').value = '';
@@ -2910,6 +2983,18 @@ function renderOverview(data, threshold) {
   });
   document.getElementById('overview-result').innerHTML = html;
 }
+</script>
+
+<!-- ══ PWA：Service Worker 註冊 ══ -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker
+        .register('/newcore-pro/newcore_sw.js', { scope: '/newcore-pro/' })
+        .then(function(reg) { console.log('[PWA] SW 已註冊，scope：', reg.scope); })
+        .catch(function(err) { console.warn('[PWA] SW 註冊失敗：', err); });
+    });
+  }
 </script>
 </body>
 </html>
